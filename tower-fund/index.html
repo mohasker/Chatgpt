@@ -1,0 +1,686 @@
+<title>صندوق البرج</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Reem+Kufi:wght@500;700&display=swap">
+<style>
+/* Layout: a tower elevation (11 floors × 2 units) as the hero, money ledger and maintenance log beside it; tabs for resident / manager work */
+:root{
+  --bg:#EEF2F1; --surface:#FFFFFF; --sunk:#E3E9E8; --line:#CCD6D5;
+  --ink:#16242A; --muted:#5A6B70; --accent:#0E6461; --accent-ink:#FFFFFF; --brass:#A87A22;
+  --ok:#23845A; --ok-bg:#DDF1E6; --warn:#A86A00; --warn-bg:#FBEBC8; --bad:#B8362F; --bad-bg:#F8DEDB;
+  --f-display:"Reem Kufi","IBM Plex Sans Arabic",Tahoma,sans-serif;
+  --f-body:"IBM Plex Sans Arabic","Segoe UI",Tahoma,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F181B; --surface:#172327; --sunk:#1E2D31; --line:#2C3E43;
+  --ink:#E4ECEC; --muted:#93A6AA; --accent:#3FB3AA; --accent-ink:#06201F; --brass:#D8A846;
+  --ok:#4CC48A; --ok-bg:#163A2B; --warn:#E5A93A; --warn-bg:#3A2D12; --bad:#EE7A70; --bad-bg:#3E1C1A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F181B; --surface:#172327; --sunk:#1E2D31; --line:#2C3E43;
+  --ink:#E4ECEC; --muted:#93A6AA; --accent:#3FB3AA; --accent-ink:#06201F; --brass:#D8A846;
+  --ok:#4CC48A; --ok-bg:#163A2B; --warn:#E5A93A; --warn-bg:#3A2D12; --bad:#EE7A70; --bad-bg:#3E1C1A; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;direction:rtl;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+.wrap{max-width:1180px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;margin:0;text-wrap:balance;line-height:1.3}
+h2{font-size:1.25rem} h3{font-size:1.05rem}
+.num{font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;padding-block:24px 16px}
+.brand small{display:block;color:var(--muted);font-size:.85rem;letter-spacing:.02em}
+.brand h1{font-size:1.9rem}
+.who{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.9rem}
+.role{padding:2px 10px;border-radius:999px;background:var(--sunk);color:var(--ink);font-size:.8rem;font-weight:600}
+.role.admin{background:var(--accent);color:var(--accent-ink)}
+
+nav.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px;overflow-x:auto}
+nav.tabs a{padding:10px 16px;text-decoration:none;color:var(--muted);font-weight:600;border-bottom:3px solid transparent;white-space:nowrap;display:flex;gap:6px;align-items:center}
+nav.tabs a[aria-current="page"]{color:var(--ink);border-color:var(--accent)}
+.badge{min-width:20px;padding:0 6px;border-radius:999px;background:var(--warn);color:#fff;font-size:.75rem;text-align:center;line-height:20px}
+
+.notice{padding:10px 14px;border-radius:8px;background:var(--warn-bg);color:var(--ink);margin-bottom:16px;font-size:.9rem}
+
+/* KPI strip */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:24px}
+.kpi{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.kpi .lbl{color:var(--muted);font-size:.85rem}
+.kpi .val{font-family:var(--f-display);font-size:1.7rem;font-weight:700;line-height:1.2}
+.kpi .sub{color:var(--muted);font-size:.8rem}
+.kpi.balance .val{color:var(--accent)}
+.kpi.due .val{color:var(--bad)}
+@media (max-width:760px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.grid{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+.stack{display:flex;flex-direction:column;gap:24px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;min-width:0}
+.panel-h{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+
+/* Tower */
+.tower{display:flex;flex-direction:column;gap:0;border:2px solid var(--ink);border-bottom:none;border-radius:10px 10px 0 0;padding:10px 10px 0;background:var(--sunk);position:relative}
+.tower::before{content:"";position:absolute;inset:-12px 30% auto;height:12px;background:var(--ink);border-radius:4px 4px 0 0}
+.floor{display:grid;grid-template-columns:28px 1fr 1fr;gap:6px;align-items:stretch;padding-bottom:6px}
+.floor .fl{font-size:.75rem;color:var(--muted);display:flex;align-items:center;justify-content:center;font-weight:600}
+.unit{border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:var(--surface);text-align:start;display:flex;flex-direction:column;gap:0;min-width:0;border-inline-start:5px solid var(--line)}
+.unit b{font-size:.9rem}
+.unit span{font-size:.75rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.unit.paid{border-inline-start-color:var(--ok);background:var(--ok-bg)}
+.unit.partial{border-inline-start-color:var(--warn);background:var(--warn-bg)}
+.unit.pending{border-inline-start-color:var(--warn);background:repeating-linear-gradient(135deg,var(--warn-bg) 0 6px,var(--surface) 6px 12px)}
+.unit.unpaid{border-inline-start-color:var(--bad);background:var(--bad-bg)}
+.unit.none{opacity:.7}
+.ground{height:14px;background:var(--ink);border-radius:0 0 4px 4px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:.8rem;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-inline-end:4px;vertical-align:middle}
+
+/* tables */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th{text-align:start;font-weight:600;color:var(--muted);font-size:.8rem;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:none}
+.empty{padding:20px;text-align:center;color:var(--muted);background:var(--sunk);border-radius:8px;font-size:.9rem}
+
+.pill{display:inline-block;padding:1px 10px;border-radius:999px;font-size:.78rem;font-weight:600;white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
+.pill.bad{background:var(--bad-bg);color:var(--bad)}
+
+/* Maintenance */
+.checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.check{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);text-align:start;width:100%}
+.check .box{flex:none;width:22px;height:22px;border-radius:5px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;margin-top:2px}
+.check.done{background:var(--ok-bg);border-color:transparent}
+.check.done .box{background:var(--ok);border-color:var(--ok)}
+.check .box svg{width:14px;height:14px;fill:none;stroke:#fff;stroke-width:3;opacity:0}
+.check.done .box svg{opacity:1}
+.check .t{display:flex;flex-direction:column;min-width:0}
+.check .t span{font-size:.75rem;color:var(--muted)}
+button.check{cursor:pointer} div.check{cursor:default}
+.progress{height:6px;background:var(--sunk);border-radius:99px;overflow:hidden;margin-bottom:12px}
+.progress>i{display:block;height:100%;background:var(--ok)}
+
+/* forms */
+form.f{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+form.f .full{grid-column:1/-1}
+@media (max-width:560px){form.f{grid-template-columns:minmax(0,1fr)}}
+label.fld{display:flex;flex-direction:column;gap:4px;font-size:.85rem;font-weight:600;min-width:0}
+input,select,textarea{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:9px 10px;font-weight:400;width:100%;min-width:0}
+textarea{min-height:80px;resize:vertical}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 14px;font-weight:600;font-size:.9rem;white-space:nowrap}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.bad{color:var(--bad);border-color:var(--bad);background:transparent}
+.btn.bad.arm{background:var(--bad);color:#fff}
+.btn.sm{padding:4px 10px;font-size:.8rem}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pay-info{background:var(--sunk);border-radius:8px;padding:12px 14px;white-space:pre-wrap;font-size:.9rem}
+.apts{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.apts label{font-size:.8rem;display:flex;flex-direction:column;gap:2px}
+.sec-title{display:flex;align-items:baseline;gap:10px;margin:8px 0 14px}
+.sec-title .muted{font-size:.85rem}
+.queue{display:flex;flex-direction:column;gap:10px}
+.qitem{border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center}
+@media (max-width:560px){.qitem{grid-template-columns:minmax(0,1fr)}}
+.qitem .amt{font-family:var(--f-display);font-size:1.3rem;font-weight:700}
+.qitem input{width:110px;padding:5px 8px}
+.toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:8px;font-weight:600;z-index:20;max-width:calc(100% - 32px)}
+@media (prefers-reduced-motion:no-preference){.unit,.check{transition:background .2s}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><small id="b-sub">١١ طابق · ٢٢ شقة · صندوق خدمات العمارة</small><h1 id="b-name">صندوق البرج</h1></div>
+    <div class="who"><span id="who-name"></span><span class="role" id="who-role">زائر</span></div>
+  </header>
+  <nav class="tabs" aria-label="الأقسام">
+    <a href="#dashboard" data-tab="dashboard">لوحة المتابعة</a>
+    <a href="#pay" data-tab="pay">إبلاغ عن سداد</a>
+    <a href="#manage" data-tab="manage" id="tab-manage" hidden>الإدارة <span class="badge" id="q-badge" hidden>0</span></a>
+  </nav>
+  <div id="notice" class="notice" hidden></div>
+
+  <!-- DASHBOARD -->
+  <section id="v-dashboard">
+    <div class="kpis">
+      <div class="kpi"><span class="lbl">إجمالي المحصّل</span><span class="val num" id="k-in">٠</span><span class="sub" id="k-in-sub">جنيه مصري</span></div>
+      <div class="kpi"><span class="lbl">إجمالي المنصرف</span><span class="val num" id="k-out">٠</span><span class="sub" id="k-out-sub">جنيه مصري</span></div>
+      <div class="kpi balance"><span class="lbl">الرصيد الحالي</span><span class="val num" id="k-bal">٠</span><span class="sub" id="k-bal-sub">جنيه مصري</span></div>
+      <div class="kpi due"><span class="lbl">مستحق على الشقق</span><span class="val num" id="k-due">٠</span><span class="sub" id="k-due-sub">—</span></div>
+    </div>
+    <div class="grid">
+      <div class="panel">
+        <div class="panel-h"><h2>حالة الشقق</h2>
+          <select id="tower-filter" aria-label="المطالبة المعروضة" style="width:auto;max-width:100%"></select></div>
+        <div class="tower" id="tower"></div><div class="ground"></div>
+        <div class="legend">
+          <span><i style="background:var(--ok)"></i>مسددة</span>
+          <span><i style="background:var(--warn)"></i>جزئي / قيد المراجعة</span>
+          <span><i style="background:var(--bad)"></i>غير مسددة</span>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="panel">
+          <div class="panel-h"><h2>الصيانة الشهرية</h2>
+            <input type="month" id="m-month" aria-label="الشهر" style="width:auto"></div>
+          <div class="progress"><i id="m-prog" style="width:0"></i></div>
+          <div class="checks" id="m-list"></div>
+          <p class="muted small" id="m-hint" style="margin:10px 0 0">يحدّث مسؤول الإدارة هذه القائمة، ويراها جميع السكان.</p>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><h2>الشقق غير المسددة</h2><span class="muted small" id="unpaid-count"></span></div>
+          <div class="tbl-wrap" id="unpaid"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><h2>آخر المصروفات</h2></div>
+          <div class="tbl-wrap" id="exp-recent"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESIDENT -->
+  <section id="v-pay" hidden>
+    <div class="grid">
+      <div class="panel">
+        <h2 style="margin-bottom:6px">أبلغ عن سداد</h2>
+        <p class="muted small" style="margin:0 0 14px">بعد التحويل أو تسليم المبلغ للمسؤول، سجّل البيانات هنا. يظل الطلب «قيد المراجعة» حتى يؤكد المسؤول الاستلام.</p>
+        <div class="pay-info" id="pay-info" hidden></div>
+        <form class="f" id="claim-form" style="margin-top:14px">
+          <label class="fld">رقم الشقة<select id="c-apt" required></select></label>
+          <label class="fld">المطالبة<select id="c-due" required></select></label>
+          <label class="fld">المبلغ (ج.م)<input id="c-amount" type="number" min="1" step="1" required inputmode="numeric"></label>
+          <label class="fld">طريقة السداد<select id="c-method">
+            <option>إنستاباي</option><option>فودافون كاش</option><option>تحويل بنكي</option><option>نقدًا للمسؤول</option><option>أخرى</option></select></label>
+          <label class="fld">تاريخ السداد<input id="c-date" type="date" required></label>
+          <label class="fld">رقم العملية / المرجع<input id="c-ref" placeholder="اختياري"></label>
+          <label class="fld full">ملاحظات<input id="c-note" placeholder="مثال: سداد شهرين معًا"></label>
+          <div class="full row"><button class="btn primary" type="submit" id="c-submit">إرسال للمراجعة</button><span class="muted small" id="c-msg"></span></div>
+        </form>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><h2>طلباتي</h2></div>
+        <div class="tbl-wrap" id="my-claims"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MANAGER -->
+  <section id="v-manage" hidden>
+    <div class="stack">
+      <div class="panel">
+        <div class="sec-title"><h2>طلبات بانتظار الاعتماد</h2><span class="muted" id="q-count"></span></div>
+        <div class="queue" id="queue"></div>
+      </div>
+
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))">
+        <div class="panel">
+          <h2 style="margin-bottom:12px">مطالبة جديدة على كل الشقق</h2>
+          <form class="f" id="due-form">
+            <label class="fld">النوع<select id="d-type"><option value="monthly">اشتراك شهري</option><option value="periodic">دوري</option><option value="special">استثنائي</option></select></label>
+            <label class="fld">الشهر / الفترة<input id="d-period" type="month" required></label>
+            <label class="fld full">العنوان<input id="d-title" required placeholder="اشتراك شهر نوفمبر"></label>
+            <label class="fld">المبلغ لكل شقة (ج.م)<input id="d-amount" type="number" min="1" step="1" required></label>
+            <label class="fld">آخر موعد للسداد<input id="d-deadline" type="date"></label>
+            <div class="full row"><button class="btn primary" type="submit">إصدار المطالبة لـ ٢٢ شقة</button></div>
+          </form>
+          <h3 style="margin:20px 0 8px">المطالبات الحالية</h3>
+          <div class="tbl-wrap" id="dues-list"></div>
+        </div>
+
+        <div class="panel">
+          <h2 style="margin-bottom:12px">تسجيل مصروف</h2>
+          <form class="f" id="exp-form">
+            <label class="fld">البند<select id="e-cat"><option>صيانة المصعد</option><option>كهرباء المرافق</option><option>مياه</option><option>نظافة</option><option>رواتب حارس / عامل</option><option>إصلاحات</option><option>أخرى</option></select></label>
+            <label class="fld">المبلغ (ج.م)<input id="e-amount" type="number" min="1" step="1" required></label>
+            <label class="fld">التاريخ<input id="e-date" type="date" required></label>
+            <label class="fld">الجهة / المستلم<input id="e-payee" placeholder="اختياري"></label>
+            <label class="fld full">الوصف<input id="e-desc" required placeholder="مثال: عقد صيانة المصعد - أكتوبر"></label>
+            <div class="full row"><button class="btn primary" type="submit">حفظ المصروف</button></div>
+          </form>
+          <h3 style="margin:20px 0 8px">كل المصروفات</h3>
+          <div class="tbl-wrap" id="exp-list"></div>
+        </div>
+      </div>
+
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))">
+        <div class="panel">
+          <h2 style="margin-bottom:6px">تسجيل تحصيل مباشر</h2>
+          <p class="muted small" style="margin:0 0 12px">لمبلغ استلمته يدًا بيد دون أن يسجّله الساكن.</p>
+          <form class="f" id="direct-form">
+            <label class="fld">رقم الشقة<select id="x-apt" required></select></label>
+            <label class="fld">المطالبة<select id="x-due" required></select></label>
+            <label class="fld">المبلغ (ج.م)<input id="x-amount" type="number" min="1" step="1" required></label>
+            <label class="fld">التاريخ<input id="x-date" type="date" required></label>
+            <div class="full row"><button class="btn primary" type="submit">تسجيل كمُحصّل</button></div>
+          </form>
+          <h3 style="margin:20px 0 8px">سجل التحصيل المعتمد</h3>
+          <div class="tbl-wrap" id="ledger"></div>
+        </div>
+
+        <div class="panel">
+          <h2 style="margin-bottom:12px">الإعدادات</h2>
+          <form class="f" id="cfg-form">
+            <label class="fld full">اسم البرج<input id="s-name"></label>
+            <label class="fld">اسم مسؤول الإدارة<input id="s-mgr"></label>
+            <label class="fld">رصيد افتتاحي (ج.م)<input id="s-open" type="number" step="1"></label>
+            <label class="fld full">بيانات التحويل التي تظهر للسكان<textarea id="s-pay" placeholder="رقم إنستاباي / فودافون كاش / حساب بنكي"></textarea></label>
+            <label class="fld full">بنود الصيانة الشهرية (بند في كل سطر)<textarea id="s-maint" style="min-height:140px"></textarea></label>
+            <div class="full"><h3 style="margin-bottom:8px">أسماء السكان (اختياري)</h3><div class="apts" id="s-apts"></div></div>
+            <div class="full row"><button class="btn primary" type="submit">حفظ الإعدادات</button></div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+const FLOORS = 11;
+const APTS = [];
+for (let f = 1; f <= FLOORS; f++) for (let u = 1; u <= 2; u++) APTS.push({ id: String(f * 100 + u), floor: f });
+const DEFAULT_MAINT = ["صيانة المصعد الدورية","فحص طوارئ وإنذار المصعد","موتور / طلمبات المياه","تنظيف خزان المياه","نظافة السلالم والمداخل","إنارة السلالم والمداخل","طفايات الحريق","البوابة والإنترفون"];
+const MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+const TYPE_LBL = { monthly: "شهري", periodic: "دوري", special: "استثنائي" };
+
+const S = { cfg: {}, dues: [], approvals: [], expenses: [], claims: [], maint: {}, uid: null, admin: false, canWrite: true, names: {} };
+let db = null, user = null;
+
+const $ = id => document.getElementById(id);
+const nf = new Intl.NumberFormat("ar-EG", { maximumFractionDigits: 0 });
+const money = n => nf.format(Math.round(n || 0));
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const today = () => new Date().toISOString().slice(0, 10);
+const thisMonth = () => new Date().toISOString().slice(0, 7);
+const monthLabel = ym => { if (!ym) return ""; const [y, m] = ym.split("-"); return MONTHS[+m - 1] + " " + nf.format(+y).replace(/٬/g, ""); };
+const fmtDate = d => d ? new Date(d + "T00:00:00").toLocaleDateString("ar-EG", { day: "numeric", month: "short", year: "numeric" }) : "";
+const rid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const aptName = id => (S.cfg.residents || {})[id] || "";
+const maintItems = () => (S.cfg.maintItems && S.cfg.maintItems.length) ? S.cfg.maintItems : DEFAULT_MAINT;
+
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2600); }
+
+// Two-step delete button inside the page (no confirm dialog in the viewer)
+function armButton(btn, action) {
+  if (btn.classList.contains("arm")) { action(); return; }
+  btn.classList.add("arm"); const old = btn.textContent; btn.textContent = "تأكيد؟";
+  setTimeout(() => { btn.classList.remove("arm"); btn.textContent = old; }, 3000);
+}
+
+/* ---------- ledger math ---------- */
+const approvalById = () => Object.fromEntries(S.approvals.map(a => [a.id, a]));
+function approvedFor(apt, dueId) { return S.approvals.filter(a => a.status === "approved" && a.aptId === apt && (!dueId || a.dueId === dueId)).reduce((s, a) => s + (+a.amount || 0), 0); }
+function pendingClaims() { const ap = approvalById(); return S.claims.filter(c => !ap[c.id]).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)); }
+function pendingFor(apt, dueId) { return pendingClaims().filter(c => c.aptId === apt && (!dueId || c.dueId === dueId)); }
+function owedFor(apt, dueId) {
+  const dues = dueId ? S.dues.filter(d => d.id === dueId) : S.dues;
+  return dues.reduce((s, d) => s + Math.max(0, (+d.amount || 0) - approvedFor(apt, d.id)), 0);
+}
+function aptState(apt, dueId) {
+  const dues = dueId ? S.dues.filter(d => d.id === dueId) : S.dues;
+  if (!dues.length) return "none";
+  const total = dues.reduce((s, d) => s + (+d.amount || 0), 0);
+  const owed = owedFor(apt, dueId);
+  if (owed <= 0) return "paid";
+  if (pendingFor(apt, dueId).length) return "pending";
+  if (owed < total) return "partial";
+  return "unpaid";
+}
+const totals = () => {
+  const inn = S.approvals.filter(a => a.status === "approved").reduce((s, a) => s + (+a.amount || 0), 0);
+  const out = S.expenses.reduce((s, e) => s + (+e.amount || 0), 0);
+  const open = +S.cfg.opening || 0;
+  const due = APTS.reduce((s, a) => s + owedFor(a.id), 0);
+  return { inn, out, open, bal: open + inn - out, due };
+};
+const dueTitle = id => (S.dues.find(d => d.id === id) || {}).title || (id === "other" ? "مبلغ آخر / تبرع" : "مطالبة محذوفة");
+
+/* ---------- names ---------- */
+async function resolveNames(ids) {
+  if (!user) return;
+  const want = [...new Set(ids.filter(Boolean))].filter(i => !(i in S.names));
+  if (!want.length) return;
+  const ps = await user.profiles(want);
+  let changed = false;
+  for (const i of want) { S.names[i] = (ps[i] && ps[i].name) || ""; changed = true; }
+  if (changed) render();
+}
+const personName = id => S.names[id] || "أحد السكان";
+
+/* ---------- render ---------- */
+function render() {
+  const t = totals();
+  $("b-name").textContent = S.cfg.name || "صندوق البرج";
+  $("k-in").textContent = money(t.inn);
+  $("k-in-sub").textContent = `${nf.format(S.approvals.filter(a => a.status === "approved").length)} عملية معتمدة`;
+  $("k-out").textContent = money(t.out);
+  $("k-out-sub").textContent = `${nf.format(S.expenses.length)} مصروف مسجّل`;
+  $("k-bal").textContent = money(t.bal);
+  $("k-bal-sub").textContent = t.open ? `يشمل رصيدًا افتتاحيًا ${money(t.open)} ج.م` : "المحصّل − المنصرف";
+  const unpaidN = APTS.filter(a => owedFor(a.id) > 0).length;
+  $("k-due").textContent = money(t.due);
+  $("k-due-sub").textContent = S.dues.length ? `على ${nf.format(unpaidN)} من ٢٢ شقة` : "لا توجد مطالبات بعد";
+
+  renderTower(); renderUnpaid(); renderMaint(); renderRecentExp();
+  renderPay(); renderMyClaims();
+  const q = pendingClaims();
+  $("q-badge").hidden = !q.length; $("q-badge").textContent = nf.format(q.length);
+  if (S.admin) { renderQueue(); renderDues(); renderExpenses(); renderLedger(); }
+  resolveNames([...S.claims.map(c => c.uid), ...S.approvals.map(a => a.by), ...Object.values(S.maint).flatMap(m => Object.values(m.items || {}).map(i => i.by))]);
+}
+
+function fillDueSelect(sel, opts = {}) {
+  const cur = sel.value;
+  const dues = [...S.dues].sort((a, b) => (b.period || "").localeCompare(a.period || ""));
+  sel.innerHTML = (opts.all ? `<option value="">كل المطالبات</option>` : "") +
+    dues.map(d => `<option value="${esc(d.id)}">${esc(d.title)} — ${money(d.amount)} ج.م</option>`).join("") +
+    (opts.other ? `<option value="other">مبلغ آخر / تبرع</option>` : "");
+  if ([...sel.options].some(o => o.value === cur)) sel.value = cur;
+}
+function fillAptSelect(sel) {
+  const cur = sel.value;
+  sel.innerHTML = `<option value="">اختر الشقة</option>` + APTS.map(a => `<option value="${a.id}">شقة ${nf.format(+a.id).replace(/٬/g,"")}${aptName(a.id) ? " — " + esc(aptName(a.id)) : ""}</option>`).join("");
+  if (cur) sel.value = cur;
+}
+
+function renderTower() {
+  const sel = $("tower-filter"); fillDueSelect(sel, { all: true });
+  const dueId = sel.value;
+  let html = "";
+  for (let f = FLOORS; f >= 1; f--) {
+    html += `<div class="floor"><div class="fl">${nf.format(f)}</div>`;
+    for (const a of APTS.filter(x => x.floor === f)) {
+      const st = aptState(a.id, dueId);
+      const owed = owedFor(a.id, dueId);
+      const label = { paid: "مسددة", pending: "قيد المراجعة", partial: `باقي ${money(owed)}`, unpaid: `مستحق ${money(owed)}`, none: "—" }[st];
+      html += `<div class="unit ${st}" title="${esc(aptName(a.id))}"><b>شقة ${nf.format(+a.id).replace(/٬/g,"")}</b><span>${esc(label)}${aptName(a.id) ? " · " + esc(aptName(a.id)) : ""}</span></div>`;
+    }
+    html += `</div>`;
+  }
+  $("tower").innerHTML = html;
+}
+
+function renderUnpaid() {
+  const rows = APTS.map(a => ({ a, owed: owedFor(a.id), pend: pendingFor(a.id) })).filter(r => r.owed > 0).sort((x, y) => y.owed - x.owed);
+  $("unpaid-count").textContent = S.dues.length ? `${nf.format(rows.length)} شقة` : "";
+  if (!S.dues.length) { $("unpaid").innerHTML = `<div class="empty">لم يُصدر مسؤول الإدارة أي مطالبة بعد. عند إصدار مطالبة (مثلاً ١٠٠ ج.م لكل شقة) ستظهر هنا الشقق التي لم تسدد.</div>`; return; }
+  if (!rows.length) { $("unpaid").innerHTML = `<div class="empty">كل الشقق مسددة. شكرًا للجميع.</div>`; return; }
+  $("unpaid").innerHTML = `<table><thead><tr><th>الشقة</th><th>الساكن</th><th>المطالبات المتأخرة</th><th>المستحق</th><th>الحالة</th></tr></thead><tbody>` +
+    rows.map(r => {
+      const late = S.dues.filter(d => (+d.amount || 0) - approvedFor(r.a.id, d.id) > 0).map(d => esc(d.title)).join("، ");
+      return `<tr><td class="num"><b>${nf.format(+r.a.id).replace(/٬/g,"")}</b></td><td>${esc(aptName(r.a.id)) || '<span class="muted">—</span>'}</td><td class="small">${late}</td><td class="num"><b>${money(r.owed)}</b> ج.م</td><td>${r.pend.length ? '<span class="pill warn">قيد المراجعة</span>' : '<span class="pill bad">غير مسدد</span>'}</td></tr>`;
+    }).join("") + `</tbody></table>`;
+}
+
+function renderMaint() {
+  const m = $("m-month").value || thisMonth();
+  const doc = (S.maint[m] || {}).items || {};
+  const items = maintItems();
+  const done = items.filter(i => doc[i] && doc[i].done).length;
+  $("m-prog").style.width = items.length ? (done / items.length * 100) + "%" : "0";
+  const tag = S.admin ? "button" : "div";
+  $("m-list").innerHTML = items.map(i => {
+    const it = doc[i] || {};
+    const sub = it.done ? `تمت ${fmtDate(it.date)}${it.by ? " · " + esc(personName(it.by)) : ""}` : "لم تتم بعد";
+    return `<${tag} ${tag === "button" ? 'type="button"' : ""} class="check ${it.done ? "done" : ""}" data-item="${esc(i)}" aria-pressed="${!!it.done}">
+      <span class="box"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></span>
+      <span class="t"><b>${esc(i)}</b><span>${sub}</span></span></${tag}>`;
+  }).join("");
+  $("m-hint").textContent = S.admin ? `اضغط على البند لتعليمه كمُنجز. تم ${nf.format(done)} من ${nf.format(items.length)} لشهر ${monthLabel(m)}.` : `تم ${nf.format(done)} من ${nf.format(items.length)} بنود لشهر ${monthLabel(m)}. يحدّث مسؤول الإدارة هذه القائمة.`;
+}
+
+function expTable(list, withDelete) {
+  if (!list.length) return `<div class="empty">لا توجد مصروفات مسجلة.</div>`;
+  return `<table><thead><tr><th>التاريخ</th><th>البند</th><th>الوصف</th><th>المبلغ</th>${withDelete ? "<th></th>" : ""}</tr></thead><tbody>` +
+    list.map(e => `<tr><td class="num small">${fmtDate(e.date)}</td><td class="small">${esc(e.category)}</td><td>${esc(e.desc)}${e.payee ? `<div class="muted small">${esc(e.payee)}</div>` : ""}</td><td class="num"><b>${money(e.amount)}</b></td>${withDelete ? `<td><button class="btn bad sm" data-del-exp="${esc(e.id)}">حذف</button></td>` : ""}</tr>`).join("") + `</tbody></table>`;
+}
+const sortedExp = () => [...S.expenses].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+function renderRecentExp() { $("exp-recent").innerHTML = expTable(sortedExp().slice(0, 6), false); }
+function renderExpenses() { $("exp-list").innerHTML = expTable(sortedExp(), true); }
+
+function renderPay() {
+  fillAptSelect($("c-apt")); fillDueSelect($("c-due"), { other: true });
+  const info = S.cfg.payInfo;
+  $("pay-info").hidden = !info;
+  $("pay-info").textContent = info ? `طريقة الدفع للمسؤول${S.cfg.manager ? " (" + S.cfg.manager + ")" : ""}:\n${info}` : "";
+  const dis = !db || !S.uid;
+  $("c-submit").disabled = dis;
+  if (dis) $("c-msg").textContent = "سجّل الدخول إلى Claude لإرسال طلب.";
+}
+function statusPill(c) {
+  const a = approvalById()[c.id];
+  if (!a) return `<span class="pill warn">قيد المراجعة</span>`;
+  if (a.status === "approved") return `<span class="pill ok">تم الاستلام</span>${+a.amount !== +c.amount ? `<div class="muted small">اعتُمد ${money(a.amount)} ج.م</div>` : ""}`;
+  return `<span class="pill bad">مرفوض</span>${a.note ? `<div class="muted small">${esc(a.note)}</div>` : ""}`;
+}
+function renderMyClaims() {
+  const mine = S.claims.filter(c => c.uid === S.uid).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  if (!mine.length) { $("my-claims").innerHTML = `<div class="empty">لم ترسل أي طلب سداد بعد. املأ النموذج بعد التحويل وسيظهر طلبك هنا مع حالته.</div>`; return; }
+  const ap = approvalById();
+  $("my-claims").innerHTML = `<table><thead><tr><th>الشقة</th><th>المطالبة</th><th>المبلغ</th><th>الحالة</th><th></th></tr></thead><tbody>` +
+    mine.map(c => `<tr><td class="num">${nf.format(+c.aptId).replace(/٬/g,"")}</td><td class="small">${esc(dueTitle(c.dueId))}<div class="muted">${esc(c.method)} · ${fmtDate(c.date)}</div></td><td class="num"><b>${money(c.amount)}</b></td><td>${statusPill(c)}</td><td>${!ap[c.id] ? `<button class="btn bad sm" data-withdraw="${esc(c.id)}">سحب</button>` : ""}</td></tr>`).join("") + `</tbody></table>`;
+}
+
+function renderQueue() {
+  const q = pendingClaims();
+  $("q-count").textContent = q.length ? `${nf.format(q.length)} طلب` : "";
+  if (!q.length) { $("queue").innerHTML = `<div class="empty">لا توجد طلبات معلّقة. عندما يبلغ ساكن عن سداد سيظهر طلبه هنا لتأكيد الاستلام أو رفضه.</div>`; return; }
+  $("queue").innerHTML = q.map(c => `<div class="qitem" data-claim="${esc(c.id)}">
+    <div><div class="row"><b>شقة ${nf.format(+c.aptId).replace(/٬/g,"")}</b>${aptName(c.aptId) ? `<span class="muted small">${esc(aptName(c.aptId))}</span>` : ""}<span class="amt num">${money(c.amount)} ج.م</span></div>
+      <div class="small">${esc(dueTitle(c.dueId))} · ${esc(c.method)} · ${fmtDate(c.date)}${c.ref ? " · مرجع: " + esc(c.ref) : ""}</div>
+      <div class="muted small">أرسله ${esc(personName(c.uid))}${c.note ? " — " + esc(c.note) : ""}</div></div>
+    <div class="row"><label class="small muted">المبلغ المستلم <input type="number" min="0" step="1" value="${esc(c.amount)}" data-amt aria-label="المبلغ المستلم"></label>
+      <button class="btn ok" data-approve>تأكيد الاستلام</button>
+      <input placeholder="سبب الرفض" data-reason style="width:130px" aria-label="سبب الرفض">
+      <button class="btn bad" data-reject>رفض</button></div></div>`).join("");
+}
+function renderDues() {
+  const dues = [...S.dues].sort((a, b) => (b.period || "").localeCompare(a.period || ""));
+  if (!dues.length) { $("dues-list").innerHTML = `<div class="empty">لا توجد مطالبات.</div>`; return; }
+  $("dues-list").innerHTML = `<table><thead><tr><th>المطالبة</th><th>لكل شقة</th><th>المحصّل</th><th>المسددون</th><th></th></tr></thead><tbody>` +
+    dues.map(d => {
+      const got = APTS.reduce((s, a) => s + Math.min(+d.amount, approvedFor(a.id, d.id)), 0);
+      const n = APTS.filter(a => owedFor(a.id, d.id) <= 0).length;
+      return `<tr><td>${esc(d.title)}<div class="muted small">${TYPE_LBL[d.type] || ""}${d.deadline ? " · حتى " + fmtDate(d.deadline) : ""}</div></td><td class="num">${money(d.amount)}</td><td class="num">${money(got)} / ${money(d.amount * 22)}</td><td class="num">${nf.format(n)}/٢٢</td><td><button class="btn bad sm" data-del-due="${esc(d.id)}">حذف</button></td></tr>`;
+    }).join("") + `</tbody></table>`;
+}
+function renderLedger() {
+  fillAptSelect($("x-apt")); fillDueSelect($("x-due"), { other: true });
+  const list = S.approvals.filter(a => a.status === "approved").sort((a, b) => (b.at || 0) - (a.at || 0)).slice(0, 40);
+  if (!list.length) { $("ledger").innerHTML = `<div class="empty">لا يوجد تحصيل معتمد بعد.</div>`; return; }
+  $("ledger").innerHTML = `<table><thead><tr><th>الشقة</th><th>المطالبة</th><th>المبلغ</th><th>التاريخ</th><th></th></tr></thead><tbody>` +
+    list.map(a => `<tr><td class="num">${nf.format(+a.aptId).replace(/٬/g,"")}</td><td class="small">${esc(dueTitle(a.dueId))}<div class="muted">${a.claimUid ? "طلب ساكن" : "تحصيل مباشر"} · ${esc(personName(a.by))}</div></td><td class="num"><b>${money(a.amount)}</b></td><td class="small num">${fmtDate(a.date)}</td><td><button class="btn bad sm" data-undo="${esc(a.id)}">إلغاء</button></td></tr>`).join("") + `</tbody></table>`;
+}
+
+function renderSettingsForm() {
+  $("s-name").value = S.cfg.name || "";
+  $("s-mgr").value = S.cfg.manager || "";
+  $("s-open").value = S.cfg.opening || "";
+  $("s-pay").value = S.cfg.payInfo || "";
+  $("s-maint").value = maintItems().join("\n");
+  $("s-apts").innerHTML = APTS.map(a => `<label>شقة ${nf.format(+a.id).replace(/٬/g,"")}<input id="r-${a.id}" value="${esc(aptName(a.id))}" placeholder="اسم الساكن"></label>`).join("");
+}
+
+/* ---------- routing ---------- */
+function route() {
+  let tab = (location.hash || "#dashboard").slice(1);
+  if (tab === "manage" && !S.admin) tab = "dashboard";
+  if (!["dashboard", "pay", "manage"].includes(tab)) tab = "dashboard";
+  for (const t of ["dashboard", "pay", "manage"]) $("v-" + t).hidden = t !== tab;
+  document.querySelectorAll("nav.tabs a").forEach(a => { if (a.dataset.tab === tab) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+}
+addEventListener("hashchange", route);
+
+/* ---------- writes ---------- */
+async function guard(fn, okMsg) {
+  try { await fn(); if (okMsg) toast(okMsg); }
+  catch (e) {
+    const code = e && e.code;
+    toast(code === "invalid_argument" ? "لا تملك صلاحية تنفيذ هذا الإجراء." : code === "quota_exceeded" ? "امتلأت مساحة البيانات. احذف سجلات قديمة." : "تعذر الحفظ، حاول مرة أخرى.");
+    console.error(e);
+  }
+}
+
+$("claim-form").addEventListener("submit", ev => {
+  ev.preventDefault();
+  if (!db || !S.uid) return;
+  const c = { id: rid(), aptId: $("c-apt").value, dueId: $("c-due").value, amount: +$("c-amount").value, method: $("c-method").value, date: $("c-date").value, ref: $("c-ref").value.trim(), note: $("c-note").value.trim(), createdAt: Date.now() };
+  if (!c.aptId || !c.dueId || !(c.amount > 0)) { toast("اختر الشقة والمطالبة واكتب المبلغ."); return; }
+  try { localStorage.setItem("tower.apt", c.aptId); } catch {}
+  guard(async () => {
+    const ref = db.doc("claims/" + S.uid);
+    const snap = await ref.get();
+    if (snap.exists) await ref.update({ items: { [c.id]: c } });
+    else await ref.set({ items: { [c.id]: c } });
+    $("c-ref").value = ""; $("c-note").value = "";
+  }, "أُرسل الطلب، وهو الآن قيد المراجعة.");
+});
+$("c-apt").addEventListener("change", suggestAmount);
+$("c-due").addEventListener("change", suggestAmount);
+function suggestAmount() {
+  const a = $("c-apt").value, d = $("c-due").value;
+  const due = S.dues.find(x => x.id === d);
+  if (due) $("c-amount").value = a ? (owedFor(a, d) || due.amount) : due.amount;
+}
+
+$("my-claims").addEventListener("click", ev => {
+  const b = ev.target.closest("[data-withdraw]"); if (!b) return;
+  armButton(b, () => {
+    const id = b.dataset.withdraw;
+    const mineDoc = S.claimDocs[S.uid] || {};
+    const items = { ...(mineDoc.items || {}) }; delete items[id];
+    guard(() => db.doc("claims/" + S.uid).set({ items }), "تم سحب الطلب.");
+  });
+});
+
+$("queue").addEventListener("click", ev => {
+  const item = ev.target.closest("[data-claim]"); if (!item) return;
+  const c = S.claims.find(x => x.id === item.dataset.claim); if (!c) return;
+  if (ev.target.closest("[data-approve]")) {
+    const amt = +item.querySelector("[data-amt]").value;
+    if (!(amt > 0)) { toast("اكتب المبلغ المستلم."); return; }
+    guard(() => db.doc("approvals/" + c.id).set({ status: "approved", aptId: c.aptId, dueId: c.dueId, amount: amt, date: c.date || today(), method: c.method, claimUid: c.uid, by: S.uid, at: Date.now() }), `تم تأكيد استلام ${money(amt)} ج.م من شقة ${c.aptId}.`);
+  } else if (ev.target.closest("[data-reject]")) {
+    const note = item.querySelector("[data-reason]").value.trim();
+    guard(() => db.doc("approvals/" + c.id).set({ status: "rejected", aptId: c.aptId, dueId: c.dueId, amount: 0, note, claimUid: c.uid, by: S.uid, at: Date.now() }), "تم رفض الطلب.");
+  }
+});
+
+$("d-type").addEventListener("change", autoTitle);
+$("d-period").addEventListener("change", autoTitle);
+function autoTitle() {
+  const p = $("d-period").value, t = $("d-type").value;
+  if (!p) return;
+  $("d-title").value = t === "monthly" ? `اشتراك شهر ${monthLabel(p)}` : t === "periodic" ? `اشتراك دوري — ${monthLabel(p)}` : `مطالبة استثنائية — ${monthLabel(p)}`;
+  if (t === "monthly" && S.cfg.monthly && !$("d-amount").value) $("d-amount").value = S.cfg.monthly;
+}
+$("due-form").addEventListener("submit", ev => {
+  ev.preventDefault();
+  const d = { type: $("d-type").value, period: $("d-period").value, title: $("d-title").value.trim(), amount: +$("d-amount").value, deadline: $("d-deadline").value, createdAt: Date.now(), by: S.uid };
+  if (!d.title || !(d.amount > 0)) return;
+  guard(async () => {
+    await db.collection("dues").doc(rid()).set(d);
+    if (d.type === "monthly" && +S.cfg.monthly !== d.amount) await db.doc("config/main").set({ ...S.cfg, monthly: d.amount });
+    $("d-title").value = ""; $("d-deadline").value = "";
+  }, `صدرت المطالبة: ${money(d.amount)} ج.م على كل شقة.`);
+});
+$("dues-list").addEventListener("click", ev => {
+  const b = ev.target.closest("[data-del-due]"); if (!b) return;
+  armButton(b, () => guard(() => db.doc("dues/" + b.dataset.delDue).delete(), "حُذفت المطالبة."));
+});
+
+$("exp-form").addEventListener("submit", ev => {
+  ev.preventDefault();
+  const e = { category: $("e-cat").value, amount: +$("e-amount").value, date: $("e-date").value, payee: $("e-payee").value.trim(), desc: $("e-desc").value.trim(), by: S.uid, at: Date.now() };
+  if (!(e.amount > 0) || !e.desc) return;
+  guard(async () => { await db.collection("expenses").doc(rid()).set(e); $("e-amount").value = ""; $("e-desc").value = ""; $("e-payee").value = ""; }, `سُجّل مصروف ${money(e.amount)} ج.م.`);
+});
+$("exp-list").addEventListener("click", ev => {
+  const b = ev.target.closest("[data-del-exp]"); if (!b) return;
+  armButton(b, () => guard(() => db.doc("expenses/" + b.dataset.delExp).delete(), "حُذف المصروف."));
+});
+
+$("direct-form").addEventListener("submit", ev => {
+  ev.preventDefault();
+  const a = { status: "approved", aptId: $("x-apt").value, dueId: $("x-due").value, amount: +$("x-amount").value, date: $("x-date").value, method: "تحصيل مباشر", by: S.uid, at: Date.now() };
+  if (!a.aptId || !a.dueId || !(a.amount > 0)) return;
+  guard(async () => { await db.doc("approvals/d-" + rid()).set(a); $("x-amount").value = ""; }, `سُجّل تحصيل ${money(a.amount)} ج.م من شقة ${a.aptId}.`);
+});
+$("x-due").addEventListener("change", () => { const d = S.dues.find(x => x.id === $("x-due").value), a = $("x-apt").value; if (d) $("x-amount").value = a ? (owedFor(a, d.id) || d.amount) : d.amount; });
+$("ledger").addEventListener("click", ev => {
+  const b = ev.target.closest("[data-undo]"); if (!b) return;
+  armButton(b, () => guard(() => db.doc("approvals/" + b.dataset.undo).delete(), "أُلغي الاعتماد، وعاد الطلب إلى قائمة الانتظار إن كان من ساكن."));
+});
+
+$("cfg-form").addEventListener("submit", ev => {
+  ev.preventDefault();
+  const residents = {};
+  for (const a of APTS) { const v = $("r-" + a.id).value.trim(); if (v) residents[a.id] = v; }
+  const cfg = { ...S.cfg, name: $("s-name").value.trim(), manager: $("s-mgr").value.trim(), opening: +$("s-open").value || 0, payInfo: $("s-pay").value.trim(),
+    maintItems: $("s-maint").value.split("\n").map(s => s.trim()).filter(Boolean), residents };
+  guard(() => db.doc("config/main").set(cfg), "حُفظت الإعدادات.");
+});
+
+$("m-month").addEventListener("change", renderMaint);
+$("tower-filter").addEventListener("change", renderTower);
+$("m-list").addEventListener("click", ev => {
+  if (!S.admin) return;
+  const b = ev.target.closest("[data-item]"); if (!b) return;
+  const m = $("m-month").value || thisMonth(), key = b.dataset.item;
+  const items = { ...((S.maint[m] || {}).items || {}) };
+  const cur = items[key] || {};
+  items[key] = cur.done ? { done: false } : { done: true, date: today(), by: S.uid };
+  guard(() => db.doc("maint/" + m).set({ items }), cur.done ? "أُلغي التعليم." : `تم: ${key}`);
+});
+
+/* ---------- boot ---------- */
+$("m-month").value = thisMonth();
+$("d-period").value = (() => { const d = new Date(); d.setMonth(d.getMonth() + 1); return d.toISOString().slice(0, 7); })();
+$("c-date").value = today(); $("e-date").value = today(); $("x-date").value = today();
+try { const a = localStorage.getItem("tower.apt"); if (a) { fillAptSelect($("c-apt")); $("c-apt").value = a; } } catch {}
+autoTitle();
+route(); render();
+
+S.claimDocs = {};
+(async () => {
+  user = await claude.use("user");
+  if (user) {
+    const me = await user.me();
+    S.uid = me.id; S.admin = await user.canEdit();
+    $("who-name").textContent = me.name || "";
+    $("who-role").textContent = S.admin ? "مسؤول الإدارة" : "ساكن";
+    $("who-role").classList.toggle("admin", S.admin);
+    $("tab-manage").hidden = !S.admin;
+    if (S.admin) { renderSettingsForm(); }
+  }
+  db = await claude.use("db");
+  if (!db) {
+    $("notice").hidden = false;
+    $("notice").textContent = "البيانات غير متاحة في هذا العرض. افتح الصفحة على claude.ai وأنت مسجّل الدخول لترى الأرقام وترسل طلبات السداد.";
+    route(); render(); return;
+  }
+  const sub = (path, fn) => db.collection(path).onSnapshot(fn, e => console.error(path, e));
+  const list = snap => snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  db.doc("config/main").onSnapshot(s => { S.cfg = s.exists ? s.data() : {}; if (S.admin && !document.activeElement?.closest("#cfg-form")) renderSettingsForm(); render(); }, e => console.error(e));
+  sub("dues", s => { S.dues = list(s); render(); });
+  sub("approvals", s => { S.approvals = list(s); render(); });
+  sub("expenses", s => { S.expenses = list(s); render(); });
+  sub("maint", s => { S.maint = Object.fromEntries(s.docs.map(d => [d.id, d.data()])); render(); });
+  sub("claims", s => {
+    S.claimDocs = Object.fromEntries(s.docs.map(d => [d.id, d.data()]));
+    S.claims = s.docs.flatMap(d => Object.values((d.data() || {}).items || {}).map(c => ({ ...c, uid: d.id })));
+    render();
+  });
+  route(); render();
+})();
+})();
+</script>
