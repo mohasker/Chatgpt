@@ -5,8 +5,10 @@
 <style>
 /* Layout: right-hand rail (RTL) for ledger sections, wide work area; documents render as true A4 paper sheets matching the company's Excel originals */
 :root{
-  --bg:#EDF0F5; --surface:#FFFFFF; --sunk:#E3E8F0; --line:#CDD5E1;
-  --ink:#141C33; --muted:#5B6680; --accent:#1F3C8F; --accent-ink:#FFFFFF; --accent-soft:#DDE4F6;
+  --bg:#EEF0F4; --surface:#FFFFFF; --sunk:#E6E9EF; --line:#D3D8E2;
+  --ink:#151B2B; --muted:#5A6275; --accent:#1B2A4A; --accent-ink:#FFFFFF; --accent-soft:#E2E6EF;
+  --rail:#16213B; --rail-ink:#E6EAF2; --rail-muted:#9AA6C0; --rail-hover:rgba(255,255,255,.07); --rail-on:rgba(214,178,98,.17); --rail-gold:#E0BD6E;
+  --c-bar:#0E9A6C; --c-line:#E07A0F; --c-blue:#1F7FC8; --c-teal:#13958A; --c-gray:#A3AAB8; --c-grid:#E1E5EC;
   --gold:#9C7629; --gold-soft:#F3E9D2;
   --ok:#1E7A4F; --ok-bg:#DCF0E4; --warn:#9A6200; --warn-bg:#FAEBC9; --bad:#B23A30; --bad-bg:#F7DEDA; --info:#3D4F7A; --info-bg:#E2E7F2;
   --paper:#FFFFFF; --paper-ink:#111111; --paper-line:#222222; --paper-soft:#F1F1F1; --paper-blue:#DCE6F1; --paper-red:#D0021B; --paper-navy:#1F3C8F; --paper-gold:#9C7629;
@@ -18,14 +20,18 @@
   --r:10px;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0D1220; --surface:#161D30; --sunk:#1D263C; --line:#2C3752;
-  --ink:#E5E9F3; --muted:#9AA5BF; --accent:#8BA4F2; --accent-ink:#0B1330; --accent-soft:#25325A;
+  --bg:#0C1019; --surface:#151B29; --sunk:#1C2334; --line:#2B3347;
+  --ink:#E6E9F0; --muted:#9BA3B6; --accent:#B4C3E4; --accent-ink:#0E1628; --accent-soft:#26314B;
+  --rail:#0A0F1C; --rail-ink:#E6EAF2; --rail-muted:#8E99B2; --rail-hover:rgba(255,255,255,.06); --rail-on:rgba(214,178,98,.14); --rail-gold:#E0BD6E;
+  --c-bar:#2BC08A; --c-line:#F2954A; --c-blue:#4AA3E8; --c-teal:#2CB5A8; --c-gray:#6E7890; --c-grid:#2A3348;
   --gold:#D9B35E; --gold-soft:#3A3020;
   --ok:#5BC98F; --ok-bg:#163828; --warn:#E6AE45; --warn-bg:#3A2D12; --bad:#F08077; --bad-bg:#40201C; --info:#AAB8DD; --info-bg:#232E4A;
   color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0D1220; --surface:#161D30; --sunk:#1D263C; --line:#2C3752;
-  --ink:#E5E9F3; --muted:#9AA5BF; --accent:#8BA4F2; --accent-ink:#0B1330; --accent-soft:#25325A;
+  --bg:#0C1019; --surface:#151B29; --sunk:#1C2334; --line:#2B3347;
+  --ink:#E6E9F0; --muted:#9BA3B6; --accent:#B4C3E4; --accent-ink:#0E1628; --accent-soft:#26314B;
+  --rail:#0A0F1C; --rail-ink:#E6EAF2; --rail-muted:#8E99B2; --rail-hover:rgba(255,255,255,.06); --rail-on:rgba(214,178,98,.14); --rail-gold:#E0BD6E;
+  --c-bar:#2BC08A; --c-line:#F2954A; --c-blue:#4AA3E8; --c-teal:#2CB5A8; --c-gray:#6E7890; --c-grid:#2A3348;
   --gold:#D9B35E; --gold-soft:#3A3020;
   --ok:#5BC98F; --ok-bg:#163828; --warn:#E6AE45; --warn-bg:#3A2D12; --bad:#F08077; --bad-bg:#40201C; --info:#AAB8DD; --info-bg:#232E4A;
   color-scheme:dark}
@@ -40,7 +46,7 @@ a{color:var(--accent)}
 
 /* shell */
 .shell{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100vh}
-.rail{background:var(--surface);border-inline-end:1px solid var(--line);padding-block:18px;padding-inline:14px;position:sticky;top:env(safe-area-inset-top,0px);height:100vh;display:flex;flex-direction:column;gap:18px}
+.rail{background:var(--rail);color:var(--rail-ink);border-inline-end:1px solid transparent;padding-block:18px;padding-inline:14px;position:sticky;top:env(safe-area-inset-top,0px);height:100vh;display:flex;flex-direction:column;gap:18px}
 .brand{display:flex;align-items:center;gap:10px}
 .brand img{width:34px;height:auto}
 .brand b{font-family:var(--f-display);font-size:16px;line-height:1.2;display:block}
@@ -73,6 +79,36 @@ main{min-width:0;padding-block:22px 60px;padding-left:max(22px,env(safe-area-ins
   body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
   main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 60px}
 }
+
+/* navy rail */
+.rail .nav a{color:var(--rail-ink)} .rail .nav a:hover{background:var(--rail-hover)} .rail .nav a.on{background:var(--rail-on);color:var(--rail-gold)}
+.rail .nav .sep{background:rgba(255,255,255,.12)} .rail .brand small,.rail .rail-foot{color:var(--rail-muted)} .rail .brand b{color:#fff}
+.rail .who{border-color:rgba(255,255,255,.14)} .rail .who b{color:var(--rail-ink)} .rail .who .av{background:var(--rail-on);color:var(--rail-gold)}
+.rail .iconbtn{color:var(--rail-muted)} .rail .iconbtn:hover{background:var(--rail-hover);color:var(--rail-ink)}
+.nbadge{margin-inline-start:auto;background:var(--rail-gold);color:#16213B;border-radius:999px;font-size:11.5px;font-weight:700;padding:0 7px;line-height:19px}
+.ver{font-size:11px;letter-spacing:.5px;direction:ltr;unicode-bidi:isolate}
+/* dashboard (reference layout) */
+.dash2{display:grid;grid-template-columns:minmax(0,2.1fr) minmax(0,1fr);gap:16px}
+.dash3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:1100px){.dash2,.dash3{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 1px 3px rgba(20,30,50,.06),0 6px 18px rgba(20,30,50,.04);min-width:0}
+.card h3{margin:0 0 14px;font-family:var(--f-display);font-size:15px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.card h3 small{font-family:var(--f-body);font-weight:500;color:var(--muted);font-size:12px}
+.card svg{width:100%;height:auto;display:block;direction:ltr}
+.card svg text{fill:var(--muted);font-size:11px;font-family:var(--f-body)}
+.rowcard{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);background:var(--sunk);border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:13.5px}
+.rowcard b{color:var(--c-line);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rowcard .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mini-inv{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:10px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 10px;text-decoration:none;color:inherit;align-items:center}
+.mini-inv:hover{border-color:var(--accent)}
+.mini-inv .no{font-weight:700;direction:ltr;unicode-bidi:isolate;font-size:13.5px}
+.mini-inv .amt{font-weight:700;font-variant-numeric:tabular-nums;text-align:end;white-space:nowrap}
+.mini-inv .meta{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.scroll-list{max-height:340px;overflow:auto;padding-inline-end:4px}
+.chart-legend{display:flex;gap:18px;justify-content:center;font-size:13px;margin-top:10px;flex-wrap:wrap}
+.chart-legend span{display:inline-flex;align-items:center;gap:6px}
+.chart-legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.chart-legend i.dot{border-radius:50%}
 
 /* controls */
 .btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:600;font-size:13.5px;text-decoration:none;color:var(--ink);white-space:nowrap}
@@ -144,7 +180,7 @@ table.t tfoot td{font-weight:700;background:var(--sunk)}
 .chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
 .chip::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
 .chip.paid,.chip.transferred{background:var(--ok-bg);color:var(--ok)}
-.chip.partial{background:var(--warn-bg);color:var(--warn)}
+.chip.partial,.chip.pending{background:var(--warn-bg);color:var(--warn)}
 .chip.issued,.chip.open{background:var(--info-bg);color:var(--info)}
 .chip.draft{background:var(--sunk);color:var(--muted)}
 .chip.cancelled{background:var(--sunk);color:var(--muted);text-decoration:line-through}
@@ -324,8 +360,10 @@ document.documentElement.setAttribute("dir","rtl"); document.documentElement.set
    ========================================================================== */
 const IMG = {logo:"{{LOGO}}", sign:"{{SIGN}}", stamp:"{{STAMP}}"};
 
-const SERIES = {invoice:"INV", proforma:"PRO", special:"CON", completion:"WCC", warranty:"WRN", cover:"CVL", receipt:"RCV"};
-const SERIES_AR = {INV:"الفواتير", PRO:"الفواتير المبدئية", CON:"الفواتير المجمعة", WCC:"شهادات الإنجاز", WRN:"شهادات الضمان", CVL:"كتب التغطية", RCV:"سندات القبض"};
+const APP_VERSION = "V.0.0.0";
+const SERIES = {invoice:"INV", proforma:"PRO", special:"CON", completion:"WCC", warranty:"WRN", cover:"CVL", delivery:"DN", receipt:"RCV"};
+const DOC_KINDS = ["completion","warranty","cover","delivery"];
+const SERIES_AR = {INV:"الفواتير", PRO:"الفواتير المبدئية", CON:"الفواتير المجمعة", WCC:"شهادات الإنجاز", WRN:"شهادات الضمان", CVL:"كتب التغطية", DN:"أذونات التسليم", RCV:"سندات القبض"};
 
 const DEFAULT_SETTINGS = {
   company:{
@@ -334,7 +372,7 @@ const DEFAULT_SETTINGS = {
     web:"www.alharam.qa", email:"Alharam@alharam-qatar.com", phone:"+974 77095000", pobox:"92075", city:"Doha , Qatar"
   },
   bank:{holder:"Al Haram for Maintenance and Agriculture .", name:"THE COMMERCIAL BANK ( P.S.Q.C )", nameAr:"البنك التجاري", account:"4570-352326-001", iban:"QA10 CBQA 0000 0000 4570 3523 2600 1", swift:"CBQAQAQA"},
-  numbering:{prefix:"ALH", start:{INV:1001, PRO:1, CON:1, WCC:1, WRN:1, CVL:1, RCV:1}},
+  numbering:{prefix:"ALH", start:{INV:1001, PRO:1, CON:1, WCC:1, WRN:1, CVL:1, DN:1, RCV:1}},
   stampDefault:false,
   users:[],
   tpl:{
@@ -362,7 +400,7 @@ const DEFAULT_SETTINGS = {
 };
 
 const KIND = {invoice:"فاتورة", proforma:"فاتورة مبدئية", special:"فاتورة مجمعة / مخصصة"};
-const STATUS_AR = {draft:"مسودة", issued:"غير مدفوعة", partial:"مدفوعة جزئياً", paid:"مدفوعة", cancelled:"ملغاة", open:"مفتوحة", transferred:"تم التحويل"};
+const STATUS_AR = {draft:"مسودة", pending:"بانتظار اعتماد الإدارة", issued:"معتمدة", partial:"مدفوعة جزئياً", paid:"مدفوعة", cancelled:"ملغاة", open:"مفتوحة", transferred:"تم التحويل"};
 const METHODS = ["تحويل بنكي","شيك","نقداً","أخرى"];
 const METHODS_EN = {"تحويل بنكي":"Bank Transfer","شيك":"Cheque","نقداً":"Cash","أخرى":"Other"};
 const MONTHS_EN = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -370,7 +408,9 @@ const MONTHS_AR = ["يناير","فبراير","مارس","أبريل","مايو
 const DAYS_EN = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const ROLES = {admin:"الإدارة (Admin / CEO)", accountant:"محاسب"};
 /* what each role may do; admin may do everything */
-const ACCOUNTANT_CAN = new Set(["invoices","edit","issue","print","pay","customers","register"]);
+const ACCOUNTANT_CAN = new Set(["invoices","edit","submit","print","pay","customers","register","send"]);
+/* built-in accounts used until the admin saves their own; both must change the temporary password at first login */
+const DEFAULT_USERS = [{"u": "admin", "name": "CEO", "role": "admin", "salt": "9858c433283d5896dba86956", "hash": "8c3041cfb45193859229bc73925f5e846d8fb4e25acde766c2a6785eb57e9b03", "active": true, "mustChange": true}, {"u": "accountant", "name": "المحاسب", "role": "accountant", "salt": "8c9607a780ba23edea1cad41", "hash": "ce036a645e3f6e8d2dcc2a5154b775b56ce3891d07215f66af03e6fb8460d382", "active": true, "mustChange": true}];
 
 /* ---------------- utilities ---------------- */
 const $ = (s, r=document) => r.querySelector(s);
@@ -415,15 +455,17 @@ function amountAr(x){ x=r2(x); const r=Math.floor(Math.abs(x)), d=Math.round((Ma
 /* ---------------- state ---------------- */
 const S = {
   mode:"loading", canWrite:true, isPlatformAdmin:true, uid:null, session:null,
-  invoices:[], customers:[], counters:{}, settings:clone(DEFAULT_SETTINGS),
-  loaded:{inv:false,cus:false,set:false}, stale:false,
+  invoices:[], customers:[], counters:{}, users:{}, settings:clone(DEFAULT_SETTINGS),
+  loaded:{inv:false,cus:false,set:false,users:false}, stale:false,
   route:{name:"dashboard", arg:""}, year:new Date().getFullYear(),
   list:{tab:"all", q:"", status:"", customer:"", from:"", to:""}, selected:new Set(),
   repTab:"register", rep:{from:"",to:"",customer:"",status:"",kind:"accounts",group:"month"},
   reg:{type:"", q:""}, custQ:"",
   doc:{lang:"en", style:"detailed", stamp:null}
 };
-let DB=null, USER=null, DL=null;
+let DB=null, USER=null, DL=null, MCP=null;
+function allUsers(){ const m={}; for(const u of DEFAULT_USERS) m[u.u]={...u, builtin:true}; for(const [id,u] of Object.entries(S.users||{})) m[id]={...(m[id]||{}), ...u, u:id, builtin:false}; return Object.values(m); }
+const saveUser = (u,data) => Store.save("users", u, data);
 const role = () => S.session?.role || "";
 const isAdmin = () => role()==="admin";
 const can = p => !!S.session && (isAdmin() || ACCOUNTANT_CAN.has(p)) && (S.canWrite || ["invoices","print","register","dashboard","reports","statement","customers","audit","settings"].includes(p));
@@ -448,6 +490,7 @@ function calc(inv){
 function statusOf(inv){
   if(inv.status==="cancelled") return "cancelled";
   if(inv.status==="draft") return "draft";
+  if(inv.status==="pending") return "pending";
   if(inv.kind==="special") return inv.spStatus==="transferred"?"transferred":"open";
   if(inv.kind==="proforma") return inv.convertedTo?"paid":"issued";
   const c=calc(inv);
@@ -456,10 +499,10 @@ function statusOf(inv){
   return "issued";
 }
 const isLegacy = inv => !!inv.imported;
-const awaitingReview = inv => isLegacy(inv) && !inv.reviewed;
-const inAccounts = inv => inv.kind==="invoice" && inv.status!=="cancelled" && inv.status!=="draft";
+const awaitingReview = inv => false; /* payment follow-up is done in QuickBooks */
+const inAccounts = inv => inv.kind==="invoice" && inv.status==="issued";
 const confirmed = inv => inAccounts(inv) && !awaitingReview(inv);
-const isLocked = inv => inv.status!=="draft" && !(isLegacy(inv) && isAdmin());
+const isLocked = inv => !["draft","pending"].includes(inv.status) && !(isLegacy(inv) && isAdmin());
 const dispNo = inv => inv.no || ("DRAFT-"+String(inv.id||"").slice(-5).toUpperCase());
 function chip(st, inv){
   let s=`<span class="chip ${st}">${STATUS_AR[st]}</span>`;
@@ -486,7 +529,7 @@ const warrantyText = inv => { const m=Number(inv.warrantyMonths)||0; if(!m) retu
 const fmtSerial = (series, n) => `${S.settings.numbering.prefix}-${series}-${String(n).padStart(6,"0")}`;
 function usedNumbers(){
   const out=[];
-  for(const i of S.invoices){ if(i.no) out.push(i.no); for(const k of ["completion","warranty","cover"]) if(i.docNos?.[k]?.no) out.push(i.docNos[k].no); for(const p of i.payments||[]) if(p.rcv?.no) out.push(p.rcv.no); }
+  for(const i of S.invoices){ if(i.no) out.push(i.no); for(const k of DOC_KINDS) if(i.docNos?.[k]?.no) out.push(i.docNos[k].no); for(const p of i.payments||[]) if(p.rcv?.no) out.push(p.rcv.no); }
   return out;
 }
 function maxUsed(series){
@@ -517,7 +560,7 @@ async function allocate(series){
 
 /* ---------------- storage layer ---------------- */
 const LS_KEY="alharam-invoices-v1";
-function lsRead(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)||"null") || {invoices:{},customers:{},settings:null,counters:{},audit:[]}; }catch(e){ return {invoices:{},customers:{},settings:null,counters:{},audit:[]}; } }
+function lsRead(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)||"null") || {invoices:{},customers:{},settings:null,counters:{},users:{},audit:[]}; }catch(e){ return {invoices:{},customers:{},settings:null,counters:{},users:{},audit:[]}; } }
 function lsWrite(d){ try{ localStorage.setItem(LS_KEY, JSON.stringify(d)); return true; }catch(e){ toast("تعذر الحفظ في المتصفح: "+e.message); return false; } }
 const Store = {
   async save(col, id, data){
@@ -554,8 +597,8 @@ function localLoad(){
   S.invoices=Object.entries(d.invoices||{}).map(([id,v])=>({...v,id}));
   S.customers=Object.entries(d.customers||{}).map(([id,v])=>({...v,id}));
   S.settings=deepMerge(DEFAULT_SETTINGS, d.settings||{});
-  S.counters=d.counters||{};
-  S.loaded={inv:true,cus:true,set:true};
+  S.counters=d.counters||{}; S.users=d.users||{};
+  S.loaded={inv:true,cus:true,set:true,users:true};
   sortData(); renderSoon();
 }
 function sortData(){
@@ -570,6 +613,7 @@ async function boot(){
     DB=cloud; S.mode="cloud";
     try{ USER = await window.claude.use("user"); }catch(e){ USER=null; }
     try{ DL = await window.claude.use("downloads"); }catch(e){ DL=null; }
+    try{ MCP = await window.claude.use("mcp"); }catch(e){ MCP=null; }
     if(USER){
       try{ S.uid = await USER.id(); }catch(e){}
       try{ const w=await USER.can("data.write"); S.canWrite = w!==false; }catch(e){}
@@ -581,7 +625,7 @@ async function boot(){
   render();
 }
 function subscribe(){
-  const timer=setTimeout(()=>{ S.stale=true; S.loaded.set=true; render(); },10000);
+  const timer=setTimeout(()=>{ S.stale=true; S.loaded.set=true; S.loaded.users=true; render(); },10000);
   const done=()=>{ if(S.loaded.inv&&S.loaded.cus){ clearTimeout(timer); S.stale=false; } };
   DB.collection("invoices").orderBy("date","desc").limit(1000).onSnapshot(snap=>{
     S.invoices = snap.docs.map(d=>({...d.data(), id:d.id}));
@@ -591,6 +635,7 @@ function subscribe(){
     S.customers = snap.docs.map(d=>({...d.data(), id:d.id}));
     if(!snap.metadata.fromCache) S.loaded.cus=true; done(); sortData(); renderSoon();
   }, ()=>{ S.loaded.cus=true; S.stale=true; render(); });
+  DB.collection("users").onSnapshot(snap=>{ const u={}; snap.docs.forEach(d=>u[d.id]=d.data()); S.users=u; if(!snap.metadata.fromCache) S.loaded.users=true; renderSoon(); }, ()=>{ S.loaded.users=true; renderSoon(); });
   DB.collection("counters").onSnapshot(snap=>{ const c={}; snap.docs.forEach(d=>c[d.id]=d.data()); S.counters=c; }, ()=>{});
   DB.doc("settings/main").onSnapshot(snap=>{
     S.settings = deepMerge(DEFAULT_SETTINGS, snap.exists ? snap.data() : {});
@@ -599,7 +644,7 @@ function subscribe(){
 }
 let _rs=null;
 function renderSoon(){ if(_rs) return; _rs=requestAnimationFrame(()=>{ _rs=null; if(isEditing()){ refreshChrome(); return; } render(); }); }
-function isEditing(){ return !!$("#editor-form") || !!$(".modal-bg") || !!$("#login-form") || !!$("#setup-form"); }
+function isEditing(){ return !!$("#editor-form") || !!$(".modal-bg") || !!$("#login-form") || !!$("#pw-form"); }
 
 /* ---------------- authentication ----------------
    Usernames/password hashes live in settings/main (PBKDF2-SHA256, per-user salt).
@@ -614,11 +659,11 @@ async function hashPw(pw, salt){
 const newSalt = () => [...crypto.getRandomValues(new Uint8Array(12))].map(b=>b.toString(16).padStart(2,"0")).join("");
 async function makeUser(u, name, roleName, pw){ const salt=newSalt(); return {u:u.trim().toLowerCase(), name:String(name||"").trim()||u, role:roleName, salt, hash:await hashPw(pw,salt), active:true, createdAt:new Date().toISOString()}; }
 async function login(u, pw, remember){
-  const user=(S.settings.users||[]).find(x=>x.u===String(u).trim().toLowerCase() && x.active!==false);
+  const user=allUsers().find(x=>x.u===String(u).trim().toLowerCase() && x.active!==false);
   if(!user) return "اسم المستخدم أو كلمة المرور غير صحيحة";
   const h=await hashPw(pw,user.salt);
   if(h!==user.hash) return "اسم المستخدم أو كلمة المرور غير صحيحة";
-  S.session={u:user.u, name:user.name, role:user.role, at:Date.now()};
+  S.session={u:user.u, name:user.name, role:user.role, at:Date.now(), mustChange:!!user.mustChange};
   ssSet("alharam-session",S.session); if(remember) lsSet("alharam-session",S.session); else lsSet("alharam-session",null);
   audit("تسجيل دخول", user.u);
   return "";
@@ -626,23 +671,24 @@ async function login(u, pw, remember){
 function logout(){ audit("تسجيل خروج", actor()); S.session=null; ssSet("alharam-session",null); lsSet("alharam-session",null); history.replaceState(null,"",location.pathname+location.search); S.route={name:"",arg:""}; render(); }
 function validateSession(){
   if(!S.session) return;
-  const user=(S.settings.users||[]).find(x=>x.u===S.session.u && x.active!==false);
-  if(S.loaded.set && (S.settings.users||[]).length && (!user || user.role!==S.session.role)){ S.session=null; ssSet("alharam-session",null); lsSet("alharam-session",null); }
-  else if(user) S.session.name=user.name;
+  const user=allUsers().find(x=>x.u===S.session.u && x.active!==false);
+  if(S.loaded.users && (!user || user.role!==S.session.role)){ S.session=null; ssSet("alharam-session",null); lsSet("alharam-session",null); }
+  else if(user){ S.session.name=user.name; S.session.mustChange=!!user.mustChange; }
 }
 
 /* ---------------- routing ---------------- */
-const ROUTE_PERM = {dashboard:"dashboard", invoices:"invoices", special:"invoices", new:"edit", edit:"edit", inv:"invoices", register:"register", reports:"reports", customers:"customers", customer:"customers", statement:"statement", config:"settings", audit:"audit", sequences:"reports", rcpt:"print"};
+const pendingCount = () => S.invoices.filter(i=>i.status==="pending").length;
+const ROUTE_PERM = {approvals:"approve", dashboard:"dashboard", invoices:"invoices", special:"invoices", new:"edit", edit:"edit", inv:"invoices", register:"register", reports:"reports", customers:"customers", customer:"customers", statement:"statement", config:"settings", audit:"audit", sequences:"reports", rcpt:"print"};
 function parseHash(){
   const h=decodeURIComponent((location.hash||"").slice(1));
-  const simple=["dashboard","invoices","special","register","reports","customers","config","audit","sequences"];
+  const simple=["approvals","dashboard","invoices","special","register","reports","customers","config","audit","sequences"];
   if(!h) return {name:"", arg:""};
   if(simple.includes(h)) return {name:h, arg:""};
   if(h==="new"||h==="new-invoice") return {name:"new",arg:"invoice"};
   if(h==="new-proforma") return {name:"new",arg:"proforma"};
   if(h==="new-special") return {name:"new",arg:"special"};
   let m=h.match(/^rcpt-(.+)-(\d+)$/); if(m) return {name:"rcpt",arg:m[1],k:+m[2]};
-  m=h.match(/^(inv|edit|doc-invoice|doc-completion|doc-warranty|doc-cover|doc-pack|customer|statement)-(.+)$/);
+  m=h.match(/^(inv|edit|doc-invoice|doc-completion|doc-warranty|doc-cover|doc-delivery|doc-pack|customer|statement)-(.+)$/);
   if(m) return {name:m[1],arg:m[2]};
   return {name:"",arg:""};
 }
@@ -699,7 +745,7 @@ const IC = {
 
 /* ---------------- shell ---------------- */
 const NAV=[
-  ["dashboard","لوحة التحكم",IC.dash,"dashboard"],["invoices","الفواتير",IC.inv,"invoices"],["new","فاتورة جديدة",IC.plus,"edit"],
+  ["dashboard","لوحة التحكم",IC.dash,"dashboard"],["approvals","بانتظار الاعتماد",IC.check,"approve"],["invoices","الفواتير",IC.inv,"invoices"],["new","فاتورة جديدة",IC.plus,"edit"],
   ["special","الفواتير المجمعة",IC.stack,"invoices"],["register","سجل المستندات",IC.reg,"register"],["reports","التقارير",IC.rep,"reports"],
   ["sep"],["customers","العملاء",IC.users,"customers"],["sequences","التسلسل",IC.hash,"reports"],["audit","سجل التدقيق",IC.shield,"audit"],["config","الإعدادات",IC.gear,"settings"]
 ];
@@ -711,10 +757,10 @@ function shell(content){
   const s=S.session;
   return `<div class="shell">
   <aside class="rail">
-    <div class="brand"><img src="${IMG.logo}" alt=""><div><b>الحرم</b><small>نظام الفواتير والمستندات</small></div></div>
-    <nav class="nav" aria-label="الأقسام">${items.map(x=>x[0]==="sep"?'<div class="sep"></div>':`<a href="#${x[0]}" class="${navActive(x[0])?"on":""}">${x[2]}<span>${x[1]}</span></a>`).join("")}</nav>
+    <div class="brand"><img src="${IMG.logo}" alt=""><div><b>الحرم</b><small>نظام الفواتير والمستندات · <span class="ver">${APP_VERSION}</span></small></div></div>
+    <nav class="nav" aria-label="الأقسام">${items.map(x=>x[0]==="sep"?'<div class="sep"></div>':`<a href="#${x[0]}" class="${navActive(x[0])?"on":""}">${x[2]}<span>${x[1]}</span>${x[0]==="approvals"&&pendingCount()?`<b class="nbadge">${pendingCount()}</b>`:""}</a>`).join("")}</nav>
     <div class="rail-foot">
-      <div class="who"><span class="av">${esc((s.name||s.u||"?").trim().charAt(0).toUpperCase())}</span><div style="min-width:0;flex:1"><b>${esc(s.name)}</b>${esc(ROLES[s.role]||s.role)}</div><button class="iconbtn" data-logout title="تسجيل الخروج" aria-label="تسجيل الخروج">${IC.out}</button></div>
+      <div class="who"><span class="av">${esc((s.name||s.u||"?").trim().charAt(0).toUpperCase())}</span><div style="min-width:0;flex:1"><b>${esc(s.name)}</b>${esc(ROLES[s.role]||s.role)}</div><button class="iconbtn" data-mypw title="تغيير كلمة المرور" aria-label="تغيير كلمة المرور">${IC.lock}</button><button class="iconbtn" data-logout title="تسجيل الخروج" aria-label="تسجيل الخروج">${IC.out}</button></div>
       ${connLabel()}${!S.canWrite?'<span>صلاحية عرض فقط على هذه المشاركة</span>':''}
     </div>
   </aside>
@@ -726,10 +772,10 @@ function shell(content){
 function refreshChrome(){ const f=$(".rail-foot .conn"); if(f) f.outerHTML=connLabel(); }
 
 function render(){
-  if(S.mode==="loading" || (S.mode==="cloud" && !S.loaded.set)){ $("#app").innerHTML=`<div class="login-wrap"><div class="login"><div class="brand"><img src="${IMG.logo}" alt=""><b>نظام فواتير الحرم</b><small class="muted">جارٍ الاتصال بقاعدة البيانات…</small></div></div></div>`; return; }
+  if(S.mode==="loading" || (S.mode==="cloud" && (!S.loaded.set || !S.loaded.users))){ $("#app").innerHTML=`<div class="login-wrap"><div class="login"><div class="brand"><img src="${IMG.logo}" alt=""><b>نظام فواتير الحرم</b><small class="muted">جارٍ الاتصال بقاعدة البيانات…</small></div></div></div>`; return; }
   validateSession();
-  if(!(S.settings.users||[]).length){ $("#app").innerHTML=viewSetup(); bindSetup(); return; }
   if(!S.session){ $("#app").innerHTML=viewLogin(); bindLogin(); return; }
+  if(S.session.mustChange){ $("#app").innerHTML=viewPwChange(); bindPwChange(); return; }
   if(!S.route || !S.route.name) S.route=parseHash();
   if(!S.route.name) S.route={name:homeRoute(),arg:""};
   const perm=ROUTE_PERM[S.route.name] || (S.route.name.startsWith("doc-")?"print":"invoices");
@@ -737,6 +783,7 @@ function render(){
   const r=S.route.name; let html="";
   try{
     if(r==="dashboard") html=viewDashboard();
+    else if(r==="approvals") html=viewApprovals();
     else if(r==="invoices") html=viewInvoices(false);
     else if(r==="special") html=viewInvoices(true);
     else if(r==="new") html=viewEditor(null, S.route.arg||"invoice");
@@ -758,34 +805,6 @@ function render(){
 }
 
 /* ---------------- login & first setup ---------------- */
-function viewSetup(){
-  const allowed = S.mode==="local" || S.isPlatformAdmin;
-  return `<div class="login-wrap"><form class="login" id="setup-form" novalidate>
-   <div class="brand"><img src="${IMG.logo}" alt=""><b>تهيئة نظام فواتير الحرم</b><small class="muted">أنشئ حساب الإدارة وحساب المحاسب لأول مرة</small></div>
-   ${allowed?`
-   <label class="f">اسم مستخدم الإدارة<input class="i ltr" id="su-u" value="admin" autocomplete="username"></label>
-   <label class="f">الاسم الظاهر<input class="i" id="su-n" value="CEO"></label>
-   <label class="f">كلمة مرور الإدارة (8 أحرف على الأقل)<input class="i ltr" type="password" id="su-p" autocomplete="new-password"></label>
-   <label class="f">كلمة مرور المحاسب — اسم المستخدم: accountant (اختياري الآن)<input class="i ltr" type="password" id="su-a" autocomplete="new-password"></label>
-   <div class="err" id="su-err"></div>
-   <button class="btn primary" type="submit" style="justify-content:center">إنشاء الحسابات والدخول</button>`
-   :`<p class="hint" style="text-align:center">لم يُهيأ النظام بعد. يجب أن يفتح مالك النظام هذه الصفحة أولاً لإنشاء حساب الإدارة.</p>`}
-  </form></div>`;
-}
-function bindSetup(){
-  const f=$("#setup-form"); if(!f||!$("#su-u")) return;
-  f.onsubmit=async e=>{ e.preventDefault(); const err=$("#su-err"); err.textContent="";
-    const u=$("#su-u").value.trim().toLowerCase(), n=$("#su-n").value.trim(), p=$("#su-p").value, a=$("#su-a").value;
-    if(!/^[a-z0-9._-]{3,30}$/.test(u)){ err.textContent="اسم المستخدم: حروف إنجليزية وأرقام فقط (3 أحرف على الأقل)"; return; }
-    if(p.length<8){ err.textContent="كلمة مرور الإدارة 8 أحرف على الأقل"; return; }
-    if(a && a.length<8){ err.textContent="كلمة مرور المحاسب 8 أحرف على الأقل"; return; }
-    try{
-      const users=[await makeUser(u,n||"CEO","admin",p)]; if(a) users.push(await makeUser("accountant","المحاسب","accountant",a));
-      const st=clone(S.settings); st.users=users; await Store.saveSettings(st); S.settings=st;
-      await login(u,p,false); audit("تهيئة النظام", u); f.remove(); render();
-    }catch(e2){ err.textContent="تعذر الحفظ: "+(e2.message||e2.code||e2); }
-  };
-}
 function viewLogin(){
   return `<div class="login-wrap"><form class="login" id="login-form" novalidate>
    <div class="brand"><img src="${IMG.logo}" alt=""><b>نظام فواتير الحرم</b><small class="muted">${esc(S.settings.company.nameAr)}</small></div>
@@ -794,6 +813,7 @@ function viewLogin(){
    <label class="chk"><input type="checkbox" id="li-r">تذكرني على هذا الجهاز</label>
    <div class="err" id="li-err" role="alert"></div>
    <button class="btn primary" type="submit" id="li-btn" style="justify-content:center">دخول</button>
+   <div class="hint ver" style="text-align:center">${APP_VERSION}</div>
   </form></div>`;
 }
 function bindLogin(){
@@ -801,6 +821,37 @@ function bindLogin(){
   f.onsubmit=async e=>{ e.preventDefault(); const b=$("#li-btn"); b.disabled=true; $("#li-err").textContent="";
     try{ const m=await login($("#li-u").value,$("#li-p").value,$("#li-r").checked); if(m){ $("#li-err").textContent=m; b.disabled=false; return; } f.remove(); S.route=parseHash(); render(); }
     catch(e2){ $("#li-err").textContent=e2.message||"تعذر الدخول"; b.disabled=false; } };
+}
+
+function viewPwChange(){
+  return `<div class="login-wrap"><form class="login" id="pw-form" novalidate>
+   <div class="brand"><img src="${IMG.logo}" alt=""><b>تغيير كلمة المرور</b><small class="muted">مرحباً ${esc(S.session.name)} — اختر كلمة مرور خاصة بك قبل المتابعة</small></div>
+   <label class="f">كلمة المرور الجديدة (8 أحرف على الأقل)<input class="i ltr" type="password" id="pw-1" autocomplete="new-password"></label>
+   <label class="f">تأكيد كلمة المرور<input class="i ltr" type="password" id="pw-2" autocomplete="new-password"></label>
+   <div class="err" id="pw-err" role="alert"></div>
+   <button class="btn primary" type="submit" id="pw-btn" style="justify-content:center">حفظ ومتابعة</button>
+   <button class="btn ghost" type="button" data-logout style="justify-content:center">تسجيل الخروج</button>
+  </form></div>`;
+}
+async function setOwnPassword(p){
+  const me=allUsers().find(x=>x.u===S.session.u); const salt=newSalt();
+  const {builtin,...rest}=me; await saveUser(me.u,{...rest, salt, hash:await hashPw(p,salt), mustChange:false, updatedAt:new Date().toISOString()});
+  S.session.mustChange=false; ssSet("alharam-session",S.session); if(lsGet("alharam-session")) lsSet("alharam-session",S.session);
+  await audit("تغيير كلمة المرور الخاصة", me.u);
+}
+function bindPwChange(){
+  const f=$("#pw-form"); if(!f) return; $("#pw-1").focus();
+  $$("[data-logout]").forEach(b=>b.onclick=e=>{ e.preventDefault(); logout(); });
+  f.onsubmit=async e=>{ e.preventDefault(); const a=$("#pw-1").value, b=$("#pw-2").value, err=$("#pw-err");
+    if(a.length<8){ err.textContent="8 أحرف على الأقل"; return; } if(a!==b){ err.textContent="كلمتا المرور غير متطابقتين"; return; }
+    if(/^(Alharam@2026|Accountant@2026)$/.test(a)){ err.textContent="اختر كلمة مرور مختلفة عن المؤقتة"; return; }
+    $("#pw-btn").disabled=true; try{ await setOwnPassword(a); f.remove(); S.route=parseHash(); render(); toast("تم حفظ كلمة المرور"); }catch(e2){ err.textContent="تعذر الحفظ: "+(e2.message||e2.code||e2); $("#pw-btn").disabled=false; } };
+}
+function myPasswordModal(){
+  modal(`<h3>تغيير كلمة المرور</h3><div class="grid g2"><label class="f">الجديدة (8 أحرف على الأقل)<input class="i ltr" type="password" id="mp-1" autocomplete="new-password"></label><label class="f">تأكيد<input class="i ltr" type="password" id="mp-2" autocomplete="new-password"></label></div>
+   <div class="foot"><button class="btn" data-close>إلغاء</button><button class="btn primary" id="mp-ok">حفظ</button></div>`,(bg)=>{
+    $("#mp-ok",bg).onclick=async()=>{ const a=$("#mp-1",bg).value; if(a.length<8){ toast("8 أحرف على الأقل"); return; } if(a!==$("#mp-2",bg).value){ toast("غير متطابقتين"); return; }
+      try{ await setOwnPassword(a); bg.remove(); toast("تم تغيير كلمة المرور"); }catch(e){ toast("تعذر الحفظ"); } }; });
 }
 
 /* ---------------- dashboard (admin) ---------------- */
@@ -815,69 +866,87 @@ function viewDashboard(){
   const acc=S.invoices.filter(i=>inAccounts(i)&&inY(i,Y)), accPrev=S.invoices.filter(i=>inAccounts(i)&&inY(i,Y-1));
   const sumT=L=>r2(L.reduce((s,i)=>s+calc(i).total,0));
   const invoiced=sumT(acc), invoicedPrev=sumT(accPrev);
-  const conf=S.invoices.filter(confirmed);
-  const collectedY=r2(conf.reduce((s,i)=>s+activePays(i).filter(p=>(p.date||"").startsWith(String(Y))).reduce((a,p)=>a+(+p.amount||0),0),0));
-  const outstanding=r2(conf.reduce((s,i)=>s+Math.max(0,calc(i).balance),0));
-  const openCount=conf.filter(i=>calc(i).balance>0.004).length;
-  const certCount=S.invoices.filter(i=>["completion","warranty"].some(k=>(i.docNos?.[k]?.at||"").startsWith(String(Y)))).length;
-  const drafts=S.invoices.filter(i=>i.status==="draft");
+  const docsY=S.invoices.reduce((s,i)=>s+DOC_KINDS.filter(k=>(i.docNos?.[k]?.at||"").startsWith(String(Y))).length,0);
+  const pend=S.invoices.filter(i=>i.status==="pending"), drafts=S.invoices.filter(i=>i.status==="draft");
   const spOpen=S.invoices.filter(i=>i.kind==="special"&&statusOf(i)==="open"), spAmt=r2(spOpen.reduce((s,i)=>s+calc(i).total,0));
   const pfOpen=S.invoices.filter(i=>i.kind==="proforma"&&statusOf(i)==="issued"), pfAmt=r2(pfOpen.reduce((s,i)=>s+calc(i).total,0));
-  const legacy=S.invoices.filter(i=>awaitingReview(i)&&i.status!=="cancelled");
-  const missingCert=S.invoices.filter(i=>inAccounts(i)&&!isLegacy(i)&&(!i.typeOfWorks||!i.workOrder||!i.site));
-  const mi=Array(12).fill(0), mp=Array(12).fill(0), mc=Array(12).fill(0);
+  const mi=Array(12).fill(0), mp=Array(12).fill(0);
   S.invoices.filter(i=>inAccounts(i)&&(i.date||"").startsWith(String(Y))).forEach(i=>mi[+i.date.slice(5,7)-1]+=calc(i).total);
   S.invoices.filter(i=>inAccounts(i)&&(i.date||"").startsWith(String(Y-1))).forEach(i=>mp[+i.date.slice(5,7)-1]+=calc(i).total);
-  conf.forEach(i=>activePays(i).forEach(p=>{ if((p.date||"").startsWith(String(Y))) mc[+p.date.slice(5,7)-1]+=Number(p.amount)||0; }));
-  const group=(key)=>{ const g={}; S.invoices.filter(i=>inAccounts(i)&&(i.date||"").startsWith(String(Y))).forEach(i=>{ const k=(key(i)||"").trim()||"غير محدد"; g[k]=(g[k]||0)+calc(i).total; }); return Object.entries(g).sort((a,b)=>b[1]-a[1]).slice(0,7); };
-  const bars=(rows)=>{ const mx=rows[0]?.[1]||1; return rows.length?rows.map(([n,v])=>`<div class="hbar"><span class="nm" title="${esc(n)}" dir="auto">${esc(n)}</span><span class="bar"><i style="width:${v/mx*100}%"></i></span><span class="num">${fmt0(v)}</span></div>`).join(""):'<div class="empty">لا توجد بيانات</div>'; };
-  return `<div class="top"><div><h1>لوحة التحكم</h1><p>ملخص الإدارة لسنة ${Y}${Y===cy?" حتى اليوم، مقارنة بنفس الفترة من "+(Y-1):" مقارنة بسنة "+(Y-1)}</p></div>
+  const yInv=S.invoices.filter(i=>i.kind==="invoice"&&(i.date||"").startsWith(String(Y)));
+  const parts=[{k:"issued",label:"معتمدة",color:"var(--c-bar)"},{k:"pending",label:"بانتظار الاعتماد",color:"var(--c-line)"},{k:"draft",label:"مسودة",color:"var(--c-blue)"},{k:"cancelled",label:"ملغاة",color:"var(--c-gray)"}]
+    .map(p=>({...p,v:yInv.filter(i=>i.status===p.k).length}));
+  const group=(key,n)=>{ const g={}; S.invoices.filter(i=>inAccounts(i)&&(i.date||"").startsWith(String(Y))).forEach(i=>{ const k=(key(i)||"").trim()||"غير محدد"; g[k]=(g[k]||0)+calc(i).total; }); return Object.entries(g).sort((a,b)=>b[1]-a[1]).slice(0,n); };
+  const latest=S.invoices.filter(i=>i.kind!=="special").slice(0,12);
+  return `<div class="top"><div><h1>لوحة التحكم</h1><p>فوترة ${Y}${Y===cy?" حتى اليوم، مقارنة بنفس الفترة من "+(Y-1):" مقارنة بسنة "+(Y-1)} — متابعة التحصيل في QuickBooks</p></div>
     <div class="actions"><select class="i" id="dash-year" aria-label="السنة" style="width:auto">${years().map(y=>`<option ${y===Y?"selected":""}>${y}</option>`).join("")}</select>
     ${can("edit")?`<a class="btn primary" href="#new">${IC.plus}فاتورة جديدة</a>`:""}</div></div>
   <div class="stack">
   <div class="kpis">
-    <div class="kpi lead"><div class="l">إجمالي الفواتير ${Y}</div><div class="v">${fmt(invoiced)} <small>ر.ق</small></div><div class="s">${acc.length} فاتورة ${delta(invoiced,invoicedPrev)}</div></div>
-    <div class="kpi"><div class="l">المحصّل خلال ${Y}</div><div class="v">${fmt(collectedY)} <small>ر.ق</small></div><div class="meter"><i style="width:${invoiced?Math.min(100,collectedY/invoiced*100):0}%"></i></div><div class="s">${invoiced?Math.round(collectedY/invoiced*100):0}% من فواتير السنة</div></div>
-    <div class="kpi"><div class="l">الرصيد المفتوح لدى العملاء</div><div class="v">${fmt(outstanding)} <small>ر.ق</small></div><div class="s">${openCount} فاتورة مؤكدة لم تُسدد بالكامل</div></div>
-    <div class="kpi"><div class="l">متوسط قيمة الفاتورة</div><div class="v">${fmt(acc.length?invoiced/acc.length:0)} <small>ر.ق</small></div><div class="s">${certCount} شهادة صادرة في ${Y}</div></div>
+    <div class="kpi lead"><div class="l">إجمالي الفوترة ${Y}</div><div class="v">${fmt(invoiced)} <small>ر.ق</small></div><div class="s">مقابل ${fmt0(invoicedPrev)} في ${Y-1} ${delta(invoiced,invoicedPrev)}</div></div>
+    <div class="kpi"><div class="l">فواتير معتمدة ${Y}</div><div class="v">${acc.length}</div><div class="s">مقابل ${accPrev.length} في ${Y-1} ${delta(acc.length,accPrev.length)}</div></div>
+    <div class="kpi"><div class="l">متوسط قيمة الفاتورة</div><div class="v">${fmt(acc.length?invoiced/acc.length:0)} <small>ر.ق</small></div><div class="s">آخر رقم: <span class="code">${esc(lastSerial("INV")||"—")}</span></div></div>
+    <div class="kpi"><div class="l">مستندات صادرة ${Y}</div><div class="v">${docsY}</div><div class="s">شهادات وكتب تغطية وأذونات تسليم</div></div>
   </div>
   <div class="kpis mini">
-    <a class="kpi" href="#invoices" data-goto-status="draft"><div class="l">مسودات لم تُعتمد</div><div class="v">${drafts.length}</div></a>
+    <a class="kpi" href="#approvals"><div class="l">بانتظار اعتماد الإدارة</div><div class="v" style="${pend.length?"color:var(--c-line)":""}">${pend.length}</div></a>
+    <a class="kpi" href="#invoices" data-goto-status="draft"><div class="l">مسودات لم تُرسل</div><div class="v">${drafts.length}</div></a>
     <a class="kpi" href="#special"><div class="l">مجمعة مفتوحة (خارج الحسابات)</div><div class="v">${fmt0(spAmt)} <small>ر.ق · ${spOpen.length}</small></div></a>
-    <a class="kpi" href="#invoices" data-goto-tab="proforma"><div class="l">فواتير مبدئية لم تُحوّل</div><div class="v">${fmt0(pfAmt)} <small>ر.ق · ${pfOpen.length}</small></div></a>
-    <a class="kpi" href="#invoices" data-goto-status="legacy"><div class="l">مستوردة بانتظار مراجعة السداد</div><div class="v">${legacy.length}</div></a>
+    <a class="kpi" href="#invoices" data-goto-tab="proforma"><div class="l">مبدئية لم تُحوّل</div><div class="v">${fmt0(pfAmt)} <small>ر.ق · ${pfOpen.length}</small></div></a>
   </div>
-  <div class="cols">
-    <div class="panel"><h2>الفواتير والتحصيل شهرياً <small>${Y}</small></h2>${monthChart(mi,mc,mp)}
-      <div class="legend"><span><i style="background:var(--accent)"></i>فواتير ${Y}</span><span><i style="background:var(--ok)"></i>المحصّل</span><span><i style="background:var(--gold)"></i>فواتير ${Y-1}</span></div></div>
-    <div class="panel"><h2>حسب نوع الأعمال <small>${Y}</small></h2>${bars(group(i=>i.typeOfWorks))}</div>
+  <div class="dash2">
+    <div class="card"><h3>الحركة الشهرية ${Y} — الفوترة مقارنة بـ ${Y-1} <small>ر.ق</small></h3>${monthChart(mi,mp)}
+      <div class="chart-legend"><span><i style="background:var(--c-bar)"></i>فوترة ${Y}</span><span><i class="dot" style="background:var(--c-line)"></i>فوترة ${Y-1}</span></div></div>
+    <div class="card"><h3>حالة الفواتير <small>${Y}</small></h3>${donut(parts)}
+      <div class="chart-legend">${parts.map(p=>`<span><i class="dot" style="background:${p.color}"></i>${p.label} (${p.v})</span>`).join("")}</div></div>
   </div>
-  <div class="cols even">
-    <div class="panel"><h2>أكبر العملاء <small>${Y}</small></h2>${bars(group(i=>i.customerName))}</div>
-    <div class="panel"><h2>أكبر المواقع / المدارس <small>${Y}</small></h2>${bars(group(i=>i.site))}</div>
-    <div class="panel"><h2>تنبيهات</h2>
-      <div class="hbar" style="grid-template-columns:1fr auto"><span>فواتير معتمدة تنقصها بيانات الشهادات</span><b class="num">${missingCert.length}</b></div>
-      <div class="hbar" style="grid-template-columns:1fr auto"><span>مسودات بانتظار الاعتماد</span><b class="num">${drafts.length}</b></div>
-      <div class="hbar" style="grid-template-columns:1fr auto"><span>مستوردة من Excel بانتظار المراجعة</span><b class="num">${legacy.length}</b></div>
-      <div class="hbar" style="grid-template-columns:1fr auto"><span>آخر رقم فاتورة</span><b class="code">${esc(lastSerial("INV")||"—")}</b></div>
-    </div>
+  <div class="dash3">
+    <div class="card"><h3>أعلى العملاء بالفوترة <small>${Y}</small></h3>${hbarChart(group(i=>i.customerName,6))}</div>
+    <div class="card"><h3>حسب نوع الأعمال <small>${Y}</small></h3>
+      ${group(i=>i.typeOfWorks,5).map(([n,v])=>`<div class="rowcard"><span class="nm" dir="auto" title="${esc(n)}">${esc(n)}</span><b>${fmt(v)} <small>ر.ق</small></b></div>`).join("")||'<div class="empty">لا توجد بيانات</div>'}
+      <a class="btn" href="#reports" data-goto-rep="work" style="width:100%;justify-content:center">${IC.rep}التقارير التفصيلية</a></div>
+    <div class="card"><h3>أحدث الفواتير <a href="#invoices" style="font-family:var(--f-body);font-size:13px;font-weight:600">عرض الكل</a></h3>
+      <div class="scroll-list">${latest.map(i=>`<a class="mini-inv" href="#inv-${esc(i.id)}"><span class="no">${esc(dispNo(i))}</span><span class="amt">${fmt(calc(i).total)} <small>ر.ق</small></span><span class="meta"><bdi>${esc(i.customerName||"")}</bdi> — ${dmy(i.date)}</span><span>${chip(statusOf(i))}</span></a>`).join("")||'<div class="empty">لا توجد فواتير</div>'}</div></div>
   </div>
-  <div class="panel"><h2>أحدث الفواتير <a class="btn sm" href="#invoices">عرض الكل</a></h2>${invTable(S.invoices.slice(0,8),{compact:true})}</div>
   </div>`;
 }
-function monthChart(a,b,prev){
-  const W=640,H=230,pl=48,pb=26,pt=10,pr=8, max=Math.max(1,...a,...b,...prev);
-  const step=niceStep(max), top=Math.ceil(max/step)*step, ih=H-pb-pt, gw=(W-pl-pr)/12, bw=Math.min(16,gw/3);
-  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="رسم بياني شهري">`;
-  for(let v=0; v<=top+0.001; v+=step){ const y=pt+ih-(v/top)*ih; s+=`<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="1"/><text x="${pl-6}" y="${y+4}" text-anchor="end">${v>=1000?fmt0(v/1000)+"k":fmt0(v)}</text>`; }
-  let path="";
-  for(let m=0;m<12;m++){ const x=pl+gw*m+gw/2; const h1=a[m]/top*ih, h2=b[m]/top*ih;
-    s+=`<rect x="${x-bw-1}" y="${pt+ih-h1}" width="${bw}" height="${Math.max(0,h1)}" rx="2" fill="var(--accent)"><title>${MONTHS_AR[m]}: ${fmt(a[m])}</title></rect>`;
-    s+=`<rect x="${x+1}" y="${pt+ih-h2}" width="${bw}" height="${Math.max(0,h2)}" rx="2" fill="var(--ok)"><title>${MONTHS_AR[m]} محصّل: ${fmt(b[m])}</title></rect>`;
-    s+=`<text x="${x}" y="${H-8}" text-anchor="middle">${m+1}</text>`;
-    path+=(m?"L":"M")+x+" "+(pt+ih-prev[m]/top*ih); }
-  s+=`<path d="${path}" fill="none" stroke="var(--gold)" stroke-width="2" stroke-dasharray="5 4"/>`;
-  return `<div class="chart">${s}</svg></div>`;
+const shortNum = v => v>=1e6 ? (Math.round(v/1e5)/10)+"M" : v>=1000 ? fmt0(v/1000)+"k" : fmt0(v);
+function monthChart(cur, prev){
+  const W=720,H=290,pl=54,pr=14,pt=14,pb=36, max=Math.max(1,...cur,...prev);
+  const step=niceStep(max), top=Math.ceil(max/step)*step, ih=H-pt-pb, gw=(W-pl-pr)/12, bw=Math.min(42,gw*0.56);
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="الفوترة الشهرية">`;
+  for(let v=0; v<=top+0.001; v+=step){ const y=pt+ih-(v/top)*ih; s+=`<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="var(--c-grid)" stroke-dasharray="4 4"/><text x="${pl-8}" y="${y+4}" text-anchor="end">${shortNum(v)}</text>`; }
+  for(let m=0;m<=12;m++){ const x=pl+gw*m; s+=`<line x1="${x}" x2="${x}" y1="${pt}" y2="${pt+ih}" stroke="var(--c-grid)" stroke-dasharray="4 4"/>`; }
+  s+=`<line x1="${pl}" x2="${W-pr}" y1="${pt+ih}" y2="${pt+ih}" stroke="var(--muted)" stroke-width="1"/><line x1="${pl}" x2="${pl}" y1="${pt}" y2="${pt+ih}" stroke="var(--muted)" stroke-width="1"/>`;
+  let path="", dots="";
+  for(let m=0;m<12;m++){ const x=pl+gw*m+gw/2, h=cur[m]/top*ih, yp=pt+ih-prev[m]/top*ih;
+    if(h>0) s+=`<rect x="${x-bw/2}" y="${pt+ih-h}" width="${bw}" height="${h}" rx="2" fill="var(--c-bar)"><title>${MONTHS_AR[m]}: ${fmt(cur[m])}</title></rect>`;
+    s+=`<text x="${x}" y="${H-12}" text-anchor="middle">${MONTHS_AR[m]}</text>`;
+    path+=(m?"L":"M")+x+" "+yp; dots+=`<circle cx="${x}" cy="${yp}" r="4" fill="var(--surface)" stroke="var(--c-line)" stroke-width="2"><title>${MONTHS_AR[m]} السابقة: ${fmt(prev[m])}</title></circle>`; }
+  s+=`<path d="${path}" fill="none" stroke="var(--c-line)" stroke-width="2.2" stroke-linejoin="round"/>${dots}`;
+  return s+`</svg>`;
+}
+function donut(parts){
+  const tot=parts.reduce((s,p)=>s+p.v,0), cx=110, cy=110, R=92, r=56, W=220;
+  let s=`<svg viewBox="0 0 ${W} ${W}" style="max-width:240px;margin:0 auto" role="img" aria-label="حالة الفواتير">`;
+  if(!tot) return s+`<circle cx="${cx}" cy="${cy}" r="${(R+r)/2}" fill="none" stroke="var(--sunk)" stroke-width="${R-r}"/><text x="${cx}" y="${cy+5}" text-anchor="middle">لا توجد فواتير</text></svg>`;
+  const live=parts.filter(p=>p.v>0);
+  if(live.length===1) s+=`<circle cx="${cx}" cy="${cy}" r="${(R+r)/2}" fill="none" stroke="${live[0].color}" stroke-width="${R-r}"/>`;
+  else { let a=-Math.PI/2; const gap=0.04, pt=(rad,ang)=>[cx+rad*Math.cos(ang), cy+rad*Math.sin(ang)];
+    for(const p of live){ const ang=p.v/tot*Math.PI*2, a0=a+gap/2, a1=a+ang-gap/2, big=(a1-a0)>Math.PI?1:0;
+      const [x0,y0]=pt(R,a0),[x1,y1]=pt(R,a1),[x2,y2]=pt(r,a1),[x3,y3]=pt(r,a0);
+      s+=`<path d="M${x0} ${y0} A${R} ${R} 0 ${big} 1 ${x1} ${y1} L${x2} ${y2} A${r} ${r} 0 ${big} 0 ${x3} ${y3} Z" fill="${p.color}"><title>${p.label}: ${p.v}</title></path>`; a+=ang; } }
+  return s+`<text x="${cx}" y="${cy-2}" text-anchor="middle" style="font-size:26px;font-weight:700;fill:var(--ink)">${tot}</text><text x="${cx}" y="${cy+18}" text-anchor="middle">فاتورة</text></svg>`;
+}
+function hbarChart(rows){
+  if(!rows.length) return '<div class="empty">لا توجد بيانات</div>';
+  const W=400, lw=150, rowH=46, pt=6, H=pt+rows.length*rowH+28, max=Math.max(...rows.map(r=>r[1]),1), step=niceStep(max), top=Math.ceil(max/step)*step, x0=W-lw, iw=x0-14;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="أعلى العملاء">`;
+  for(let v=0; v<=top+0.001; v+=step){ const x=x0-(v/top)*iw; s+=`<line x1="${x}" x2="${x}" y1="${pt}" y2="${H-24}" stroke="var(--c-grid)" stroke-dasharray="4 4"/><text x="${x}" y="${H-8}" text-anchor="middle">${shortNum(v)}</text>`; }
+  rows.forEach(([n,v],k)=>{ const y=pt+k*rowH+7, h=rowH-14, w=Math.max(2,(v/top)*iw); const nm=n.length>22?n.slice(0,21)+"…":n;
+    s+=`<rect x="${x0-w}" y="${y}" width="${w}" height="${h}" rx="3" fill="var(--c-teal)"><title>${esc(n)}: ${fmt(v)}</title></rect><text x="${W-4}" y="${y+h/2+4}" text-anchor="end" style="fill:var(--ink);font-size:12px">${esc(nm)}</text>`; });
+  s+=`<line x1="${x0}" x2="${x0}" y1="${pt}" y2="${H-24}" stroke="var(--muted)"/>`;
+  return s+`</svg>`;
 }
 function niceStep(max){ const raw=max/4, p=Math.pow(10,Math.floor(Math.log10(raw))), n=raw/p; return (n<=1?1:n<=2?2:n<=5?5:10)*p; }
 
@@ -909,23 +978,40 @@ function invTable(list,opt={}){
 function viewInvoices(special){
   const list=filteredInvoices(special), L=S.list;
   const tabs=[["all","الكل"],["invoice","الفواتير"],["proforma","المبدئية"],["special","المجمعة / المخصصة"]];
-  const sts=special?["open","transferred","draft","cancelled"]:["draft","issued","partial","paid","cancelled"];
+  const sts=special?["open","transferred","draft","pending","cancelled"]:["draft","pending","issued","partial","paid","cancelled"];
   return `<div class="top"><div><h1>${special?"الفواتير المجمعة والمخصصة":"الفواتير"}</h1><p>${special?"تسلسل مستقل لتحويلات العملاء عن عدة فواتير — لا تدخل في الحسابات العامة.":"سجل كل الفواتير مع البحث والتصفية والطباعة."}</p></div>
   <div class="actions">${can("edit")?(special?`<a class="btn gold" href="#new-special">${IC.plus}فاتورة مجمعة جديدة</a>`:`<a class="btn" href="#new-proforma">${IC.plus}فاتورة مبدئية</a><a class="btn primary" href="#new">${IC.plus}فاتورة جديدة</a>`):""}
   ${isAdmin()?`<button class="btn" id="exp-list">${IC.xls}تصدير Excel</button>`:""}</div></div>
   ${special?'':`<div class="tabs" role="tablist">${tabs.map(([k,l])=>`<button role="tab" data-tab="${k}" class="${L.tab===k?"on":""}">${l}</button>`).join("")}</div>`}
   <div class="filters">
     <label class="f">بحث<input class="i" id="f-q" value="${esc(L.q)}" placeholder="رقم، عميل، مدرسة، أمر عمل، بند…"></label>
-    <label class="f">الحالة<select class="i" id="f-st"><option value="">الكل</option><option value="open" ${L.status==="open"?"selected":""}>كل المفتوحة</option>${sts.map(k=>`<option value="${k}" ${L.status===k?"selected":""}>${STATUS_AR[k]}</option>`).join("")}<option value="legacy" ${L.status==="legacy"?"selected":""}>مستوردة بانتظار المراجعة</option></select></label>
+    <label class="f">الحالة<select class="i" id="f-st"><option value="">الكل</option><option value="open" ${L.status==="open"?"selected":""}>كل المفتوحة</option>${sts.map(k=>`<option value="${k}" ${L.status===k?"selected":""}>${STATUS_AR[k]}</option>`).join("")}</select></label>
     <label class="f">العميل<select class="i" id="f-cu"><option value="">الكل</option>${S.customers.map(c=>`<option value="${esc(c.id)}" ${L.customer===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}</select></label>
     <label class="f">من تاريخ<input type="date" class="i" id="f-from" value="${L.from}"></label>
     <label class="f">إلى تاريخ<input type="date" class="i" id="f-to" value="${L.to}"></label>
   </div>
   <div class="actions" style="margin-bottom:10px" id="bulk" ${S.selected.size?"":"hidden"}><span class="muted" id="bulk-n">${S.selected.size} محددة:</span>
    ${can("edit")?`<button class="btn sm" data-bulk="repeat">${IC.copy}تكرار</button>`:""}<button class="btn sm" data-bulk="pack">${IC.pdf}تنزيل الفواتير PDF</button>
-   ${isAdmin()?'<button class="btn sm" data-bulk="rev-paid">مراجعة: مدفوعة بالكامل</button><button class="btn sm" data-bulk="rev-unpaid">مراجعة: غير مدفوعة</button><button class="btn sm" data-bulk="paid">تسجيل دفعة كاملة</button>':''}
+   ${can("issue")?'<button class="btn sm" data-bulk="approve">اعتماد المحدد</button>':''}
    <button class="btn sm" data-bulk="clear">إلغاء التحديد</button></div>
   ${invTable(list,{select:true})}`;
+}
+
+/* ---------------- management approval ---------------- */
+function viewApprovals(){
+  const L=S.invoices.filter(i=>i.status==="pending").sort((a,b)=>String(a.submittedAt||"").localeCompare(String(b.submittedAt||"")));
+  return `<div class="top"><div><h1>بانتظار اعتماد الإدارة</h1><p>فواتير أعدّها المحاسب وأرسلها للاعتماد. عند الاعتماد يُعطى الرقم الرسمي، أو تُعاد للمحاسب مع ملاحظة.</p></div>
+   <div class="actions">${L.length?`<button class="btn primary" id="ap-all">${IC.check}اعتماد الكل (${L.length})</button>`:""}</div></div>
+   ${L.length?`<div class="tw"><table class="t"><thead><tr><th>المسودة</th><th>النوع</th><th>التاريخ</th><th>العميل</th><th>الموقع / الأعمال</th><th class="n">القيمة</th><th>أرسلها</th><th></th></tr></thead><tbody>
+   ${L.map(i=>`<tr class="click" data-open="${esc(i.id)}"><td class="code">${esc(dispNo(i))}</td><td>${KIND[i.kind]}</td><td class="num">${dmy(i.date)}</td><td><bdi>${esc(i.customerName)}</bdi></td><td class="muted">${esc([i.site,i.typeOfWorks].filter(Boolean).join(" — ")||i.purpose||"")}</td><td class="n">${fmt(calc(i).total)}</td><td>${esc(i.submittedBy||"")}<div class="hint">${i.submittedAt?new Date(i.submittedAt).toLocaleString("en-GB"):""}</div></td>
+     <td style="white-space:nowrap"><a class="btn sm" href="#doc-invoice-${esc(i.id)}">معاينة</a> <button class="btn sm primary" data-ap="${esc(i.id)}">اعتماد</button> <button class="btn sm" data-ret="${esc(i.id)}">إعادة</button></td></tr>`).join("")}
+   </tbody></table></div>`:'<div class="empty"><b>لا توجد فواتير بانتظار الاعتماد</b>عندما يرسل المحاسب فاتورة للاعتماد تظهر هنا.</div>'}`;
+}
+function returnModal(i){ confirmBox(`إعادة ${dispNo(i)} للمحاسب كمسودة؟ ستظهر له ملاحظتك.`,"إعادة للمحاسب",async note=>{ await patchInvoice(i.id,{status:"draft",returnNote:note,returnedBy:actor(),returnedAt:new Date().toISOString()},"إعادة للمحاسب — "+note); toast("تمت الإعادة"); },false,true); }
+function bindApprovals(){
+  $$("[data-ap]").forEach(b=>b.onclick=e=>{ e.stopPropagation(); const i=invById(b.dataset.ap); confirmBox(`اعتماد ${KIND[i.kind]} للعميل ${i.customerName} بقيمة ${fmt(calc(i).total)}؟`,"اعتماد",async()=>{ await issueExisting(i); }); });
+  $$("[data-ret]").forEach(b=>b.onclick=e=>{ e.stopPropagation(); returnModal(invById(b.dataset.ret)); });
+  const all=$("#ap-all"); if(all) all.onclick=()=>{ const L=S.invoices.filter(i=>i.status==="pending"); confirmBox(`اعتماد ${L.length} فاتورة وإعطاؤها أرقاماً رسمية؟`,"اعتماد الكل",async()=>{ for(const i of L) await issueExisting(invById(i.id),true); toast(`تم اعتماد ${L.length} فاتورة`); }); };
 }
 
 /* ---------------- editor ---------------- */
@@ -949,7 +1035,7 @@ function viewEditor(id, kind){
   const e=ED, isSp=e.kind==="special", locked=!!id && isLocked(invById(id)), dis=locked?"disabled":"";
   const custOpts=`<option value="">— اختر العميل —</option>`+S.customers.map(c=>`<option value="${esc(c.id)}" ${e.customerId===c.id?"selected":""}>${esc(c.name)}</option>`).join("");
   const dl=(idd,f)=>`<datalist id="${idd}">${suggest(f).map(v=>`<option value="${esc(v)}">`).join("")}</datalist>`;
-  return `<div class="top"><div><h1>${id?"تعديل "+(isSp?"الفاتورة المجمعة":KIND[e.kind])+" "+esc(dispNo(e)):"إنشاء "+KIND[e.kind]}</h1><p>${e.repeatOf&&!id?"نسخة مكررة من "+esc(e.repeatOf)+" — راجع البيانات وعدّل ما تريد. ":""}${locked?"الفاتورة معتمدة: البيانات المالية مقفلة. يمكن تعديل بيانات المشروع والشهادات وخيار الختم فقط.":isSp?"تسلسل خاص لا يدخل في الحسابات العامة.":"تُحفظ كمسودة، ويُعطى الرقم التسلسلي الرسمي عند الاعتماد."}</p></div>
+  return `<div class="top"><div><h1>${id?"تعديل "+(isSp?"الفاتورة المجمعة":KIND[e.kind])+" "+esc(dispNo(e)):"إنشاء "+KIND[e.kind]}</h1>${e.returnNote?`<div class="banner">ملاحظة الإدارة عند الإعادة: ${esc(e.returnNote)}</div>`:""}<p>${e.repeatOf&&!id?"نسخة مكررة من "+esc(e.repeatOf)+" — راجع البيانات وعدّل ما تريد. ":""}${locked?"الفاتورة معتمدة: البيانات المالية مقفلة. يمكن تعديل بيانات المشروع والشهادات وخيار الختم فقط.":isSp?"تسلسل خاص لا يدخل في الحسابات العامة.":"تُحفظ كمسودة، ويُعطى الرقم التسلسلي الرسمي عند الاعتماد."}</p></div>
   <div class="actions"><a class="btn ghost" href="${id?"#inv-"+esc(id):"#invoices"}">${IC.back}رجوع</a></div></div>
   <form id="editor-form" class="stack" novalidate>
   <div class="panel"><h2>بيانات ${isSp?"الفاتورة المجمعة":"الفاتورة"} ${locked?`<span class="lock">${IC.lock}مقفلة بعد الاعتماد</span>`:""}</h2>
@@ -996,7 +1082,7 @@ function viewEditor(id, kind){
     <label class="f" style="margin-top:12px">ملاحظات داخلية (لا تطبع)<textarea class="i" id="e-notes">${esc(e.notes||"")}</textarea></label>
   </div>
   <div class="sticky-bar"><span class="hint" id="save-hint">${locked?"التعديل يُسجَّل في سجل التدقيق":id?"مسودة محفوظة":"لم تُحفظ بعد"}</span>
-    <div class="actions">${locked?`<button type="submit" class="btn primary" id="save-btn">حفظ التعديلات</button>`:`<button type="submit" class="btn" id="save-btn">حفظ كمسودة</button>${can("issue")&&(!id||invById(id)?.status==="draft")?`<button type="button" class="btn primary" id="save-issue">${IC.check}حفظ واعتماد</button>`:""}`}</div></div>
+    <div class="actions">${locked?`<button type="submit" class="btn primary" id="save-btn">حفظ التعديلات</button>`:`<button type="submit" class="btn" id="save-btn">حفظ كمسودة</button>${(!id||["draft","pending"].includes(invById(id)?.status))?(can("issue")?`<button type="button" class="btn primary" id="save-issue">${IC.check}حفظ واعتماد</button>`:can("submit")?`<button type="button" class="btn primary" id="save-submit">${IC.check}حفظ وإرسال للاعتماد</button>`:""):""}`}</div></div>
   </form>`;
 }
 function linesRows(locked){
@@ -1038,7 +1124,7 @@ function updateTotals(){
 }
 function applyCustomer(id){
   const c=custById(id); ED.customerId=id||"";
-  ED.customerName=c?.name||""; ED.customerNameEn=c?.nameEn||""; ED.customerAddress=c?.address||""; ED.customerPhone=c?.phone||""; ED.customerPobox=c?.pobox||"";
+  ED.customerEmail=c?.email||""; ED.customerName=c?.name||""; ED.customerNameEn=c?.nameEn||""; ED.customerAddress=c?.address||""; ED.customerPhone=c?.phone||""; ED.customerPobox=c?.pobox||"";
   const s=$("#cust-snap"); if(s) s.textContent = c?`سيُطبع: ${c.nameEn||c.name} — ${c.address||""} ${c.phone?"— "+c.phone:""}`:"";
   const lb=$("#linked-box"); if(lb){ ED.linked=[]; lb.innerHTML=linkedBox(false); }
 }
@@ -1057,8 +1143,9 @@ function buildRecord(base){
   return data;
 }
 function snapshot(){ const st=S.settings; return {company:clone(st.company), bank:clone(st.bank), at:new Date().toISOString()}; }
-function refreshCustomerSnap(data){ const c=custById(data.customerId); if(c) Object.assign(data,{customerName:c.name,customerNameEn:c.nameEn||"",customerAddress:c.address||"",customerPhone:c.phone||"",customerPobox:c.pobox||""}); }
-async function saveEditor(issue){
+function refreshCustomerSnap(data){ const c=custById(data.customerId); if(c) Object.assign(data,{customerEmail:c.email||"",customerName:c.name,customerNameEn:c.nameEn||"",customerAddress:c.address||"",customerPhone:c.phone||"",customerPobox:c.pobox||""}); }
+async function saveEditor(mode){
+  const issue = mode===true || mode==="issue", submit = mode==="submit";
   readEditor();
   const id0=ED._id, orig=id0?invById(id0):null, locked=orig && isLocked(orig);
   const btns=$$("#editor-form .sticky-bar button"); btns.forEach(b=>b.disabled=true); $("#save-hint").textContent="جارٍ الحفظ…";
@@ -1086,27 +1173,28 @@ async function saveEditor(issue){
     if(orig && isLegacy(orig)){ data.status=orig.status; data.no=orig.no; }
     data.updatedAt=now; data.updatedBy=actor();
     const hist=[...(ED.history||[]),{at:now,by:actor(),action:orig&&isLegacy(orig)?"تعديل فاتورة مستوردة":id0?"تعديل مسودة":"إنشاء مسودة"}];
-    if(issue && data.status==="draft"){
+    if(submit && data.status==="draft"){ data.status="pending"; data.submittedAt=now; data.submittedBy=actor(); delete data.returnNote; hist.push({at:now,by:actor(),action:"إرسال لاعتماد الإدارة"}); }
+    if(issue && ["draft","pending"].includes(data.status)){
       if(!can("issue")) return fail("لا تملك صلاحية الاعتماد");
       if(data.total<=0 && data.kind!=="special") return fail("لا يمكن اعتماد فاتورة قيمتها صفر أو أقل");
-      data.no=await allocate(SERIES[data.kind]); data.status="issued"; data.issuedAt=now; data.issuedBy=actor(); data.snap=snapshot(); refreshCustomerSnap(data);
+      data.no=await allocate(SERIES[data.kind]); data.status="issued"; data.issuedAt=now; data.issuedBy=actor(); data.snap=snapshot(); refreshCustomerSnap(data); delete data.returnNote;
       hist.push({at:now,by:actor(),action:"اعتماد برقم "+data.no});
     }
     data.history=hist.slice(-40);
     await Store.save("invoices",id,data);
-    await audit(issue?"اعتماد "+KIND[data.kind]:(orig&&isLegacy(orig)?"تعديل فاتورة مستوردة":id0?"تعديل مسودة":"إنشاء مسودة"), data.no||dispNo({id}), fmt(data.total));
-    toast(issue?"تم الاعتماد برقم "+data.no:"تم الحفظ");
+    await audit(issue?"اعتماد "+KIND[data.kind]:submit?"إرسال للاعتماد":(orig&&isLegacy(orig)?"تعديل فاتورة مستوردة":id0?"تعديل مسودة":"إنشاء مسودة"), data.no||dispNo({id}), fmt(data.total));
+    toast(issue?"تم الاعتماد برقم "+data.no:submit?"أُرسلت لاعتماد الإدارة":"تم الحفظ");
     ED=null; go("inv-"+id);
   }catch(e){ console.error(e); fail("تعذر الحفظ: "+(e.message||e.code||e)); }
 }
-async function issueExisting(i){
+async function issueExisting(i, quiet){
   const now=new Date().toISOString();
   const data={...i}; delete data.id;
   if(data.kind!=="special" && calc(data).total<=0){ toast("لا يمكن اعتماد فاتورة قيمتها صفر أو أقل"); return; }
-  data.no=await allocate(SERIES[data.kind]); data.status="issued"; data.issuedAt=now; data.issuedBy=actor(); data.snap=snapshot(); refreshCustomerSnap(data);
+  data.no=await allocate(SERIES[data.kind]); data.status="issued"; data.issuedAt=now; data.issuedBy=actor(); data.snap=snapshot(); refreshCustomerSnap(data); delete data.returnNote;
   data.history=[...(i.history||[]),{at:now,by:actor(),action:"اعتماد برقم "+data.no}].slice(-40);
   await Store.save("invoices",i.id,data); await audit("اعتماد "+KIND[data.kind], data.no, fmt(calc(data).total));
-  toast("تم الاعتماد برقم "+data.no);
+  if(!quiet) toast("تم الاعتماد برقم "+data.no);
 }
 
 /* ---------------- repeat (monthly contracts) ----------------
@@ -1169,25 +1257,30 @@ function repeatModal(ids){
 function viewInvoice(id){
   const i=invById(id);
   if(!i) return S.loaded.inv?`<div class="empty"><b>الفاتورة غير موجودة</b><a href="#invoices">العودة للفواتير</a></div>`:`<div class="empty">جارٍ التحميل…</div>`;
-  const c=calc(i), st=statusOf(i), draft=i.status==="draft", cancelled=i.status==="cancelled", isSp=i.kind==="special";
+  const c=calc(i), st=statusOf(i), draft=i.status==="draft", pending=i.status==="pending", cancelled=i.status==="cancelled", isSp=i.kind==="special";
   const docs = isSp ? [["invoice","الفاتورة المجمعة","للتحويل البنكي — خارج الحسابات العامة."]]
     : [["invoice", i.kind==="proforma"?"الفاتورة المبدئية":"الفاتورة","مطابقة للنموذج الأصلي مع بيانات البنك."],
       ["completion","شهادة إنجاز الأعمال", i.docNos?.completion?.no?"رقم "+i.docNos.completion.no:"Completion Certificate — يُعطى رقمها عند أول تنزيل."],
       ["warranty","شهادة ضمان الأعمال", i.docNos?.warranty?.no?"رقم "+i.docNos.warranty.no:`نموذج ${S.settings.tpl.warranty[warrantyType(i)]?.label||""} — ${warrantyText(i)||"—"}.`],
-      ["cover","كتاب التغطية", i.docNos?.cover?.no?"رقم "+i.docNos.cover.no:"خطاب إرسال المستندات (عربي / إنجليزي)."]];
+      ["cover","كتاب التغطية", i.docNos?.cover?.no?"رقم "+i.docNos.cover.no:"خطاب إرسال المستندات (عربي / إنجليزي)."],
+      ["delivery","إذن التسليم", i.docNos?.delivery?.no?"رقم "+i.docNos.delivery.no:"Delivery Note بالبنود والكميات وتوقيع المستلم."]];
   const missing=isSp?[]:[!i.typeOfWorks&&"نوع الأعمال",!i.workOrder&&"أمر العمل",!i.site&&"المدرسة / الموقع",!i.completedDate&&"تاريخ الإنجاز"].filter(Boolean);
   const linked=(i.linked||[]).map(x=>({...x, inv:invById(x.id)}));
   const lsp=linkedSpecials(i.id);
   return `<div class="top"><div><h1 class="code" style="font-size:22px">${esc(dispNo(i))}</h1><p>${KIND[i.kind]} — <bdi>${esc(i.customerName)}</bdi> ${chip(st,i)} ${isLocked(i)&&!draft?`<span class="lock">${IC.lock}مقفلة</span>`:""}</p></div>
    <div class="actions"><a class="btn ghost" href="#${isSp?"special":"invoices"}">${IC.back}رجوع</a>
-   ${draft&&can("edit")?`<a class="btn" href="#edit-${esc(i.id)}">${IC.edit}تعديل المسودة</a>`:""}
-   ${draft&&can("issue")?`<button class="btn primary" id="issue">${IC.check}اعتماد وإعطاء الرقم</button>`:""}
-   ${!draft&&!cancelled&&can("edit")?`<a class="btn" href="#edit-${esc(i.id)}">${IC.edit}${isLegacy(i)&&isAdmin()?"تعديل":"بيانات المشروع والطباعة"}</a>`:""}
+   ${(draft||pending)&&can("edit")?`<a class="btn" href="#edit-${esc(i.id)}">${IC.edit}تعديل المسودة</a>`:""}
+   ${draft&&!can("issue")&&can("submit")?`<button class="btn primary" id="submit">${IC.check}إرسال لاعتماد الإدارة</button>`:""}
+   ${pending&&can("issue")?`<button class="btn" id="return">إعادة للمحاسب</button>`:""}
+   ${(draft||pending)&&can("issue")?`<button class="btn primary" id="issue">${IC.check}اعتماد وإعطاء الرقم</button>`:""}
+   ${!draft&&!pending&&!cancelled&&can("edit")?`<a class="btn" href="#edit-${esc(i.id)}">${IC.edit}${isLegacy(i)&&isAdmin()?"تعديل":"بيانات المشروع والطباعة"}</a>`:""}
    ${can("edit")&&!cancelled?`<button class="btn" id="dup">${IC.copy}تكرار الفاتورة</button>`:""}
    ${i.kind==="proforma"&&!draft&&!cancelled&&!i.convertedTo&&can("issue")?'<button class="btn gold" id="convert">تحويل إلى فاتورة</button>':''}
+   ${!cancelled&&can("send")?`<button class="btn" id="send">إرسال / تصدير</button>`:""}
    ${!isSp?`<button class="btn primary" id="pack">${IC.pdf}كل المستندات PDF</button>`:""}</div></div>
   <div class="stack">
-  ${draft?'<div class="banner info">مسودة — لم يُعطَ لها رقم رسمي بعد. المستندات المطبوعة تحمل علامة DRAFT.</div>':''}
+  ${draft?`<div class="banner info">مسودة — لم يُعطَ لها رقم رسمي بعد. المستندات المطبوعة تحمل علامة DRAFT.${i.returnNote?" — <b>أعادتها الإدارة:</b> "+esc(i.returnNote):""}</div>`:''}
+  ${pending?`<div class="banner">بانتظار اعتماد الإدارة — أرسلها ${esc(i.submittedBy||"")} ${i.submittedAt?new Date(i.submittedAt).toLocaleString("en-GB"):""}.</div>`:''}
   ${cancelled?`<div class="banner bad">ملغاة — السبب: ${esc(i.cancelReason||"—")} (${esc(i.cancelledBy||"")}، ${i.cancelledAt?new Date(i.cancelledAt).toLocaleDateString("en-GB"):""})</div>`:''}
   ${awaitingReview(i)?`<div class="banner"><span>فاتورة مستوردة من Excel (الورقة: ${esc(i.sheet||"")}) — حالة السداد غير مؤكدة، ولا تدخل في مؤشرات التحصيل حتى تُراجع.</span>${isAdmin()?'<span class="actions"><button class="btn sm" id="rev-paid">مدفوعة بالكامل</button><button class="btn sm" id="rev-unpaid">غير مدفوعة</button></span>':''}</div>`:''}
   ${i.repeatOf?`<div class="banner info">مكررة من الفاتورة ${esc(i.repeatOf)}</div>`:''}${i.convertedTo?`<div class="banner info">حُوّلت إلى الفاتورة ${esc(i.convertedTo)}</div>`:''}${i.fromProforma?`<div class="banner info">منشأة من الفاتورة المبدئية ${esc(i.fromProforma)}</div>`:''}
@@ -1222,13 +1315,13 @@ function viewInvoice(id){
       <dt>الإنجاز</dt><dd>${dmy(i.completedDate)||"—"}</dd><dt>الضمان</dt><dd>${esc(warrantyText(i)||"—")}${i.completedDate&&i.warrantyMonths?" — ساري حتى "+dmy(addMonths(i.completedDate,i.warrantyMonths)):""}</dd>`}
       ${i.notes?`<dt>ملاحظات</dt><dd>${esc(i.notes)}</dd>`:''}</dl></div>
     ${isSp?(!draft&&!cancelled&&st==="open"&&can("pay")?`<div class="panel"><h2>التحويل</h2><p class="hint">عند وصول التحويل يُسجَّل كدفعات على الفواتير الأصلية، ويمكن طباعة سند قبض لكل فاتورة.</p><button class="btn primary" id="sp-pay">تسجيل وصول التحويل</button></div>`:"")
-    :(i.kind==="invoice"&&!draft?`<div class="panel"><h2>الدفعات وسندات القبض ${can("pay")&&!cancelled&&c.balance>0.004?'<button class="btn sm primary" id="add-pay">'+IC.plus+'دفعة</button>':''}</h2>
+    :(i.kind==="invoice"&&!draft&&!pending?`<div class="panel"><h2>الدفعات وسندات القبض <small>اختياري — متابعة التحصيل في QuickBooks</small> ${can("pay")&&!cancelled&&c.balance>0.004?'<button class="btn sm primary" id="add-pay">'+IC.plus+'دفعة</button>':''}</h2>
       ${(i.payments||[]).length?`<div class="tw"><table class="t"><thead><tr><th>التاريخ</th><th>الطريقة / المرجع</th><th class="n">المبلغ</th><th>السند</th><th></th></tr></thead><tbody>${i.payments.map((p,k)=>`<tr style="${p.reversed?"opacity:.55":""}"><td class="num">${dmy(p.date)}</td><td>${esc(p.method||"")} <span class="ltr muted">${esc(p.ref||"")}</span>${p.reversed?`<div class="hint">معكوسة: ${esc(p.reversed.reason||"")}</div>`:""}</td><td class="n">${fmt(p.amount)}</td><td>${p.reversed?'<span class="tag lg">معكوسة</span>':`<a class="btn sm" href="#rcpt-${esc(i.id)}-${k}">${p.rcv?.no?`<span class="code">${esc(p.rcv.no)}</span>`:"سند قبض"}</a>`}</td><td>${!p.reversed&&isAdmin()?`<button class="iconbtn" data-revpay="${k}" title="عكس الدفعة" aria-label="عكس الدفعة">${IC.trash}</button>`:''}</td></tr>`).join("")}</tbody></table></div>`:'<p class="hint">لا توجد دفعات مسجلة.</p>'}
     </div>`:"")}
     <div class="panel"><h2>سجل العمليات</h2>${(i.history||[]).slice().reverse().map(h=>`<div class="hint">${esc(h.action)} — ${new Date(h.at).toLocaleString("en-GB")} ${h.by?"— "+esc(h.by):""}</div>`).join("")||'<p class="hint">—</p>'}
       <div class="actions" style="margin-top:10px">
-      ${draft&&can("edit")?`<button class="btn sm danger" id="del-draft">${IC.trash}حذف المسودة</button>`:''}
-      ${!draft&&!cancelled&&isAdmin()?`<button class="btn sm danger" id="cancel-inv">إلغاء ${isSp?"الفاتورة المجمعة":"الفاتورة"}</button>`:''}</div></div>
+      ${(draft||pending)&&can("edit")?`<button class="btn sm danger" id="del-draft">${IC.trash}حذف المسودة</button>`:''}
+      ${!draft&&!pending&&!cancelled&&isAdmin()?`<button class="btn sm danger" id="cancel-inv">إلغاء ${isSp?"الفاتورة المجمعة":"الفاتورة"}</button>`:''}</div></div>
    </div>
   </div></div>`;
 }
@@ -1269,7 +1362,7 @@ function letterhead(i){
     <div>IBAN | ${esc(b.iban)}</div></div><img src="${IMG.logo}" alt=""></div>`;
 }
 function footer(i){ const {company:co}=coFor(i); return `<div class="foot">${[co.web, co.email?"Email : "+co.email:"", co.phone, co.pobox?"P.O.Box "+co.pobox+" , "+(co.city||""):""].filter(Boolean).map(esc).join("  &nbsp;|&nbsp;  ")}</div>`; }
-function watermark(i){ return i.status==="cancelled"?'<div class="watermark">CANCELLED</div>':i.status==="draft"?'<div class="watermark draft">DRAFT</div>':""; }
+function watermark(i){ return i.status==="cancelled"?'<div class="watermark">CANCELLED</div>':["draft","pending"].includes(i.status)?'<div class="watermark draft">DRAFT</div>':""; }
 function signBlock(i, stamp, label){
   const {company:co}=coFor(i);
   return `<div class="signblock"><div class="co">${esc(label||co.shortEn)} .<small>Authorized Signature &amp; Stamp</small></div>
@@ -1366,17 +1459,33 @@ function docReceipt(i, k, o){
    <div class="signs3"><div><div style="height:90px"></div><div>Received by</div></div><div><div style="height:90px"></div><div>Accountant</div></div><div><div class="stampbox" style="width:auto;height:90px">${o.stamp?`<img class="stamp" src="${IMG.stamp}" alt="" style="width:90px;left:20px"><img class="sign" src="${IMG.sign}" alt="" style="width:120px;left:60px;bottom:14px">`:""}</div><div>${esc(co.shortEn)}</div></div></div>
    ${footer(i)}</div>`;
 }
+function docDelivery(i, o){
+  const x=docCtx(i), {company:co}=coFor(i); let n=0;
+  const rows=(i.lines||[]).map(l=>l.heading?`<tr class="h"><td></td><td colspan="3">${esc(l.desc)}</td></tr>`:`<tr><td class="c">${++n}</td><td>${esc(l.desc)}</td><td class="c">${esc(l.unit||"")}</td><td class="c">${l.qty??""}</td></tr>`).join("")
+    +'<tr class="pad"><td></td><td></td><td></td><td></td></tr>'.repeat(Math.max(0,8-(i.lines||[]).length));
+  return `<div class="sheet">${letterhead(i)}${watermark(i)}
+   <div class="dateno">${docNoLine(i,"delivery")}<span><b>Invoice Ref :-</b> ${esc(dispNo(i))}</span></div>
+   <div class="dateno" style="margin-top:6px"><span><b>Date :-</b> ${esc(dayDate(i.completedDate||i.date))}</span>${x.workOrder?`<span><b>W.O :-</b> ${esc(x.workOrder)}</span>`:""}</div>
+   <div class="doc-title"><b>DELIVERY NOTE</b><small>إذن تسليم</small></div>
+   ${billTo(i)}
+   ${x.site||x.location?`<div class="purpose"><b>Delivery Site :-</b> ${esc([x.site,x.location].filter(Boolean).join(" , "))}</div>`:""}
+   <table class="items"><thead><tr><th style="width:44px">Ser.</th><th>Description</th><th style="width:80px">Unit</th><th style="width:90px">Qty.</th></tr></thead><tbody>${rows}</tbody></table>
+   <div class="note-box">Received the above items / works in good condition and as per the order.</div>
+   <div class="signs3"><div><div style="height:70px;text-align:left;font-size:12px;padding-top:4px">Name :<br>Date :</div><div>Delivered by — ${esc(co.shortEn)}</div></div><div><div style="height:70px;text-align:left;font-size:12px;padding-top:4px">Name :<br>Date :</div><div>Received by (Client)</div></div><div><div class="stampbox" style="width:auto;height:70px">${o.stamp?`<img class="stamp" src="${IMG.stamp}" alt="" style="width:80px;left:30px"><img class="sign" src="${IMG.sign}" alt="" style="width:110px;left:70px;bottom:10px">`:""}</div><div>Stamp &amp; Signature</div></div></div>
+   ${footer(i)}</div>`;
+}
 function docHtml(kind, i, o){
   o={stamp:!!(i.stamp), lang:"en", style:i.coverStyle||"detailed", ...o};
   if(kind==="invoice") return docInvoice(i,o);
   if(kind==="completion") return docCompletion(i,o);
   if(kind==="warranty") return docWarranty(i,o);
   if(kind==="cover") return docCover(i,o);
+  if(kind==="delivery") return docDelivery(i,o);
   if(kind==="pack") return [docInvoice(i,o),docCompletion(i,o),docWarranty(i,o),docCover(i,o)].join("");
   return "";
 }
-const DOC_NAMES={invoice:"Invoice",completion:"Completion-Certificate",warranty:"Warranty-Certificate",cover:"Cover-Letter",pack:"Documents-Pack"};
-const DOC_AR={invoice:"الفاتورة",completion:"شهادة إنجاز الأعمال",warranty:"شهادة الضمان",cover:"كتاب التغطية",pack:"ملف المستندات الكامل"};
+const DOC_NAMES={invoice:"Invoice",completion:"Completion-Certificate",warranty:"Warranty-Certificate",cover:"Cover-Letter",delivery:"Delivery-Note",pack:"Documents-Pack"};
+const DOC_AR={invoice:"الفاتورة",completion:"شهادة إنجاز الأعمال",warranty:"شهادة الضمان",cover:"كتاب التغطية",delivery:"إذن التسليم",pack:"ملف المستندات الكامل"};
 function docOpts(i){ return {stamp: S.doc.stamp==null ? !!i.stamp : S.doc.stamp, lang:S.doc.lang, style: S.doc.styleSet ? S.doc.style : (i.coverStyle||"detailed")}; }
 function docToolbar(i, kind){
   const o=docOpts(i);
@@ -1389,7 +1498,7 @@ function docToolbar(i, kind){
 function viewDoc(kind, id){
   const i=invById(id);
   if(!i) return S.loaded.inv?`<div class="empty"><b>الفاتورة غير موجودة</b></div>`:`<div class="empty">جارٍ التحميل…</div>`;
-  const pending = i.status==="issued" && i.kind==="invoice" && ["completion","warranty","cover"].some(k=>(kind===k||kind==="pack")&&!i.docNos?.[k]?.no);
+  const pending = i.status==="issued" && i.kind==="invoice" && DOC_KINDS.some(k=>(kind===k||kind==="pack")&&!i.docNos?.[k]?.no);
   return `<div class="top"><div><h1>${DOC_AR[kind]}</h1><p><span class="code">${esc(dispNo(i))}</span> — <bdi>${esc(i.customerName)}</bdi>${pending?" — يُعطى رقم المستند تلقائياً عند التنزيل":""}</p></div>
    <div class="actions"><a class="btn ghost" href="#inv-${esc(i.id)}">${IC.back}رجوع</a>${docToolbar(i,kind)}</div></div>
    <div class="paper-wrap" id="paper-wrap"><div class="paper-scale" id="paper-scale">${docHtml(kind,i,docOpts(i))}</div></div>`;
@@ -1403,7 +1512,7 @@ function viewReceipt(id,k){
 }
 async function ensureDocNos(i, kinds){
   if(i.status!=="issued" || i.kind!=="invoice") return i;
-  const need=kinds.filter(k=>["completion","warranty","cover"].includes(k) && !i.docNos?.[k]?.no);
+  const need=kinds.filter(k=>DOC_KINDS.includes(k) && !i.docNos?.[k]?.no);
   if(!need.length) return i;
   const docNos={...(i.docNos||{})}; const now=new Date().toISOString();
   for(const k of need) docNos[k]={no:await allocate(SERIES[k]), at:now, by:actor()};
@@ -1428,7 +1537,10 @@ async function saveFile(filename, data){
   catch(e){ toast("تعذر التنزيل في هذا العرض"); return false; }
 }
 async function makePdf(html, filename){
-  if(!window.html2canvas || !window.jspdf){ toast("مكتبات PDF لم تُحمّل بعد — أعد المحاولة بعد لحظات"); return; }
+  const blob=await renderPdfBlob(html,3); if(blob) await saveFile(filename, blob);
+}
+async function renderPdfBlob(html, scale){
+  if(!window.html2canvas || !window.jspdf){ toast("مكتبات PDF لم تُحمّل بعد — أعد المحاولة بعد لحظات"); return null; }
   toast("جارٍ تجهيز ملف PDF…");
   const root=$("#render-root"); root.innerHTML=html;
   try{ await document.fonts.ready; }catch(e){}
@@ -1437,7 +1549,7 @@ async function makePdf(html, filename){
   let first=true;
   try{
     for(const sh of $$(".sheet",root)){
-      const canvas=await html2canvas(sh,{scale:3,backgroundColor:"#ffffff",useCORS:true,logging:false,windowWidth:794});
+      const canvas=await html2canvas(sh,{scale:scale||3,backgroundColor:"#ffffff",useCORS:true,logging:false,windowWidth:794});
       const pageHpx=canvas.width*297/210;
       for(let y=0; y<canvas.height-4; y+=pageHpx){
         const h=Math.min(pageHpx, canvas.height-y);
@@ -1448,7 +1560,76 @@ async function makePdf(html, filename){
       }
     }
   } finally { root.innerHTML=""; }
-  await saveFile(filename, pdf.output("blob"));
+  return pdf.output("blob");
+}
+const blobToB64 = b => new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(",")[1]); r.onerror=rej; r.readAsDataURL(b); });
+function invoiceXlsx(i){
+  if(!window.XLSX){ toast("مكتبة Excel لم تُحمّل بعد"); return; }
+  const c=calc(i); const aoa=[["Invoice No.",dispNo(i)],["Date",i.date],["Customer",i.customerNameEn||i.customerName],["Site",i.site||""],["Work Order",i.workOrder||""],["Ref",i.ref||""],[],["Ser.","Description","Unit","Qty","Unit Price","Total"]];
+  let n=0; (i.lines||[]).forEach(l=>aoa.push(l.heading?["",l.desc]:[++n,l.desc,l.unit||"",l.qty??"",l.price??"",lineTotal(l)]));
+  aoa.push([],["","","","","Sub-Total",c.sub]); (i.deductions||[]).forEach(d=>aoa.push(["","","","",d.label,-dedAmount(d,c.sub)])); aoa.push(["","","","","Discount",-(+i.discount||0)],["","","","","Net",c.total],[],["",amountEn(c.total)]);
+  const ws=XLSX.utils.aoa_to_sheet(aoa.map(r=>r.map(xlsSafe))); ws["!cols"]=[{wch:12},{wch:60},{wch:10},{wch:10},{wch:14},{wch:14}];
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Invoice");
+  saveFile(`Invoice-${safeName(dispNo(i))}.xlsx`, new Blob([XLSX.write(wb,{type:"array",bookType:"xlsx"})])); audit("تصدير فاتورة Excel", dispNo(i));
+}
+const MCP_ERR = {server_not_connected:"الحساب غير مربوط في claude.ai — اربطه من إعدادات الموصّلات",server_not_found:"الحساب غير مربوط في claude.ai",needs_reauth:"يلزم إعادة ربط الحساب في claude.ai",not_granted:"لم تُمنح الصلاحية",consent_required:"لم تُمنح الصلاحية",approval_required:"لم تُمنح الصلاحية",blocked_by_policy:"الإرسال غير مسموح في هذه المؤسسة",rate_limited:"محاولات كثيرة — انتظر قليلاً",tool_error:"رفضت الخدمة الطلب",bad_request:"بيانات غير صالحة (تحقق من البريد)"};
+function sendText(i, lang){
+  const c=calc(i), co=coFor(i).company;
+  return lang==="ar"
+    ? `السادة / ${i.customerName}\nتحية طيبة،\nنرفق لكم الفاتورة رقم ${dispNo(i)} بتاريخ ${dmy(i.date)}${i.site?" عن أعمال "+i.site:""} بمبلغ ${fmt(c.total)} ريال قطري.\nنرجو التكرم بتحويل المبلغ إلى حسابنا: ${coFor(i).bank.iban}\nمع التحية،\n${co.nameAr}`
+    : `Dear Sir / Madam,\n\nPlease find attached our Invoice No. ${dispNo(i)} dated ${dmy(i.date)}${i.site?" for "+i.site:""}${i.typeOfWorks?" ("+i.typeOfWorks+")":""}, total amount QAR ${fmt(c.total)} (${amountEn(c.total)}).\n\nKindly arrange the transfer to our account:\n${coFor(i).bank.name} — IBAN ${coFor(i).bank.iban}\n\nBest regards,\n${co.shortEn}\n${co.phone||""}`;
+}
+function waNumber(p){ const d=String(p||"").split(/[\/,]/)[0].replace(/\D/g,""); if(!d) return ""; return d.length===8?"974"+d:d; }
+function sendModal(i){
+  const mailOk=!!MCP;
+  const subj=`Invoice No. ${dispNo(i)} — ${coFor(i).company.shortEn}`;
+  modal(`<h3>إرسال / تصدير — <span class="code">${esc(dispNo(i))}</span></h3>
+   <div class="grid g2"><label class="f">إلى (البريد)<input class="i ltr" id="sd-to" value="${esc(i.customerEmail||custById(i.customerId)?.email||"")}" placeholder="client@example.com"></label><label class="f">نسخة إلى (CC)<input class="i ltr" id="sd-cc"></label></div>
+   <label class="f" style="margin-top:10px">الموضوع<input class="i ltr" id="sd-sub" value="${esc(subj)}"></label>
+   <div class="actions" style="margin-top:10px"><span class="hint">لغة الرسالة:</span><div class="seg"><button type="button" data-sl="en" class="on">English</button><button type="button" data-sl="ar">عربي</button></div>
+     <label class="chk"><input type="checkbox" id="sd-pack">إرفاق كل المستندات بدل الفاتورة فقط</label></div>
+   <label class="f" style="margin-top:10px">نص الرسالة<textarea class="i" id="sd-body" rows="8" dir="auto">${esc(sendText(i,"en"))}</textarea></label>
+   <h3 style="font-size:14px;margin:16px 0 8px">إرسال</h3>
+   <div class="actions">
+     ${mailOk?`<button class="btn primary" id="sd-gmail">مسودة Gmail مع PDF مرفق</button><button class="btn" id="sd-outlook">مسودة Outlook</button>`:`<span class="hint">البريد متاح عند فتح النظام داخل claude.ai مع ربط Gmail أو Outlook.</span>`}
+     <a class="btn" id="sd-wa" target="_blank" rel="noopener" href="#">واتساب</a>
+     <button class="btn" id="sd-copy">${IC.copy}نسخ النص</button></div>
+   <p class="hint" id="sd-res" style="margin-top:8px"></p>
+   <h3 style="font-size:14px;margin:16px 0 8px">تصدير</h3>
+   <div class="actions"><button class="btn" id="sd-pdf">${IC.pdf}PDF</button><button class="btn" id="sd-xls">${IC.xls}Excel</button></div>
+   <p class="hint" style="margin-top:8px">رسالة Outlook لا تدعم المرفقات — نزّل الـ PDF وأرفقه يدوياً. تُحفظ المسودة في بريدك ولا تُرسل إلا عندما تضغط "إرسال" هناك.</p>
+   <div class="foot"><button class="btn" data-close>إغلاق</button></div>`,(bg)=>{
+    let lang="en"; const body=$("#sd-body",bg), res=$("#sd-res",bg);
+    const wa=()=>{ const n=waNumber(i.customerPhone); $("#sd-wa",bg).href="https://wa.me/"+n+"?text="+encodeURIComponent(body.value); };
+    wa(); body.addEventListener("input",wa);
+    $$("[data-sl]",bg).forEach(b=>b.onclick=()=>{ lang=b.dataset.sl; $$("[data-sl]",bg).forEach(x=>x.classList.toggle("on",x===b)); body.value=sendText(i,lang); wa(); });
+    const emails=v=>v.split(/[;,\s]+/).map(x=>x.trim()).filter(Boolean);
+    const valid=a=>a.every(x=>/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x));
+    const log=async(ch,to)=>{ const cur=invById(i.id); await patchInvoice(i.id,{sent:[...(cur.sent||[]),{at:new Date().toISOString(),by:actor(),channel:ch,to:to.join(", ")}]},"إرسال عبر "+ch+(to.length?" إلى "+to.join(", "):"")); };
+    const showErr=e=>{ res.textContent="تعذر: "+(MCP_ERR[e&&e.code]||e&&e.message||e); };
+    const g=$("#sd-gmail",bg); if(g) g.onclick=async()=>{ const to=emails($("#sd-to",bg).value), cc=emails($("#sd-cc",bg).value); if(!to.length||!valid(to)||!valid(cc)){ res.textContent="أدخل بريداً صحيحاً"; return; }
+      g.disabled=true; res.textContent="جارٍ تجهيز المرفق وإنشاء المسودة…";
+      try{ let cur=invById(i.id); const pack=$("#sd-pack",bg).checked; if(pack) cur=await ensureDocNos(cur,["completion","warranty","cover"]);
+        const blob=await renderPdfBlob(docHtml(pack?"pack":"invoice",cur,docOpts(cur)),2); if(!blob){ g.disabled=false; return; }
+        const fn=`${pack?"Documents":"Invoice"}-${safeName(dispNo(cur))}.pdf`;
+        let lt={}; try{ lt=await MCP.listTools(); }catch(e){}
+        let content; if(lt.fileArgs) content={$file:{data:blob,name:fn,type:"application/pdf"}}; else { if(blob.size>700000){ res.textContent="الملف كبير على الإرفاق المباشر — نزّل الـ PDF وأرفقه يدوياً"; g.disabled=false; return; } content=await blobToB64(blob); }
+        const r=await MCP.callTool("Gmail","create_draft",{to,...(cc.length?{cc}:{}),subject:$("#sd-sub",bg).value,body:body.value,attachments:[{filename:fn,mimeType:"application/pdf",content}]});
+        const url=r&&r.payload&&r.payload.viewUrl; await log("Gmail",to);
+        res.innerHTML="تم إنشاء المسودة في Gmail مع المرفق."+(url?` <a href="${esc(url)}" target="_blank" rel="noopener">فتح المسودة</a>`:"");
+      }catch(e){ showErr(e); } g.disabled=false; };
+    const o=$("#sd-outlook",bg); if(o) o.onclick=async()=>{ const to=emails($("#sd-to",bg).value), cc=emails($("#sd-cc",bg).value); if(!to.length||!valid(to)||!valid(cc)){ res.textContent="أدخل بريداً صحيحاً"; return; }
+      o.disabled=true; res.textContent="جارٍ إنشاء المسودة…";
+      try{ const html=body.value.split(/\n\n+/).map(p=>"<p>"+esc(p).replace(/\n/g,"<br>")+"</p>").join("");
+        const r=await MCP.callTool("Microsoft 365","outlook_create_draft",{to,...(cc.length?{cc}:{}),subject:$("#sd-sub",bg).value,body:html,bodyType:"html"});
+        const url=r&&r.payload&&r.payload.webLink; await log("Outlook",to);
+        res.innerHTML="تم إنشاء المسودة في Outlook — أرفق ملف الـ PDF قبل الإرسال."+(url?` <a href="${esc(url)}" target="_blank" rel="noopener">فتح المسودة</a>`:"");
+      }catch(e){ showErr(e); } o.disabled=false; };
+    $("#sd-wa",bg).addEventListener("click",()=>{ log("واتساب",[]).catch(()=>{}); });
+    $("#sd-copy",bg).onclick=async()=>{ try{ await navigator.clipboard.writeText(body.value); res.textContent="تم نسخ النص"; }catch(e){ body.select(); res.textContent="حدّد النص وانسخه يدوياً"; } };
+    $("#sd-pdf",bg).onclick=()=>outputDoc($("#sd-pack",bg).checked?"pack":"invoice",i.id,"pdf").catch(e=>toast("تعذر: "+(e.message||e)));
+    $("#sd-xls",bg).onclick=()=>invoiceXlsx(invById(i.id));
+  });
 }
 const safeName = s => String(s||"doc").replace(/[^A-Za-z0-9\-_.]+/g,"-");
 async function outputDoc(kind, id, how){
@@ -1468,7 +1649,7 @@ function registerRows(){
   for(const i of S.invoices){
     if(i.no && !isLegacy(i)) rows.push({no:i.no, type:SERIES[i.kind], at:i.issuedAt||i.createdAt||i.date, inv:i, href:`#doc-invoice-${i.id}`, amount:calc(i).total, cancelled:i.status==="cancelled"});
     if(isLegacy(i)) rows.push({no:i.no, type:"XLS", at:i.date, inv:i, href:`#doc-invoice-${i.id}`, amount:calc(i).total, cancelled:i.status==="cancelled"});
-    for(const k of ["completion","warranty","cover"]) if(i.docNos?.[k]?.no) rows.push({no:i.docNos[k].no, type:SERIES[k], at:i.docNos[k].at, inv:i, href:`#doc-${k}-${i.id}`, cancelled:i.status==="cancelled"});
+    for(const k of DOC_KINDS) if(i.docNos?.[k]?.no) rows.push({no:i.docNos[k].no, type:SERIES[k], at:i.docNos[k].at, inv:i, href:`#doc-${k}-${i.id}`, cancelled:i.status==="cancelled"});
     (i.payments||[]).forEach((p,k)=>{ if(p.rcv?.no) rows.push({no:p.rcv.no, type:"RCV", at:p.rcv.at, inv:i, href:`#rcpt-${i.id}-${k}`, amount:p.amount, cancelled:!!p.reversed}); });
   }
   return rows.sort((a,b)=>String(b.at||"").localeCompare(String(a.at||"")));
@@ -1688,9 +1869,9 @@ function viewSettings(){
    ${f("t-cse","كتاب التغطية المختصر — إنجليزي",t.coverShortEn,1,1)}${f("t-csa","كتاب التغطية المختصر — عربي",t.coverShortAr,0,1)}</div></div>
   ${ro?'':`<div class="sticky-bar"><span class="hint">تنطبق على المستندات الجديدة وعلى إعادة طباعة النصوص.</span><div class="actions"><button type="button" class="btn" id="s-reset">استعادة النصوص الافتراضية</button><button class="btn primary" type="submit">حفظ الإعدادات</button></div></div>`}
   </form>
-  <div class="panel" style="margin-top:16px"><h2>المستخدمون والصلاحيات ${ro?"":`<button class="btn sm primary" id="u-add">${IC.plus}مستخدم</button>`}</h2>
-   <div class="tw"><table class="t"><thead><tr><th>اسم المستخدم</th><th>الاسم</th><th>الدور</th><th>الحالة</th><th></th></tr></thead><tbody>${(st.users||[]).map((u,k)=>`<tr><td class="code">${esc(u.u)}</td><td>${esc(u.name)}</td><td>${esc(ROLES[u.role]||u.role)}</td><td>${u.active===false?'<span class="chip cancelled">موقوف</span>':'<span class="chip paid">نشط</span>'}</td><td>${ro?"":`<button class="btn sm" data-upw="${k}">كلمة المرور</button> ${u.u!==actor()?`<button class="btn sm" data-utog="${k}">${u.active===false?"تفعيل":"إيقاف"}</button>`:""}`}</td></tr>`).join("")}</tbody></table></div>
-   <p class="hint" style="margin-top:8px"><b>الإدارة:</b> كل الشاشات ولوحة التحكم والتقارير والإلغاء والإعدادات. <b>المحاسب:</b> إدخال الفواتير واعتمادها وطباعتها، والدفعات، والعملاء، وسجل المستندات — بدون لوحة التحكم والإجماليات.<br>الحماية الفعلية للبيانات تتم من مشاركة الصفحة في claude.ai: أعطِ الإدارة صلاحية "محرر" والمحاسب "مساهم".</p></div>
+  <div class="panel" style="margin-top:16px"><h2>المستخدمون والصلاحيات ${S.canWrite?`<button class="btn sm primary" id="u-add">${IC.plus}مستخدم</button>`:""}</h2>
+   <div class="tw"><table class="t"><thead><tr><th>اسم المستخدم</th><th>الاسم الظاهر</th><th>الدور</th><th>الحالة</th><th></th></tr></thead><tbody>${allUsers().map(u=>`<tr><td class="code">${esc(u.u)}</td><td>${esc(u.name)}</td><td>${esc(ROLES[u.role]||u.role)}</td><td>${u.active===false?'<span class="chip cancelled">موقوف</span>':u.mustChange?'<span class="chip pending">كلمة مرور مؤقتة</span>':'<span class="chip paid">نشط</span>'}</td><td>${S.canWrite?`<button class="btn sm" data-uedit="${esc(u.u)}">تعديل</button> ${u.u!==actor()?`<button class="btn sm" data-utog="${esc(u.u)}">${u.active===false?"تفعيل":"إيقاف"}</button>`:""}`:""}</td></tr>`).join("")}</tbody></table></div>
+   <p class="hint" style="margin-top:8px"><b>الإدارة:</b> كل الشاشات، واعتماد الفواتير، والتقارير، والإلغاء، والإعدادات. <b>المحاسب:</b> إعداد الفواتير وإرسالها للاعتماد، والطباعة، والإرسال، والعملاء — بدون لوحة التحكم والإجماليات.<br>الحماية الفعلية للبيانات تتم من مشاركة الصفحة في claude.ai: أعطِ الإدارة صلاحية "محرر" والمحاسب "مساهم".</p></div>
   <div class="panel" style="margin-top:16px"><h2>النسخ الاحتياطي والنقل</h2>
    <p class="hint">صدّر كل البيانات (الفواتير، العملاء، الإعدادات بدون كلمات المرور، العدادات) كملف JSON واحتفظ به.</p>
    <div class="actions"><button class="btn" id="bk-exp">${IC.pdf}تصدير نسخة احتياطية</button><button class="btn" id="bk-xls">${IC.xls}تصدير كل البيانات Excel</button>
@@ -1701,11 +1882,14 @@ function viewSettings(){
 function bind(){
   const r=S.route.name;
   $$("[data-logout]").forEach(b=>b.onclick=e=>{ e.preventDefault(); logout(); });
+  $$("[data-mypw]").forEach(b=>b.onclick=()=>myPasswordModal());
   $$("[data-open]").forEach(tr=>tr.addEventListener("click",e=>{ if(e.target.closest("input,button,a")) return; go("inv-"+tr.dataset.open); }));
   if(r==="dashboard"){ const y=$("#dash-year"); y&&(y.onchange=()=>{S.year=+y.value; render();});
     $$("[data-goto-status]").forEach(a=>a.onclick=()=>{ S.list={...S.list,tab:"all",status:a.dataset.gotoStatus}; });
-    $$("[data-goto-tab]").forEach(a=>a.onclick=()=>{ S.list={...S.list,tab:a.dataset.gotoTab,status:""}; }); }
+    $$("[data-goto-tab]").forEach(a=>a.onclick=()=>{ S.list={...S.list,tab:a.dataset.gotoTab,status:""}; });
+    $$("[data-goto-rep]").forEach(a=>a.onclick=()=>{ S.repTab="grouped"; S.rep={...S.rep,group:a.dataset.gotoRep,kind:"accounts"}; }); }
   if(r==="invoices"||r==="special") bindList(r==="special");
+  if(r==="approvals") bindApprovals();
   if(r==="new"||r==="edit") bindEditor();
   if(r==="inv") bindInvoice();
   if(r.startsWith("doc-")) bindDoc(r.slice(4));
@@ -1729,6 +1913,8 @@ function bindList(special){
     const ids=[...S.selected], a=b.dataset.bulk;
     if(a==="clear"){ S.selected.clear(); render(); return; }
     if(a==="repeat"){ repeatModal(ids); return; }
+    if(a==="approve"){ const L=ids.map(invById).filter(i=>i&&["draft","pending"].includes(i.status)); if(!L.length){ toast("لا توجد مسودات أو فواتير بانتظار الاعتماد في التحديد"); return; }
+      confirmBox(`اعتماد ${L.length} فاتورة وإعطاؤها أرقاماً رسمية؟`,"اعتماد",async()=>{ for(const i of L) await issueExisting(invById(i.id),true); S.selected.clear(); toast(`تم اعتماد ${L.length} فاتورة`); }); return; }
     if(a==="pack"){ const html=ids.map(invById).filter(Boolean).map(i=>docInvoice(i,{stamp:!!i.stamp})).join(""); await makePdf(html,`Invoices-${ids.length}.pdf`); audit("تنزيل فواتير مجمعة PDF", ids.length+" فاتورة"); return; }
     if(a==="rev-paid"||a==="rev-unpaid") confirmBox(`تأكيد ${ids.length} فاتورة مستوردة كـ${a==="rev-paid"?"مدفوعة بالكامل":"غير مدفوعة"}؟ الفواتير غير المستوردة تُتجاهل.`,"تأكيد المراجعة",async()=>{
       let n=0; for(const id of ids){ const i=invById(id); if(!i||!awaitingReview(i)) continue; await reviewLegacy(i, a==="rev-paid"); n++; } S.selected.clear(); toast(`تمت مراجعة ${n} فاتورة`); });
@@ -1778,7 +1964,8 @@ function bindEditor(){
     ED.linked=ids.map(id=>{ const i=invById(id); const keep=(ED.linked||[]).find(x=>x.id===id); return keep||{id,no:dispNo(i),date:i.date,amount:calc(i).balance,desc:[i.typeOfWorks,i.site].filter(Boolean).join(" , ")||(i.lines||[]).find(l=>!l.heading&&l.desc)?.desc||"",workOrder:i.workOrder||"",site:i.site||""}; });
     const s=$("#lk-sum"); if(s) s.textContent=`${ids.length} محددة — الإجمالي ${fmt(ED.linked.reduce((a,x)=>a+(+x.amount||0),0))} ر.ق`; });
   form.addEventListener("submit",e=>{ e.preventDefault(); saveEditor(false); });
-  const si=$("#save-issue"); if(si) si.onclick=()=>saveEditor(true);
+  const si=$("#save-issue"); if(si) si.onclick=()=>saveEditor("issue");
+  const ssb=$("#save-submit"); if(ssb) ssb.onclick=()=>saveEditor("submit");
   updateTotals();
 }
 function bindInvoice(){
@@ -1786,6 +1973,9 @@ function bindInvoice(){
   const err=e=>toast("تعذر: "+(e.message||e.code||e));
   $$("[data-pdf]").forEach(b=>b.onclick=()=>outputDoc(b.dataset.pdf,i.id,"pdf").then(()=>render()).catch(err));
   const pk=$("#pack"); if(pk) pk.onclick=()=>outputDoc("pack",i.id,"pdf").then(()=>render()).catch(err);
+  const sbm=$("#submit"); if(sbm) sbm.onclick=()=>confirmBox("إرسال الفاتورة لاعتماد الإدارة؟","إرسال",async()=>{ await patchInvoice(i.id,{status:"pending",submittedAt:new Date().toISOString(),submittedBy:actor(),returnNote:null},"إرسال لاعتماد الإدارة"); toast("أُرسلت للاعتماد"); });
+  const rt=$("#return"); if(rt) rt.onclick=()=>returnModal(i);
+  const snd=$("#send"); if(snd) snd.onclick=()=>sendModal(i);
   const is=$("#issue"); if(is) is.onclick=()=>confirmBox(`اعتماد ${KIND[i.kind]} وإعطاؤها الرقم التسلسلي الرسمي؟ بعد الاعتماد تُقفل البيانات المالية.`,"اعتماد",async()=>{ await issueExisting(i); });
   const ap=$("#add-pay"); if(ap) ap.onclick=()=>paymentModal("تسجيل دفعة — "+dispNo(i), calc(i).balance, async p=>{ await patchInvoice(i.id,{payments:[...(i.payments||[]),p]},"دفعة "+fmt(p.amount)); toast("تم تسجيل الدفعة — يمكنك طباعة سند القبض"); });
   $$("[data-revpay]").forEach(b=>b.onclick=()=>confirmBox("عكس هذه الدفعة؟ تبقى ظاهرة في السجل كدفعة معكوسة ولا تُحذف.","عكس الدفعة",async reason=>{ const P=clone(i.payments); const k=+b.dataset.revpay; P[k].reversed={at:new Date().toISOString(),by:actor(),reason}; await patchInvoice(i.id,{payments:P},"عكس دفعة "+fmt(P[k].amount)+" — "+reason); toast("تم عكس الدفعة"); },true,true));
@@ -1863,21 +2053,32 @@ function bindSettings(){
     Object.keys(st.tpl.warranty).forEach(k=>{ st.tpl.warranty[k].body=v("tw-"+k+"-b"); st.tpl.warranty[k].exclusions=v("tw-"+k+"-e"); });
     try{ await Store.saveSettings(st); S.settings=deepMerge(DEFAULT_SETTINGS,st); await audit("تعديل الإعدادات","settings"); toast("تم حفظ الإعدادات"); }catch(err){ toast("تعذر حفظ الإعدادات — تحتاج صلاحية محرر"); } };
   const rs=$("#s-reset"); if(rs) rs.onclick=()=>confirmBox("استعادة نصوص النماذج الافتراضية؟ (لا تتغير بيانات الشركة والمستخدمين)","استعادة",async()=>{ const st=clone(S.settings); st.tpl=clone(DEFAULT_SETTINGS.tpl); await Store.saveSettings(st); S.settings=st; await audit("استعادة النصوص الافتراضية","settings"); toast("تمت الاستعادة"); $("#editor-form")?.remove(); render(); });
-  const ua=$("#u-add"); if(ua) ua.onclick=()=>modal(`<h3>مستخدم جديد</h3><div class="grid g2"><label class="f">اسم المستخدم (إنجليزي)<input class="i ltr" id="nu-u"></label><label class="f">الاسم الظاهر<input class="i" id="nu-n"></label>
-    <label class="f">الدور<select class="i" id="nu-r"><option value="accountant">محاسب</option><option value="admin">الإدارة (Admin / CEO)</option></select></label><label class="f">كلمة المرور (8 أحرف على الأقل)<input class="i ltr" type="password" id="nu-p" autocomplete="new-password"></label></div>
-    <div class="foot"><button class="btn" data-close>إلغاء</button><button class="btn primary" id="nu-ok">إضافة</button></div>`,(bg,close)=>{
-    $("#nu-ok",bg).onclick=async()=>{ const u=$("#nu-u",bg).value.trim().toLowerCase(), p=$("#nu-p",bg).value;
-      if(!/^[a-z0-9._-]{3,30}$/.test(u)){ toast("اسم المستخدم: حروف إنجليزية وأرقام (3 على الأقل)"); return; } if((S.settings.users||[]).some(x=>x.u===u)){ toast("اسم المستخدم مستخدم"); return; } if(p.length<8){ toast("كلمة المرور 8 أحرف على الأقل"); return; }
-      try{ const st=clone(S.settings); st.users=[...(st.users||[]), await makeUser(u,$("#nu-n",bg).value,$("#nu-r",bg).value,p)]; await Store.saveSettings(st); S.settings=st; await audit("إضافة مستخدم", u, $("#nu-r",bg).value); bg.remove(); toast("تمت إضافة المستخدم"); $("#editor-form")?.remove(); render(); }catch(e){ toast("تعذر الحفظ — تحتاج صلاحية محرر"); } };
+  const userModal=(u)=>modal(`<h3>${u?"تعديل المستخدم":"مستخدم جديد"}</h3><div class="grid g2">
+    <label class="f">اسم المستخدم (إنجليزي)<input class="i ltr" id="nu-u" value="${esc(u?.u||"")}"></label><label class="f">الاسم الظاهر<input class="i" id="nu-n" value="${esc(u?.name||"")}"></label>
+    <label class="f">الدور<select class="i" id="nu-r" ${u&&u.u===actor()?"disabled":""}><option value="accountant" ${u?.role==="accountant"?"selected":""}>محاسب</option><option value="admin" ${u?.role==="admin"?"selected":""}>الإدارة (Admin / CEO)</option></select></label>
+    <label class="f">${u?"كلمة مرور جديدة (اتركها فارغة للإبقاء)":"كلمة المرور (8 أحرف على الأقل)"}<input class="i ltr" type="password" id="nu-p" autocomplete="new-password"></label></div>
+    <label class="chk" style="margin-top:10px"><input type="checkbox" id="nu-m" ${!u||u.mustChange?"checked":""}>يطلب تغيير كلمة المرور عند الدخول التالي</label>
+    <div class="foot"><button class="btn" data-close>إلغاء</button><button class="btn primary" id="nu-ok">حفظ</button></div>`,(bg)=>{
+    $("#nu-ok",bg).onclick=async()=>{ const nu=$("#nu-u",bg).value.trim().toLowerCase(), p=$("#nu-p",bg).value, name=$("#nu-n",bg).value.trim()||nu, roleV=$("#nu-r",bg).value;
+      if(!/^[a-z0-9._-]{3,30}$/.test(nu)){ toast("اسم المستخدم: حروف إنجليزية وأرقام (3 على الأقل)"); return; }
+      if((!u||nu!==u.u) && allUsers().some(x=>x.u===nu)){ toast("اسم المستخدم مستخدم"); return; }
+      if((!u&&p.length<8)||(p&&p.length<8)){ toast("كلمة المرور 8 أحرف على الأقل"); return; }
+      const admins=allUsers().filter(x=>x.role==="admin"&&x.active!==false&&x.u!==(u&&u.u));
+      if(u&&u.role==="admin"&&roleV!=="admin"&&!admins.length){ toast("يجب أن يبقى حساب إدارة واحد على الأقل"); return; }
+      try{ const now=new Date().toISOString(); let rec=u?{...u}:{active:true,createdAt:now}; delete rec.builtin;
+        Object.assign(rec,{u:nu,name,role:roleV,mustChange:$("#nu-m",bg).checked,updatedAt:now});
+        if(p){ rec.salt=newSalt(); rec.hash=await hashPw(p,rec.salt); }
+        await saveUser(nu,rec);
+        if(u && nu!==u.u){ const old={...u}; delete old.builtin; await saveUser(u.u,{...old,active:false,renamedTo:nu,updatedAt:now}); if(S.session.u===u.u){ S.session.u=nu; ssSet("alharam-session",S.session); } }
+        await audit(u?"تعديل مستخدم":"إضافة مستخدم", nu, roleV); bg.remove(); toast("تم الحفظ"); $("#editor-form")?.remove(); render();
+      }catch(e){ toast("تعذر الحفظ: "+(e.message||e.code||e)); } };
   });
-  $$("[data-upw]").forEach(b=>b.onclick=()=>{ const k=+b.dataset.upw, u=S.settings.users[k];
-    modal(`<h3>كلمة مرور جديدة — <span class="code">${esc(u.u)}</span></h3><label class="f">كلمة المرور (8 أحرف على الأقل)<input class="i ltr" type="password" id="pw-n" autocomplete="new-password"></label><div class="foot"><button class="btn" data-close>إلغاء</button><button class="btn primary" id="pw-ok">حفظ</button></div>`,(bg,close)=>{
-      $("#pw-ok",bg).onclick=async()=>{ const p=$("#pw-n",bg).value; if(p.length<8){ toast("8 أحرف على الأقل"); return; }
-        try{ const st=clone(S.settings); const salt=newSalt(); st.users[k]={...st.users[k],salt,hash:await hashPw(p,salt)}; await Store.saveSettings(st); S.settings=st; await audit("تغيير كلمة مرور", u.u); close(); toast("تم تغيير كلمة المرور"); }catch(e){ toast("تعذر الحفظ"); } }; }); });
-  $$("[data-utog]").forEach(b=>b.onclick=async()=>{ const k=+b.dataset.utog; const st=clone(S.settings); const u=st.users[k];
-    if(u.active!==false && u.role==="admin" && st.users.filter(x=>x.role==="admin"&&x.active!==false).length<=1){ toast("لا يمكن إيقاف آخر حساب إدارة"); return; }
-    u.active = u.active===false; try{ await Store.saveSettings(st); S.settings=st; await audit(u.active?"تفعيل مستخدم":"إيقاف مستخدم", u.u); $("#editor-form")?.remove(); render(); }catch(e){ toast("تعذر الحفظ"); } });
-  $("#bk-exp").onclick=()=>{ const st=clone(S.settings); st.users=(st.users||[]).map(u=>({u:u.u,name:u.name,role:u.role,active:u.active})); const data={app:"alharam-invoices",version:2,exportedAt:new Date().toISOString(),settings:st,counters:S.counters,customers:S.customers,invoices:S.invoices}; saveFile(`Alharam-Backup-${todayISO()}.json`, JSON.stringify(data,null,1)); audit("تصدير نسخة احتياطية",""); };
+  const ua=$("#u-add"); if(ua) ua.onclick=()=>userModal(null);
+  $$("[data-uedit]").forEach(b=>b.onclick=()=>userModal(allUsers().find(x=>x.u===b.dataset.uedit)));
+  $$("[data-utog]").forEach(b=>b.onclick=async()=>{ const u={...allUsers().find(x=>x.u===b.dataset.utog)}; delete u.builtin;
+    if(u.active!==false && u.role==="admin" && allUsers().filter(x=>x.role==="admin"&&x.active!==false).length<=1){ toast("لا يمكن إيقاف آخر حساب إدارة"); return; }
+    u.active = u.active===false; try{ await saveUser(u.u,u); await audit(u.active?"تفعيل مستخدم":"إيقاف مستخدم", u.u); $("#editor-form")?.remove(); render(); }catch(e){ toast("تعذر الحفظ"); } });
+  $("#bk-exp").onclick=()=>{ const st=clone(S.settings); delete st.users; const data={app:"alharam-invoices",version:2,exportedAt:new Date().toISOString(),settings:st,counters:S.counters,customers:S.customers,invoices:S.invoices}; saveFile(`Alharam-Backup-${todayISO()}.json`, JSON.stringify(data,null,1)); audit("تصدير نسخة احتياطية",""); };
   $("#bk-xls").onclick=()=>{ if(!window.XLSX) return toast("مكتبة Excel لم تُحمّل");
     const wb=XLSX.utils.book_new(), sf=o=>{ const r={}; for(const k in o) r[k]=xlsSafe(o[k]); return r; };
     const inv=S.invoices.map(i=>{const c=calc(i);return sf({"الرقم":dispNo(i),"النوع":KIND[i.kind],"التاريخ":i.date,"العميل":i.customerName,"المدرسة":i.site||"","نوع الأعمال":i.typeOfWorks||"","أمر العمل":i.workOrder||"","المرجع":i.ref||"","الموقع":i.location||"","المجموع":c.sub,"الاستقطاعات":c.ded,"الخصم":+i.discount||0,"الصافي":c.total,"المدفوع":c.paid,"الرصيد":c.balance,"الحالة":STATUS_AR[statusOf(i)],"مستوردة":isLegacy(i)?"نعم":"","معتمدة بواسطة":i.issuedBy||""});});
@@ -1894,7 +2095,7 @@ function bindSettings(){
     confirmBox(`استعادة ${d.invoices?.length||0} فاتورة و ${d.customers?.length||0} عميل؟ السجلات بنفس المعرّف ستُستبدل. المستخدمون وكلمات المرور الحالية لا تتغير.`,"استعادة",async()=>{
       let n=0; for(const c of d.customers||[]){ const {id,...x}=c; if(okId(id)){ await Store.save("customers",id,x); n++; } }
       for(const i of d.invoices||[]){ const {id,...x}=i; if(okId(id)){ await Store.save("invoices",id,x); n++; } }
-      if(d.settings&&S.isPlatformAdmin){ const st=deepMerge(S.settings,{...d.settings,users:S.settings.users}); await Store.saveSettings(st); }
+      if(d.settings&&S.isPlatformAdmin){ const st=deepMerge(S.settings,d.settings); delete st.users; await Store.saveSettings(st); }
       await audit("استعادة نسخة احتياطية", n+" سجل"); toast(`تمت استعادة ${n} سجل`); }); }; rd.readAsText(f); };
 }
 
