@@ -186,6 +186,7 @@ table.t tfoot td{font-weight:700;background:var(--sunk)}
 .chip.issued,.chip.open{background:var(--info-bg);color:var(--info)}
 .chip.draft{background:var(--sunk);color:var(--muted)}
 .chip.cancelled{background:var(--sunk);color:var(--muted);text-decoration:line-through}
+.chip.cancelled-red{background:var(--bad-bg);color:var(--bad)}
 .chip.legacy{background:var(--gold-soft);color:var(--gold)}
 .tag{display:inline-block;padding:1px 7px;border-radius:5px;font-size:11.5px;font-weight:600;background:var(--gold-soft);color:var(--gold);white-space:nowrap}
 .tag.pf{background:var(--accent-soft);color:var(--accent)}
@@ -372,7 +373,7 @@ document.documentElement.setAttribute("dir","rtl"); document.documentElement.set
    ========================================================================== */
 const IMG = {logo:"{{LOGO}}", sign:"{{SIGN}}", stamp:"{{STAMP}}"};
 
-const APP_VERSION = "V.0.0.1";
+const APP_VERSION = "V.0.0.2";
 const CHEQUE_HTML = {{CHEQUE_HTML}};
 const SERIES = {invoice:"INV", proforma:"PRO", special:"CON", completion:"WCC", warranty:"WRN", cover:"CVL", delivery:"DN", receipt:"RCV"};
 const DOC_KINDS = ["completion","warranty","cover","delivery"];
@@ -471,7 +472,7 @@ const S = {
   invoices:[], customers:[], counters:{}, users:{}, settings:clone(DEFAULT_SETTINGS),
   loaded:{inv:false,cus:false,set:false,users:false}, stale:false,
   route:{name:"", arg:""}, year:new Date().getFullYear(),
-  list:{tab:"all", q:"", status:"", customer:"", from:"", to:""}, selected:new Set(),
+  list:{tab:"all", q:"", status:"", customer:"", from:"", to:""}, selected:new Set(), ret:{status:"open", customer:"", q:""},
   repTab:"register", rep:{from:"",to:"",customer:"",status:"",kind:"accounts",group:"month"},
   reg:{type:"", q:""}, custQ:"",
   doc:{lang:"en", style:"detailed", stamp:null}
@@ -693,10 +694,25 @@ function validateSession(){
 
 /* ---------------- routing ---------------- */
 const pendingCount = () => S.invoices.filter(i=>i.status==="pending").length;
-const ROUTE_PERM = {cheques:"cheques", approvals:"approve", dashboard:"dashboard", invoices:"invoices", special:"invoices", new:"edit", edit:"edit", inv:"invoices", register:"register", reports:"reports", customers:"customers", customer:"customers", statement:"statement", config:"settings", audit:"audit", sequences:"reports", rcpt:"print"};
+/* ---------- retention (amounts held by the client for a period) ---------- */
+const RET_RE=/retention|retintion|retension|retaining|محتجز|احتجاز/i;
+function retAmount(i){ if(!i||i.kind!=="invoice"||i.status!=="issued") return 0; const sub=calc(i).sub;
+  return r2((i.discType==="retention"?discAmt(i,sub):0)+(i.deductions||[]).filter(d=>RET_RE.test(d.label||"")).reduce((s,d)=>s+dedAmount(d,sub),0)); }
+function retInfo(i){
+  const amount=retAmount(i); if(!(amount>0.004)) return null;
+  const months=Number(i.retentionMonths)||12, base=i.completedDate||i.date, due=addMonths(base,months);
+  const rel=i.retention&&i.retention.releasedAt?i.retention:null, left=daysUntil(due);
+  const status=rel?"released":left<0?"expired":left<=30?"due":"held";
+  return {amount, months, base, due, left, status, rel, collected:rel?Number(rel.amount)||amount:0};
+}
+const daysUntil = iso => Math.round((new Date(iso+"T00:00:00")-new Date(todayISO()+"T00:00:00"))/86400000);
+const RET_AR={held:"محتجزة",due:"تستحق خلال 30 يوماً",expired:"انتهت المدة — للتحصيل",released:"تم التحصيل"};
+const RET_CHIP={held:"issued",due:"pending",expired:"cancelled-red",released:"paid"};
+const retAlerts = () => S.invoices.map(retInfo).filter(r=>r&&(r.status==="due"||r.status==="expired")).length;
+const ROUTE_PERM = {retentions:"retention", cheques:"cheques", approvals:"approve", dashboard:"dashboard", invoices:"invoices", special:"invoices", new:"edit", edit:"edit", inv:"invoices", register:"register", reports:"reports", customers:"customers", customer:"customers", statement:"statement", config:"settings", audit:"audit", sequences:"reports", rcpt:"print"};
 function parseHash(){
   const h=decodeURIComponent((location.hash||"").slice(1));
-  const simple=["cheques","approvals","dashboard","invoices","special","register","reports","customers","config","audit","sequences"];
+  const simple=["retentions","cheques","approvals","dashboard","invoices","special","register","reports","customers","config","audit","sequences"];
   if(!h) return {name:"", arg:""};
   if(simple.includes(h)) return {name:h, arg:""};
   if(h==="new"||h==="new-invoice") return {name:"new",arg:"invoice"};
@@ -761,7 +777,7 @@ const IC = {
 
 /* ---------------- shell ---------------- */
 const NAV=[
-  ["dashboard","لوحة التحكم",IC.dash,"dashboard"],["approvals","بانتظار الاعتماد",IC.check,"approve"],["invoices","الفواتير",IC.inv,"invoices"],["new","فاتورة جديدة",IC.plus,"edit"],
+  ["dashboard","لوحة التحكم",IC.dash,"dashboard"],["approvals","بانتظار الاعتماد",IC.check,"approve"],["retentions","المحتجزات",IC.lock,"retention"],["invoices","الفواتير",IC.inv,"invoices"],["new","فاتورة جديدة",IC.plus,"edit"],
   ["special","الفواتير المجمعة",IC.stack,"invoices"],["register","سجل المستندات",IC.reg,"register"],["reports","التقارير",IC.rep,"reports"],["cheques","الشيكات",IC.cheque,"cheques"],
   ["sep"],["customers","العملاء",IC.users,"customers"],["sequences","التسلسل",IC.hash,"reports"],["audit","سجل التدقيق",IC.shield,"audit"],["config","الإعدادات",IC.gear,"settings"]
 ];
@@ -774,7 +790,7 @@ function shell(content){
   return `<div class="shell">
   <aside class="rail">
     <div class="brand"><img src="${IMG.logo}" alt=""><div><b>الحرم</b><small>نظام الفواتير والمستندات · <span class="ver">${APP_VERSION}</span></small></div></div>
-    <nav class="nav" aria-label="الأقسام">${items.map(x=>x[0]==="sep"?'<div class="sep"></div>':`<a href="#${x[0]}" class="${navActive(x[0])?"on":""}">${x[2]}<span>${x[1]}</span>${x[0]==="approvals"&&pendingCount()?`<b class="nbadge">${pendingCount()}</b>`:""}</a>`).join("")}</nav>
+    <nav class="nav" aria-label="الأقسام">${items.map(x=>x[0]==="sep"?'<div class="sep"></div>':`<a href="#${x[0]}" class="${navActive(x[0])?"on":""}">${x[2]}<span>${x[1]}</span>${x[0]==="approvals"&&pendingCount()?`<b class="nbadge">${pendingCount()}</b>`:""}${x[0]==="retentions"&&retAlerts()?`<b class="nbadge">${retAlerts()}</b>`:""}</a>`).join("")}</nav>
     <div class="rail-foot">
       <div class="who"><span class="av">${esc((s.name||s.u||"?").trim().charAt(0).toUpperCase())}</span><div style="min-width:0;flex:1"><b>${esc(s.name)}</b>${esc(ROLES[s.role]||s.role)}</div><button class="iconbtn" data-mypw title="تغيير كلمة المرور" aria-label="تغيير كلمة المرور">${IC.lock}</button><button class="iconbtn" data-logout title="تسجيل الخروج" aria-label="تسجيل الخروج">${IC.out}</button></div>
       ${connLabel()}${!S.canWrite?'<span>صلاحية عرض فقط على هذه المشاركة</span>':''}
@@ -800,6 +816,7 @@ function render(){
   try{
     if(r==="dashboard") html=viewDashboard();
     else if(r==="approvals") html=viewApprovals();
+    else if(r==="retentions") html=viewRetentions();
     else if(r==="cheques") html=`<div id="chq-slot"></div>`;
     else if(r==="invoices") html=viewInvoices(false);
     else if(r==="special") html=viewInvoices(true);
@@ -916,6 +933,7 @@ function viewDashboard(){
     <div class="kpi"><a href="#reports" data-goto-bal style="color:inherit;text-decoration:none"><div class="l">المستحق لدى العملاء</div><div class="v">${fmt(outstanding)} <small>ر.ق</small></div><div class="s">${openCount} فاتورة لم تُسدد بالكامل</div></a></div>
     <div class="kpi"><div class="l">متوسط قيمة الفاتورة</div><div class="v">${fmt(acc.length?invoiced/acc.length:0)} <small>ر.ق</small></div><div class="s">${docsY} مستند صادر — آخر رقم <span class="code">${esc(lastSerial("INV")||"—")}</span></div></div>
   </div>
+  ${(()=>{ const R=S.invoices.map(retInfo).filter(Boolean), ex=R.filter(r=>r.status==="expired"), du=R.filter(r=>r.status==="due"); if(!ex.length&&!du.length) return ""; return `<a class="banner bad" href="#retentions" style="text-decoration:none;margin:0"><span><b>تنبيه المحتجزات:</b> ${ex.length?`${ex.length} محتجزات انتهت مدتها بقيمة ${fmt(ex.reduce((s,r)=>s+r.amount,0))} ر.ق`:""}${ex.length&&du.length?" — ":""}${du.length?`${du.length} تستحق خلال 30 يوماً بقيمة ${fmt(du.reduce((s,r)=>s+r.amount,0))} ر.ق`:""}</span><span class="btn sm">عرض المحتجزات</span></a>`; })()}
   <div class="kpis mini">
     <a class="kpi" href="#approvals"><div class="l">بانتظار اعتماد الإدارة</div><div class="v" style="${pend.length?"color:var(--c-line)":""}">${pend.length}</div></a>
     <a class="kpi" href="#invoices" data-goto-status="draft"><div class="l">مسودات لم تُرسل</div><div class="v">${drafts.length}</div></a>
@@ -945,6 +963,7 @@ function viewDashboard(){
     <div class="card"><h3>الفوترة حسب الربع <small>${Y} مقابل ${Y-1}</small></h3>${[0,1,2,3].map(q=>{ const a=mi.slice(q*3,q*3+3).reduce((x,y)=>x+y,0), b=mp.slice(q*3,q*3+3).reduce((x,y)=>x+y,0); return `<div class="rowcard"><span>الربع ${q+1}</span><span class="num" style="color:var(--muted)">${fmt0(b)}</span><b>${fmt0(a)} ${b?delta(a,b):""}</b></div>`; }).join("")}</div>
     <div class="card"><h3>تنبيهات</h3>
       <div class="rowcard"><span>فواتير معتمدة تنقصها بيانات الشهادات</span><b>${missingCert.length}</b></div>
+      <a class="rowcard" href="#retentions" style="text-decoration:none;color:inherit"><span>محتجزات انتهت مدتها أو تستحق خلال 30 يوماً</span><b>${retAlerts()}</b></a>
       <div class="rowcard"><span>بانتظار اعتماد الإدارة</span><b>${pend.length}</b></div>
       <div class="rowcard"><span>مسودات لم تُرسل</span><b>${drafts.length}</b></div>
       <div class="rowcard"><span>آخر رقم فاتورة</span><b class="code">${esc(lastSerial("INV")||"—")}</b></div></div>
@@ -1054,6 +1073,62 @@ function mountCheques(){
   slot.appendChild(CHQ_HOST);
 }
 
+/* ---------------- retentions ---------------- */
+function retRows(){
+  return S.invoices.map(i=>({i, r:retInfo(i)})).filter(x=>x.r).sort((a,b)=>a.r.due.localeCompare(b.r.due));
+}
+function viewRetentions(){
+  const all=retRows(), F=S.ret, q=F.q.trim().toLowerCase();
+  const list=all.filter(({i,r})=>(F.status==="all"||(F.status==="open"?r.status!=="released":r.status===F.status))&&(!F.customer||i.customerId===F.customer)&&(!q||[dispNo(i),i.customerName,i.site].join(" ").toLowerCase().includes(q)));
+  const sum=f=>r2(all.filter(f).reduce((s,x)=>s+x.r.amount,0)), cnt=f=>all.filter(f).length;
+  const cy=String(new Date().getFullYear());
+  const custs=[...new Map(all.map(x=>[x.i.customerId,x.i.customerName])).entries()];
+  return `<div class="top"><div><h1>المحتجزات (Retention)</h1><p>مبالغ يحتجزها العملاء من الفواتير لمدة محددة. يُنبَّه عند اقتراب انتهاء المدة، ويُسجَّل التحصيل عند استلامها.</p></div>
+   <div class="actions"><button class="btn" id="ret-xls">${IC.xls}تصدير Excel</button></div></div>
+   <div class="kpis" style="margin-bottom:16px">
+    <div class="kpi lead"><div class="l">محتجزات قائمة لم تُحصّل</div><div class="v">${fmt(sum(x=>x.r.status!=="released"))} <small>ر.ق</small></div><div class="s">${cnt(x=>x.r.status!=="released")} فاتورة</div></div>
+    <div class="kpi"><div class="l">انتهت مدتها — للتحصيل</div><div class="v" style="color:var(--bad)">${fmt(sum(x=>x.r.status==="expired"))} <small>ر.ق</small></div><div class="s">${cnt(x=>x.r.status==="expired")} فاتورة</div></div>
+    <div class="kpi"><div class="l">تستحق خلال 30 يوماً</div><div class="v" style="color:var(--warn)">${fmt(sum(x=>x.r.status==="due"))} <small>ر.ق</small></div><div class="s">${cnt(x=>x.r.status==="due")} فاتورة</div></div>
+    <div class="kpi"><div class="l">حُصّلت خلال ${cy}</div><div class="v">${fmt(r2(all.filter(x=>x.r.rel&&String(x.r.rel.releasedAt).startsWith(cy)).reduce((s,x)=>s+x.r.collected,0)))} <small>ر.ق</small></div><div class="s">${cnt(x=>x.r.status==="released")} محتجزات محصلة إجمالاً</div></div>
+   </div>
+   <div class="filters">
+    <label class="f">الحالة<select class="i" id="rt-st">${[["open","كل غير المحصلة"],["expired",RET_AR.expired],["due",RET_AR.due],["held",RET_AR.held],["released",RET_AR.released],["all","الكل"]].map(([k,l])=>`<option value="${k}" ${F.status===k?"selected":""}>${l}</option>`).join("")}</select></label>
+    <label class="f">العميل<select class="i" id="rt-cu"><option value="">كل العملاء</option>${custs.map(([id,n])=>`<option value="${esc(id)}" ${F.customer===id?"selected":""}>${esc(n)}</option>`).join("")}</select></label>
+    <label class="f">بحث<input class="i" id="rt-q" value="${esc(F.q)}" placeholder="رقم الفاتورة، العميل، الموقع"></label>
+   </div>
+   <div class="actions" style="margin-bottom:10px" id="rt-bulk" hidden><span class="muted" id="rt-n"></span>${can("pay")?'<button class="btn sm primary" id="rt-collect">تسجيل التحصيل للمحدد</button>':''}</div>
+   ${list.length?`<div class="tw"><table class="t"><thead><tr><th><input type="checkbox" id="rt-all" aria-label="تحديد الكل"></th><th>الفاتورة</th><th>العميل</th><th>تاريخ الإنجاز</th><th class="n">المحتجز</th><th>المدة</th><th>تاريخ الاستحقاق</th><th>المتبقي</th><th>الحالة</th><th></th></tr></thead><tbody>
+   ${list.map(({i,r})=>`<tr class="click" data-open="${esc(i.id)}"><td>${r.rel?"":`<input type="checkbox" class="rt-sel" value="${esc(i.id)}" aria-label="تحديد">`}</td><td class="code">${esc(dispNo(i))}</td><td><bdi>${esc(i.customerName)}</bdi></td><td class="num">${dmy(r.base)}</td><td class="n">${fmt(r.amount)}</td><td>${r.months} شهر</td><td class="num">${dmy(r.due)}</td><td class="num">${r.rel?"—":r.left>=0?r.left+" يوم":`<b style="color:var(--bad)">متأخرة ${-r.left} يوم</b>`}</td><td><span class="chip ${RET_CHIP[r.status]}">${RET_AR[r.status]}</span>${r.rel?`<div class="hint">${dmy(r.rel.releasedAt)} — ${fmt(r.rel.amount)}</div>`:""}</td><td>${!r.rel&&can("pay")?`<button class="btn sm" data-rc="${esc(i.id)}">تحصيل</button>`:""}</td></tr>`).join("")}
+   </tbody><tfoot><tr><td></td><td colspan="3">الإجمالي (${list.length})</td><td class="n">${fmt(list.reduce((s,x)=>s+x.r.amount,0))}</td><td colspan="5"></td></tr></tfoot></table></div>`
+   :'<div class="empty"><b>لا توجد محتجزات مطابقة</b>تظهر هنا الفواتير المعتمدة التي فيها استقطاع محتجزات (Retention) — من خانة الخصم أو من الاستقطاعات.</div>'}`;
+}
+function retCollectModal(ids){
+  const L=ids.map(invById).filter(i=>i&&retInfo(i)&&!retInfo(i).rel); if(!L.length){ toast("لا توجد محتجزات قابلة للتحصيل في التحديد"); return; }
+  const one=L.length===1, r0=retInfo(L[0]);
+  modal(`<h3>تسجيل تحصيل المحتجزات ${one?"— <span class=\"code\">"+esc(dispNo(L[0]))+"</span>":"("+L.length+" فواتير)"}</h3>
+   <div class="grid g2"><label class="f">تاريخ التحصيل<input type="date" class="i" id="rc-d" value="${todayISO()}"></label>
+   ${one?`<label class="f">المبلغ المحصل<input class="i ltr" id="rc-a" inputmode="decimal" value="${r0.amount}"></label>`:`<div class="f"><span class="hint">الإجمالي</span><b class="num">${fmt(L.reduce((s,i)=>s+retInfo(i).amount,0))} ر.ق</b></div>`}
+   <label class="f span2">المرجع (شيك / تحويل)<input class="i ltr" id="rc-r"></label></div>
+   <div class="foot"><button class="btn" data-close>إلغاء</button><button class="btn primary" id="rc-ok">تسجيل</button></div>`,(bg)=>{
+    $("#rc-ok",bg).onclick=async()=>{ const d=$("#rc-d",bg).value||todayISO(), ref=$("#rc-r",bg).value.trim(); let amt=one?r2($("#rc-a",bg).value.replace(/,/g,"")):null;
+      if(one&&!(amt>0)){ toast("أدخل مبلغاً صحيحاً"); return; } bg.remove();
+      try{ for(const i of L){ const r=retInfo(invById(i.id)); await patchInvoice(i.id,{retention:{releasedAt:d,amount:one?amt:r.amount,ref,by:actor(),at:new Date().toISOString()}},"تحصيل محتجزات "+fmt(one?amt:r.amount)); }
+        toast(one?"تم تسجيل التحصيل":`تم تسجيل تحصيل ${L.length} محتجزات`); }catch(e){ toast("تعذر الحفظ: "+(e.message||e.code||e)); } renderSoon(); };
+  });
+}
+function bindRetentions(){
+  $("#rt-st").onchange=e=>{ S.ret.status=e.target.value; render(); };
+  $("#rt-cu").onchange=e=>{ S.ret.customer=e.target.value; render(); };
+  liveInput("#rt-q",v=>S.ret.q=v);
+  const upd=()=>{ const n=$$(".rt-sel:checked").length, b=$("#rt-bulk"); if(b){ b.hidden=!n; $("#rt-n").textContent=n+" محددة:"; } };
+  $$(".rt-sel").forEach(c=>c.onchange=upd);
+  const all=$("#rt-all"); if(all) all.onchange=()=>{ $$(".rt-sel").forEach(c=>c.checked=all.checked); upd(); };
+  const bc=$("#rt-collect"); if(bc) bc.onclick=()=>retCollectModal($$(".rt-sel:checked").map(c=>c.value));
+  $$("[data-rc]").forEach(b=>b.onclick=e=>{ e.stopPropagation(); retCollectModal([b.dataset.rc]); });
+  $("#ret-xls").onclick=()=>exportXlsx({head:["الفاتورة","العميل","تاريخ الإنجاز","المحتجز","المدة (شهر)","تاريخ الاستحقاق","الأيام المتبقية","الحالة","تاريخ التحصيل","المبلغ المحصل","المرجع"],
+    rows:retRows().map(({i,r})=>[dispNo(i),i.customerName||"",r.base,r.amount,r.months,r.due,r.rel?"":r.left,RET_AR[r.status],r.rel?r.rel.releasedAt:"",r.rel?Number(r.rel.amount):"",r.rel?r.rel.ref||"":""])},"Alharam-Retentions-"+todayISO());
+}
+
 /* ---------------- management approval ---------------- */
 function viewApprovals(){
   const L=S.invoices.filter(i=>i.status==="pending").sort((a,b)=>String(a.submittedAt||"").localeCompare(String(b.submittedAt||"")));
@@ -1127,6 +1202,7 @@ function viewEditor(id, kind){
       <label class="f">موقع المشروع (Located)<input class="i ltr" id="e-loc" value="${esc(e.location)}" list="dl-loc" placeholder="Zone 1 In MOEHE Building Fabric Project"></label>
       <label class="f">المدرسة / الموقع (School / Site)<input class="i ltr" id="e-site" value="${esc(e.site)}" list="dl-site" placeholder="Hassan ibn Thabit Secondary School for Boys"></label>
       <label class="f">تاريخ إنجاز الأعمال<input type="date" class="i" id="e-comp" value="${esc(e.completedDate||"")}"></label>
+      <label class="f">مدة احتجاز المحتجزات (بالأشهر)<input class="i ltr" id="e-retm" value="${esc(e.retentionMonths??12)}" inputmode="numeric" title="تُحسب من تاريخ إنجاز الأعمال، ويُنبَّه عند انتهائها"></label>
       <label class="f">مدة الضمان (بالأشهر)<input class="i ltr" id="e-wm" value="${esc(e.warrantyMonths??12)}" inputmode="numeric"></label>
       <label class="f">نموذج الضمان<select class="i" id="e-wt"><option value="auto" ${(!e.warrantyType||e.warrantyType==="auto")?"selected":""}>تلقائي حسب نوع الأعمال</option>${Object.entries(S.settings.tpl.warranty).map(([k,v])=>`<option value="${k}" ${e.warrantyType===k?"selected":""}>${esc(v.label)}</option>`).join("")}</select></label>
       <label class="f">الأعمال المنجزة (اختياري — يحل محل البنود في شهادة الإنجاز)<input class="i ltr" id="e-wl" value="${esc(e.worksList||"")}"></label>
@@ -1167,6 +1243,7 @@ function readEditor(){
   const set=(k,val)=>{ if(val!==undefined) ED[k]=val; };
   set("date",v("e-date")); set("typeOfWorks",v("e-tow")?.trim()); set("ref",v("e-ref")?.trim()); set("workOrder",v("e-wo")?.trim());
   set("location",v("e-loc")?.trim()); set("site",v("e-site")?.trim()); set("completedDate",v("e-comp")); set("worksList",v("e-wl")?.trim());
+  if(v("e-retm")!==undefined) ED.retentionMonths=Math.max(0,parseInt(v("e-retm"),10)||0)||12;
   set("warrantyType",v("e-wt")); set("notes",v("e-notes")); set("purpose",v("e-purpose")?.trim()); set("coverStyle",v("e-cov"));
   if(v("e-wm")!==undefined) ED.warrantyMonths=Math.max(0,parseInt(v("e-wm"),10)||0);
   if(v("e-disc")!==undefined) ED.discount=r2(String(v("e-disc")).replace(/,/g,""));
@@ -1214,7 +1291,7 @@ async function saveEditor(mode){
   try{
     const now=new Date().toISOString();
     if(locked){
-      const keep=["typeOfWorks","ref","workOrder","location","site","completedDate","warrantyMonths","warrantyType","worksList","notes","stamp","coverStyle","purpose"];
+      const keep=["retentionMonths","typeOfWorks","ref","workOrder","location","site","completedDate","warrantyMonths","warrantyType","worksList","notes","stamp","coverStyle","purpose"];
       const data={...orig}; delete data.id; keep.forEach(k=>{ if(ED[k]!==undefined) data[k]=ED[k]; }); data.warranty=warrantyText(data); data.updatedAt=now; data.updatedBy=actor();
       data.history=[...(orig.history||[]),{at:now,by:actor(),action:"تعديل بيانات المشروع/الطباعة"}].slice(-40);
       await Store.save("invoices",id0,data); await audit("تعديل بيانات فاتورة معتمدة", orig.no);
@@ -1379,6 +1456,11 @@ function viewInvoice(id){
     :(i.kind==="invoice"&&!draft&&!pending?`<div class="panel"><h2>الدفعات وسندات القبض <small>اختياري — متابعة التحصيل في QuickBooks</small> ${can("pay")&&!cancelled&&c.balance>0.004?'<button class="btn sm primary" id="add-pay">'+IC.plus+'دفعة</button>':''}</h2>
       ${(i.payments||[]).length?`<div class="tw"><table class="t"><thead><tr><th>التاريخ</th><th>الطريقة / المرجع</th><th class="n">المبلغ</th><th>السند</th><th></th></tr></thead><tbody>${i.payments.map((p,k)=>`<tr style="${p.reversed?"opacity:.55":""}"><td class="num">${dmy(p.date)}</td><td>${esc(p.method||"")} <span class="ltr muted">${esc(p.ref||"")}</span>${p.reversed?`<div class="hint">معكوسة: ${esc(p.reversed.reason||"")}</div>`:""}</td><td class="n">${fmt(p.amount)}</td><td>${p.reversed?'<span class="tag lg">معكوسة</span>':`<a class="btn sm" href="#rcpt-${esc(i.id)}-${k}">${p.rcv?.no?`<span class="code">${esc(p.rcv.no)}</span>`:"سند قبض"}</a>`}</td><td>${!p.reversed&&isAdmin()?`<button class="iconbtn" data-revpay="${k}" title="عكس الدفعة" aria-label="عكس الدفعة">${IC.trash}</button>`:''}</td></tr>`).join("")}</tbody></table></div>`:'<p class="hint">لا توجد دفعات مسجلة.</p>'}
     </div>`:"")}
+    ${(()=>{ const r=retInfo(i); if(!r) return ""; return `<div class="panel"><h2>المحتجزات (Retention) <span class="chip ${RET_CHIP[r.status]}">${RET_AR[r.status]}</span></h2><dl class="dl">
+      <dt>المبلغ المحتجز</dt><dd class="num"><b>${fmt(r.amount)}</b> ر.ق</dd><dt>المدة</dt><dd>${r.months} شهراً من ${dmy(r.base)}</dd>
+      <dt>تاريخ الاستحقاق</dt><dd>${dmy(r.due)} ${r.rel?"":r.left>=0?`<span class="hint">(بعد ${r.left} يوماً)</span>`:`<span class="hint" style="color:var(--bad)">(منذ ${-r.left} يوماً)</span>`}</dd>
+      ${r.rel?`<dt>التحصيل</dt><dd>${fmt(r.rel.amount)} ر.ق بتاريخ ${dmy(r.rel.releasedAt)} ${r.rel.ref?"— "+esc(r.rel.ref):""} <span class="hint">(${esc(r.rel.by||"")})</span></dd>`:""}</dl>
+      <div class="actions" style="margin-top:10px">${!r.rel&&can("pay")?`<button class="btn sm primary" id="ret-collect">تسجيل تحصيل المحتجزات</button>`:""}${r.rel&&isAdmin()?`<button class="btn sm" id="ret-undo">إلغاء تسجيل التحصيل</button>`:""}</div></div>`; })()}
     <div class="panel"><h2>سجل العمليات</h2>${(i.history||[]).slice().reverse().map(h=>`<div class="hint">${esc(h.action)} — ${new Date(h.at).toLocaleString("en-GB")} ${h.by?"— "+esc(h.by):""}</div>`).join("")||'<p class="hint">—</p>'}
       <div class="actions" style="margin-top:10px">
       ${(draft||pending)&&can("edit")?`<button class="btn sm danger" id="del-draft">${IC.trash}حذف المسودة</button>`:''}
@@ -1952,6 +2034,7 @@ function bind(){
     $$("[data-stmt]").forEach(tr=>tr.onclick=()=>{ if(tr.dataset.stmt) go("statement-"+tr.dataset.stmt); }); }
   if(r==="invoices"||r==="special") bindList(r==="special");
   if(r==="approvals") bindApprovals();
+  if(r==="retentions") bindRetentions();
   if(r==="cheques") mountCheques();
   if(r==="new"||r==="edit") bindEditor();
   if(r==="inv") bindInvoice();
@@ -2040,6 +2123,8 @@ function bindInvoice(){
   const pk=$("#pack"); if(pk) pk.onclick=()=>outputDoc("pack",i.id,"pdf").then(()=>render()).catch(err);
   const sbm=$("#submit"); if(sbm) sbm.onclick=()=>confirmBox("إرسال الفاتورة لاعتماد الإدارة؟","إرسال",async()=>{ await patchInvoice(i.id,{status:"pending",submittedAt:new Date().toISOString(),submittedBy:actor(),returnNote:null},"إرسال لاعتماد الإدارة"); toast("أُرسلت للاعتماد"); });
   const rt=$("#return"); if(rt) rt.onclick=()=>returnModal(i);
+  const rc=$("#ret-collect"); if(rc) rc.onclick=()=>retCollectModal([i.id]);
+  const rtu=$("#ret-undo"); if(rtu) rtu.onclick=()=>confirmBox("إلغاء تسجيل تحصيل المحتجزات لهذه الفاتورة؟","إلغاء التسجيل",async()=>{ await patchInvoice(i.id,{retention:null},"إلغاء تسجيل تحصيل المحتجزات"); toast("تم الإلغاء"); },true);
   const snd=$("#send"); if(snd) snd.onclick=()=>sendModal(i);
   const is=$("#issue"); if(is) is.onclick=()=>confirmBox(`اعتماد ${KIND[i.kind]} وإعطاؤها الرقم التسلسلي الرسمي؟ بعد الاعتماد تُقفل البيانات المالية.`,"اعتماد",async()=>{ await issueExisting(i); });
   const ap=$("#add-pay"); if(ap) ap.onclick=()=>paymentModal("تسجيل دفعة — "+dispNo(i), calc(i).balance, async p=>{ await patchInvoice(i.id,{payments:[...(i.payments||[]),p]},"دفعة "+fmt(p.amount)); toast("تم تسجيل الدفعة — يمكنك طباعة سند القبض"); });
