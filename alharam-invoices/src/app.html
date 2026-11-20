@@ -211,6 +211,10 @@ table.t tfoot td{font-weight:700;background:var(--sunk)}
 .hbar .bar i{display:block;height:100%;background:var(--accent)}
 
 /* editor */
+.ghead{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) minmax(0,.85fr) minmax(0,2.6fr)}
+@media (max-width:860px){.ghead{grid-template-columns:repeat(2,minmax(0,1fr))}.ghead .wide{grid-column:1/-1}}
+@media (max-width:520px){.ghead{grid-template-columns:minmax(0,1fr)}}
+.disc{display:flex;gap:6px;align-items:center}.disc select{width:auto}.disc input{width:72px}
 table.lines{width:100%;border-collapse:collapse;min-width:680px}
 table.lines th{font-size:12px;color:var(--muted);font-weight:600;text-align:start;padding:6px;background:var(--sunk);white-space:nowrap}
 table.lines td{padding:4px;border-top:1px solid var(--line);vertical-align:top}
@@ -265,9 +269,11 @@ table.lines td.tot{padding:10px 8px;text-align:end;font-weight:600;white-space:n
 .sheet table{border-collapse:collapse;width:100%;color:var(--paper-ink);font-family:inherit}
 .sheet td,.sheet th{color:var(--paper-ink)}
 .sheet .ar{font-family:var(--f-doc-ar);direction:rtl;unicode-bidi:isolate}
-.lh{display:grid;grid-template-columns:minmax(0,1fr) 78px;gap:16px;align-items:center;padding-bottom:10px;border-bottom:1.5px solid var(--paper-gold)}
-.lh .co{font-family:var(--f-doc-sans);font-size:12.5px;line-height:1.55;text-align:center}
-.lh .co .r1{font-size:13.5px;font-weight:700}
+.lh{display:grid;grid-template-columns:minmax(0,1fr) 80px;gap:18px;align-items:center;padding-bottom:12px;border-bottom:2px solid var(--paper-gold);position:relative}
+.lh::after{content:"";position:absolute;left:0;right:0;bottom:-5px;border-bottom:1px solid var(--paper-navy);opacity:.55}
+.lh .co{font-family:var(--f-doc-sans);font-size:11.5px;line-height:1.6;color:#333}
+.lh .co .r0{font-family:var(--f-doc);font-size:19px;font-weight:700;color:var(--paper-navy);letter-spacing:.3px;line-height:1.25;margin-bottom:3px}
+.lh .co .r1{font-weight:700;color:#222}
 .lh .co .ar{font-family:var(--f-doc-ar)}
 .lh img{width:74px;justify-self:end}
 .dateno{display:flex;justify-content:space-between;align-items:baseline;margin-top:16px;font-size:14px}
@@ -281,7 +287,7 @@ table.lines td.tot{padding:10px 8px;text-align:end;font-weight:600;white-space:n
 .doc-title{text-align:center;margin:16px 0 12px}
 .doc-title b{display:inline-block;font-size:22px;letter-spacing:3px;border-top:3px double var(--paper-navy);border-bottom:3px double var(--paper-navy);padding:3px 26px}
 .doc-title small{display:block;font-size:12.5px;color:#444;margin-top:4px}
-.billto{display:grid;grid-template-columns:auto minmax(0,1.3fr) auto minmax(0,1fr);gap:4px 10px;margin-bottom:12px;font-size:13.5px}
+.billto{display:grid;grid-template-columns:auto minmax(0,2fr) auto minmax(0,1fr);gap:4px 10px;margin-bottom:12px;font-size:13.5px}
 .billto b{white-space:nowrap}
 .billto .v{min-width:0;overflow-wrap:anywhere;font-family:var(--f-doc-sans);font-weight:700;font-size:12.5px}
 .purpose{font-size:13.5px;margin:-4px 0 12px}
@@ -297,6 +303,10 @@ table.items tr.pad td{height:26px}
 table.tot td{padding:4px 8px;font-size:13px;font-family:var(--f-doc-sans)}
 table.tot td:last-child{background:var(--paper-blue);border:1px solid #9FB4D0;text-align:right;font-variant-numeric:tabular-nums;width:110px}
 table.tot tr.net td{font-weight:700}
+.bankbox{margin-top:18px;border:1px solid #9AA6BF;border-left:4px solid var(--paper-navy);padding:7px 12px;font-family:var(--f-doc-sans);font-size:11.5px;line-height:1.7;display:grid;grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr);gap:0 10px;width:92%;background:#F8F9FC}
+.bankbox .t{grid-column:1/-1;font-weight:700;color:var(--paper-navy);font-size:12px;letter-spacing:.4px;text-transform:uppercase}
+.bankbox b{white-space:nowrap;color:#444}
+.bankbox span{min-width:0;overflow-wrap:anywhere}
 table.bank{width:auto;min-width:420px;margin-top:20px;font-family:var(--f-doc-sans);font-size:12px}
 table.bank td{border:1px solid var(--paper-line);padding:2px 8px}
 table.bank tr.hd td{background:#E7E6E6;font-family:var(--f-doc);font-weight:700;font-size:14px;border-bottom:2px solid var(--paper-line)}
@@ -309,7 +319,7 @@ table.bank td:first-child{font-weight:700;white-space:nowrap}
 .stampbox img.sign{position:absolute;width:150px;bottom:24px;left:80px}
 .signs3{margin-top:auto;padding-top:20px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px;text-align:center;font-size:13px}
 .signs3>div>div:last-child{border-top:1px solid var(--paper-line);padding-top:5px}
-.foot{position:absolute;left:40px;right:40px;bottom:22px;border-top:1px solid #999;padding-top:6px;text-align:center;font-family:var(--f-doc-sans);font-size:11.5px;color:#333}
+.foot{position:absolute;left:40px;right:40px;bottom:22px;border-top:1px solid var(--paper-gold);padding-top:7px;text-align:center;font-family:var(--f-doc-sans);font-size:12px;color:var(--paper-navy);letter-spacing:.6px}
 .cert-meta{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:20px;margin-top:16px;align-items:start}
 table.kv td{border:1px solid var(--paper-line);padding:4px 8px;font-size:12.5px;vertical-align:top;font-family:var(--f-doc-sans)}
 table.kv td:first-child{font-weight:700;background:var(--paper-soft);white-space:nowrap;width:1%}
@@ -360,7 +370,7 @@ document.documentElement.setAttribute("dir","rtl"); document.documentElement.set
    ========================================================================== */
 const IMG = {logo:"{{LOGO}}", sign:"{{SIGN}}", stamp:"{{STAMP}}"};
 
-const APP_VERSION = "V.0.0.0";
+const APP_VERSION = "V.0.1.0";
 const SERIES = {invoice:"INV", proforma:"PRO", special:"CON", completion:"WCC", warranty:"WRN", cover:"CVL", delivery:"DN", receipt:"RCV"};
 const DOC_KINDS = ["completion","warranty","cover","delivery"];
 const SERIES_AR = {INV:"الفواتير", PRO:"الفواتير المبدئية", CON:"الفواتير المجمعة", WCC:"شهادات الإنجاز", WRN:"شهادات الضمان", CVL:"كتب التغطية", DN:"أذونات التسليم", RCV:"سندات القبض"};
@@ -478,12 +488,14 @@ function lineTotal(l){
   if(blank(l.qty)) return r2(Number(l.price)||0);
   return r2((Number(l.qty)||0)*(Number(l.price)||0));
 }
+function discAmt(inv, sub){ return r2(!blank(inv.discPct) && Number(inv.discPct) ? sub*Number(inv.discPct)/100 : Number(inv.discount)||0); }
+function discLabel(inv){ const p=Number(inv.discPct)||0; return inv.discType==="retention" ? "Retention"+(p?` (${p}%)`:"") : (p?`Discount (${p}%)`:"Dis."); }
 function dedAmount(d, sub){ return r2(!blank(d.pct) && Number(d.pct) ? sub*Number(d.pct)/100 : Number(d.amount)||0); }
 const activePays = inv => (inv.payments||[]).filter(p=>!p.reversed);
 function calc(inv){
   const sub = r2((inv.lines||[]).reduce((s,l)=> s + lineTotal(l),0));
   const ded = r2((inv.deductions||[]).reduce((s,d)=> s + dedAmount(d,sub),0));
-  const total = r2(sub - ded - (Number(inv.discount)||0));
+  const total = r2(sub - ded - discAmt(inv,sub));
   const paid = inv.kind==="special" ? 0 : r2(activePays(inv).reduce((s,p)=>s+(Number(p.amount)||0),0));
   return {sub,ded,total,paid,balance:r2(total-paid)};
 }
@@ -866,27 +878,38 @@ function viewDashboard(){
   const acc=S.invoices.filter(i=>inAccounts(i)&&inY(i,Y)), accPrev=S.invoices.filter(i=>inAccounts(i)&&inY(i,Y-1));
   const sumT=L=>r2(L.reduce((s,i)=>s+calc(i).total,0));
   const invoiced=sumT(acc), invoicedPrev=sumT(accPrev);
+  const conf=S.invoices.filter(confirmed);
+  const collectedY=r2(conf.reduce((s,i)=>s+activePays(i).filter(p=>(p.date||"").startsWith(String(Y))).reduce((a,p)=>a+(+p.amount||0),0),0));
+  const outstanding=r2(conf.reduce((s,i)=>s+Math.max(0,calc(i).balance),0));
+  const openCount=conf.filter(i=>calc(i).balance>0.004).length;
   const docsY=S.invoices.reduce((s,i)=>s+DOC_KINDS.filter(k=>(i.docNos?.[k]?.at||"").startsWith(String(Y))).length,0);
   const pend=S.invoices.filter(i=>i.status==="pending"), drafts=S.invoices.filter(i=>i.status==="draft");
   const spOpen=S.invoices.filter(i=>i.kind==="special"&&statusOf(i)==="open"), spAmt=r2(spOpen.reduce((s,i)=>s+calc(i).total,0));
   const pfOpen=S.invoices.filter(i=>i.kind==="proforma"&&statusOf(i)==="issued"), pfAmt=r2(pfOpen.reduce((s,i)=>s+calc(i).total,0));
-  const mi=Array(12).fill(0), mp=Array(12).fill(0);
+  const missingCert=S.invoices.filter(i=>inAccounts(i)&&!isLegacy(i)&&(!i.typeOfWorks||!i.workOrder||!i.site));
+  const mi=Array(12).fill(0), mp=Array(12).fill(0), mc=Array(12).fill(0);
   S.invoices.filter(i=>inAccounts(i)&&(i.date||"").startsWith(String(Y))).forEach(i=>mi[+i.date.slice(5,7)-1]+=calc(i).total);
   S.invoices.filter(i=>inAccounts(i)&&(i.date||"").startsWith(String(Y-1))).forEach(i=>mp[+i.date.slice(5,7)-1]+=calc(i).total);
+  conf.forEach(i=>activePays(i).forEach(p=>{ if((p.date||"").startsWith(String(Y))) mc[+p.date.slice(5,7)-1]+=Number(p.amount)||0; }));
   const yInv=S.invoices.filter(i=>i.kind==="invoice"&&(i.date||"").startsWith(String(Y)));
-  const parts=[{k:"issued",label:"معتمدة",color:"var(--c-bar)"},{k:"pending",label:"بانتظار الاعتماد",color:"var(--c-line)"},{k:"draft",label:"مسودة",color:"var(--c-blue)"},{k:"cancelled",label:"ملغاة",color:"var(--c-gray)"}]
-    .map(p=>({...p,v:yInv.filter(i=>i.status===p.k).length}));
+  const parts=[{k:"paid",label:"مدفوعة",color:"var(--c-blue)"},{k:"partial",label:"مدفوعة جزئياً",color:"var(--c-line)"},{k:"issued",label:"معتمدة غير مسددة",color:"var(--c-bar)"},{k:"pending",label:"بانتظار الاعتماد",color:"#C9A227"},{k:"draft",label:"مسودة",color:"var(--c-gray)"}]
+    .map(p=>({...p,v:yInv.filter(i=>statusOf(i)===p.k).length})).filter(p=>p.v||["paid","issued"].includes(p.k));
   const group=(key,n)=>{ const g={}; S.invoices.filter(i=>inAccounts(i)&&(i.date||"").startsWith(String(Y))).forEach(i=>{ const k=(key(i)||"").trim()||"غير محدد"; g[k]=(g[k]||0)+calc(i).total; }); return Object.entries(g).sort((a,b)=>b[1]-a[1]).slice(0,n); };
+  const bars=(rows)=>{ const mx=rows[0]?.[1]||1; return rows.length?rows.map(([n,v])=>`<div class="hbar"><span class="nm" title="${esc(n)}" dir="auto">${esc(n)}</span><span class="bar"><i style="width:${v/mx*100}%;background:var(--c-teal)"></i></span><span class="num">${fmt0(v)}</span></div>`).join(""):'<div class="empty">لا توجد بيانات</div>'; };
+  // customers: invoices issued this year + amounts due (all years)
+  const cs={}; S.invoices.filter(inAccounts).forEach(i=>{ const k=i.customerId||i.customerName; const c=cs[k]=cs[k]||{id:i.customerId,name:i.customerName||"—",n:0,t:0,b:0,last:""}; const cc=calc(i);
+    if((i.date||"").startsWith(String(Y))){ c.n++; c.t+=cc.total; } if(confirmed(i)) c.b+=Math.max(0,cc.balance); if(i.date>c.last) c.last=i.date; });
+  const custRows=Object.values(cs).filter(c=>c.n||c.b>0.004).sort((a,b)=>b.t-a.t||b.b-a.b).slice(0,12);
   const latest=S.invoices.filter(i=>i.kind!=="special").slice(0,12);
-  return `<div class="top"><div><h1>لوحة التحكم</h1><p>فوترة ${Y}${Y===cy?" حتى اليوم، مقارنة بنفس الفترة من "+(Y-1):" مقارنة بسنة "+(Y-1)} — متابعة التحصيل في QuickBooks</p></div>
+  return `<div class="top"><div><h1>لوحة التحكم</h1><p>ملخص الإدارة لسنة ${Y}${Y===cy?" حتى اليوم، مقارنة بنفس الفترة من "+(Y-1):" مقارنة بسنة "+(Y-1)}</p></div>
     <div class="actions"><select class="i" id="dash-year" aria-label="السنة" style="width:auto">${years().map(y=>`<option ${y===Y?"selected":""}>${y}</option>`).join("")}</select>
     ${can("edit")?`<a class="btn primary" href="#new">${IC.plus}فاتورة جديدة</a>`:""}</div></div>
   <div class="stack">
   <div class="kpis">
-    <div class="kpi lead"><div class="l">إجمالي الفوترة ${Y}</div><div class="v">${fmt(invoiced)} <small>ر.ق</small></div><div class="s">مقابل ${fmt0(invoicedPrev)} في ${Y-1} ${delta(invoiced,invoicedPrev)}</div></div>
-    <div class="kpi"><div class="l">فواتير معتمدة ${Y}</div><div class="v">${acc.length}</div><div class="s">مقابل ${accPrev.length} في ${Y-1} ${delta(acc.length,accPrev.length)}</div></div>
-    <div class="kpi"><div class="l">متوسط قيمة الفاتورة</div><div class="v">${fmt(acc.length?invoiced/acc.length:0)} <small>ر.ق</small></div><div class="s">آخر رقم: <span class="code">${esc(lastSerial("INV")||"—")}</span></div></div>
-    <div class="kpi"><div class="l">مستندات صادرة ${Y}</div><div class="v">${docsY}</div><div class="s">شهادات وكتب تغطية وأذونات تسليم</div></div>
+    <div class="kpi lead"><div class="l">إجمالي الفواتير ${Y}</div><div class="v">${fmt(invoiced)} <small>ر.ق</small></div><div class="s">${acc.length} فاتورة — مقابل ${fmt0(invoicedPrev)} في ${Y-1} ${delta(invoiced,invoicedPrev)}</div></div>
+    <div class="kpi"><div class="l">المحصّل خلال ${Y}</div><div class="v">${fmt(collectedY)} <small>ر.ق</small></div><div class="meter"><i style="width:${invoiced?Math.min(100,collectedY/invoiced*100):0}%"></i></div><div class="s">${invoiced?Math.round(collectedY/invoiced*100):0}% من فواتير السنة</div></div>
+    <div class="kpi"><a href="#reports" data-goto-bal style="color:inherit;text-decoration:none"><div class="l">المستحق لدى العملاء</div><div class="v">${fmt(outstanding)} <small>ر.ق</small></div><div class="s">${openCount} فاتورة لم تُسدد بالكامل</div></a></div>
+    <div class="kpi"><div class="l">متوسط قيمة الفاتورة</div><div class="v">${fmt(acc.length?invoiced/acc.length:0)} <small>ر.ق</small></div><div class="s">${docsY} مستند صادر — آخر رقم <span class="code">${esc(lastSerial("INV")||"—")}</span></div></div>
   </div>
   <div class="kpis mini">
     <a class="kpi" href="#approvals"><div class="l">بانتظار اعتماد الإدارة</div><div class="v" style="${pend.length?"color:var(--c-line)":""}">${pend.length}</div></a>
@@ -895,8 +918,8 @@ function viewDashboard(){
     <a class="kpi" href="#invoices" data-goto-tab="proforma"><div class="l">مبدئية لم تُحوّل</div><div class="v">${fmt0(pfAmt)} <small>ر.ق · ${pfOpen.length}</small></div></a>
   </div>
   <div class="dash2">
-    <div class="card"><h3>الحركة الشهرية ${Y} — الفوترة مقارنة بـ ${Y-1} <small>ر.ق</small></h3>${monthChart(mi,mp)}
-      <div class="chart-legend"><span><i style="background:var(--c-bar)"></i>فوترة ${Y}</span><span><i class="dot" style="background:var(--c-line)"></i>فوترة ${Y-1}</span></div></div>
+    <div class="card"><h3>الحركة الشهرية ${Y} — مفوتر مقابل محصل <small>ر.ق</small></h3>${monthChart(mi,mc,mp)}
+      <div class="chart-legend"><span><i style="background:var(--c-bar)"></i>مفوتر ${Y}</span><span><i class="dot" style="background:var(--c-line)"></i>محصل</span><span><i style="background:var(--gold);height:3px"></i>مفوتر ${Y-1}</span></div></div>
     <div class="card"><h3>حالة الفواتير <small>${Y}</small></h3>${donut(parts)}
       <div class="chart-legend">${parts.map(p=>`<span><i class="dot" style="background:${p.color}"></i>${p.label} (${p.v})</span>`).join("")}</div></div>
   </div>
@@ -908,22 +931,36 @@ function viewDashboard(){
     <div class="card"><h3>أحدث الفواتير <a href="#invoices" style="font-family:var(--f-body);font-size:13px;font-weight:600">عرض الكل</a></h3>
       <div class="scroll-list">${latest.map(i=>`<a class="mini-inv" href="#inv-${esc(i.id)}"><span class="no">${esc(dispNo(i))}</span><span class="amt">${fmt(calc(i).total)} <small>ر.ق</small></span><span class="meta"><bdi>${esc(i.customerName||"")}</bdi> — ${dmy(i.date)}</span><span>${chip(statusOf(i))}</span></a>`).join("")||'<div class="empty">لا توجد فواتير</div>'}</div></div>
   </div>
+  <div class="card"><h3>العملاء — الفواتير الصادرة والمبالغ المستحقة <small>الفواتير والقيمة: ${Y} · المستحق: كل السنوات</small></h3>
+    ${custRows.length?`<div class="tw" style="border:0"><table class="t"><thead><tr><th>العميل</th><th class="n">فواتير ${Y}</th><th class="n">قيمة الفواتير ${Y}</th><th class="n">المستحق</th><th>آخر فاتورة</th><th>النسبة من فوترة السنة</th></tr></thead><tbody>
+    ${custRows.map(c=>`<tr class="click" data-stmt="${esc(c.id||"")}"><td><bdi>${esc(c.name)}</bdi></td><td class="n">${c.n}</td><td class="n">${fmt(c.t)}</td><td class="n" style="${c.b>0.004?"color:var(--c-line);font-weight:700":""}">${fmt(c.b)}</td><td class="num">${dmy(c.last)}</td><td style="min-width:120px"><div class="meter" style="margin:0"><i style="width:${invoiced?c.t/invoiced*100:0}%;background:var(--c-teal)"></i></div></td></tr>`).join("")}
+    </tbody></table></div><a class="btn sm" href="#customers" style="margin-top:10px">كل العملاء وكشوف الحساب</a>`:'<div class="empty">لا توجد بيانات</div>'}</div>
+  <div class="dash3">
+    <div class="card"><h3>أكبر المواقع / المدارس <small>${Y}</small></h3>${bars(group(i=>i.site,7))}</div>
+    <div class="card"><h3>الفوترة حسب الربع <small>${Y} مقابل ${Y-1}</small></h3>${[0,1,2,3].map(q=>{ const a=mi.slice(q*3,q*3+3).reduce((x,y)=>x+y,0), b=mp.slice(q*3,q*3+3).reduce((x,y)=>x+y,0); return `<div class="rowcard"><span>الربع ${q+1}</span><span class="num" style="color:var(--muted)">${fmt0(b)}</span><b>${fmt0(a)} ${b?delta(a,b):""}</b></div>`; }).join("")}</div>
+    <div class="card"><h3>تنبيهات</h3>
+      <div class="rowcard"><span>فواتير معتمدة تنقصها بيانات الشهادات</span><b>${missingCert.length}</b></div>
+      <div class="rowcard"><span>بانتظار اعتماد الإدارة</span><b>${pend.length}</b></div>
+      <div class="rowcard"><span>مسودات لم تُرسل</span><b>${drafts.length}</b></div>
+      <div class="rowcard"><span>آخر رقم فاتورة</span><b class="code">${esc(lastSerial("INV")||"—")}</b></div></div>
+  </div>
   </div>`;
 }
 const shortNum = v => v>=1e6 ? (Math.round(v/1e5)/10)+"M" : v>=1000 ? fmt0(v/1000)+"k" : fmt0(v);
-function monthChart(cur, prev){
-  const W=720,H=290,pl=54,pr=14,pt=14,pb=36, max=Math.max(1,...cur,...prev);
+function monthChart(cur, coll, prev){
+  const W=720,H=290,pl=54,pr=14,pt=14,pb=36, max=Math.max(1,...cur,...coll,...prev);
   const step=niceStep(max), top=Math.ceil(max/step)*step, ih=H-pt-pb, gw=(W-pl-pr)/12, bw=Math.min(42,gw*0.56);
-  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="الفوترة الشهرية">`;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="الحركة الشهرية">`;
   for(let v=0; v<=top+0.001; v+=step){ const y=pt+ih-(v/top)*ih; s+=`<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="var(--c-grid)" stroke-dasharray="4 4"/><text x="${pl-8}" y="${y+4}" text-anchor="end">${shortNum(v)}</text>`; }
   for(let m=0;m<=12;m++){ const x=pl+gw*m; s+=`<line x1="${x}" x2="${x}" y1="${pt}" y2="${pt+ih}" stroke="var(--c-grid)" stroke-dasharray="4 4"/>`; }
-  s+=`<line x1="${pl}" x2="${W-pr}" y1="${pt+ih}" y2="${pt+ih}" stroke="var(--muted)" stroke-width="1"/><line x1="${pl}" x2="${pl}" y1="${pt}" y2="${pt+ih}" stroke="var(--muted)" stroke-width="1"/>`;
-  let path="", dots="";
-  for(let m=0;m<12;m++){ const x=pl+gw*m+gw/2, h=cur[m]/top*ih, yp=pt+ih-prev[m]/top*ih;
-    if(h>0) s+=`<rect x="${x-bw/2}" y="${pt+ih-h}" width="${bw}" height="${h}" rx="2" fill="var(--c-bar)"><title>${MONTHS_AR[m]}: ${fmt(cur[m])}</title></rect>`;
+  s+=`<line x1="${pl}" x2="${W-pr}" y1="${pt+ih}" y2="${pt+ih}" stroke="var(--muted)"/><line x1="${pl}" x2="${pl}" y1="${pt}" y2="${pt+ih}" stroke="var(--muted)"/>`;
+  let pc="", pp="", dots="";
+  for(let m=0;m<12;m++){ const x=pl+gw*m+gw/2, h=cur[m]/top*ih, yc=pt+ih-coll[m]/top*ih, yp=pt+ih-prev[m]/top*ih;
+    if(h>0) s+=`<rect x="${x-bw/2}" y="${pt+ih-h}" width="${bw}" height="${h}" rx="2" fill="var(--c-bar)"><title>${MONTHS_AR[m]} مفوتر: ${fmt(cur[m])}</title></rect>`;
     s+=`<text x="${x}" y="${H-12}" text-anchor="middle">${MONTHS_AR[m]}</text>`;
-    path+=(m?"L":"M")+x+" "+yp; dots+=`<circle cx="${x}" cy="${yp}" r="4" fill="var(--surface)" stroke="var(--c-line)" stroke-width="2"><title>${MONTHS_AR[m]} السابقة: ${fmt(prev[m])}</title></circle>`; }
-  s+=`<path d="${path}" fill="none" stroke="var(--c-line)" stroke-width="2.2" stroke-linejoin="round"/>${dots}`;
+    pc+=(m?"L":"M")+x+" "+yc; pp+=(m?"L":"M")+x+" "+yp;
+    dots+=`<circle cx="${x}" cy="${yc}" r="4" fill="var(--surface)" stroke="var(--c-line)" stroke-width="2"><title>${MONTHS_AR[m]} محصل: ${fmt(coll[m])}</title></circle>`; }
+  s+=`<path d="${pp}" fill="none" stroke="var(--gold)" stroke-width="1.8" stroke-dasharray="6 5" opacity=".85"/><path d="${pc}" fill="none" stroke="var(--c-line)" stroke-width="2.2" stroke-linejoin="round"/>${dots}`;
   return s+`</svg>`;
 }
 function donut(parts){
@@ -992,7 +1029,7 @@ function viewInvoices(special){
   </div>
   <div class="actions" style="margin-bottom:10px" id="bulk" ${S.selected.size?"":"hidden"}><span class="muted" id="bulk-n">${S.selected.size} محددة:</span>
    ${can("edit")?`<button class="btn sm" data-bulk="repeat">${IC.copy}تكرار</button>`:""}<button class="btn sm" data-bulk="pack">${IC.pdf}تنزيل الفواتير PDF</button>
-   ${can("issue")?'<button class="btn sm" data-bulk="approve">اعتماد المحدد</button>':''}
+   ${can("issue")?'<button class="btn sm" data-bulk="approve">اعتماد المحدد</button><button class="btn sm" data-bulk="paid">تسجيل كمدفوعة بالكامل</button>':''}
    <button class="btn sm" data-bulk="clear">إلغاء التحديد</button></div>
   ${invTable(list,{select:true})}`;
 }
@@ -1039,11 +1076,11 @@ function viewEditor(id, kind){
   <div class="actions"><a class="btn ghost" href="${id?"#inv-"+esc(id):"#invoices"}">${IC.back}رجوع</a></div></div>
   <form id="editor-form" class="stack" novalidate>
   <div class="panel"><h2>بيانات ${isSp?"الفاتورة المجمعة":"الفاتورة"} ${locked?`<span class="lock">${IC.lock}مقفلة بعد الاعتماد</span>`:""}</h2>
-    <div class="grid g4">
+    <div class="grid ghead">
       <label class="f">النوع<select class="i" id="e-kind" ${id?"disabled":""}>${Object.entries(KIND).map(([k,l])=>`<option value="${k}" ${e.kind===k?"selected":""}>${l}</option>`).join("")}</select></label>
       <label class="f">الرقم<input class="i ltr" value="${esc(e.no||"يُعطى عند الاعتماد")}" disabled></label>
       <label class="f">التاريخ<input type="date" class="i" id="e-date" value="${esc(e.date)}" ${dis}></label>
-      <label class="f">العميل<div style="display:flex;gap:6px"><select class="i" id="e-cust" ${dis}>${custOpts}</select>${locked?"":`<button type="button" class="btn sm" id="e-addcust" title="إضافة عميل" aria-label="إضافة عميل">${IC.plus}</button>`}</div></label>
+      <label class="f wide">العميل<div style="display:flex;gap:6px"><select class="i" id="e-cust" ${dis}>${custOpts}</select>${locked?"":`<button type="button" class="btn sm" id="e-addcust" title="إضافة عميل" aria-label="إضافة عميل">${IC.plus}</button>`}</div></label>
     </div>
     <p class="hint" id="cust-snap" style="margin:8px 0 0">${e.customerName?`سيُطبع: ${esc(e.customerNameEn||e.customerName)} — ${esc(e.customerAddress||"")} ${e.customerPhone?"— "+esc(e.customerPhone):""}`:""}</p>
     ${isSp?`<div class="grid g2" style="margin-top:12px"><label class="f">الغرض (يطبع على الفاتورة)<input class="i" id="e-purpose" value="${esc(e.purpose||"")}" placeholder="تحويل مبلغ مجمع عن فواتير أعمال الصيانة والدهانات"></label>
@@ -1058,7 +1095,7 @@ function viewEditor(id, kind){
     <div id="ded-box">${dedRows(locked)}</div>
     ${locked?"":`<div class="actions" style="margin-top:6px"><button type="button" class="btn sm" data-dadd="ret">+ محتجزات 5%</button><button type="button" class="btn sm" data-dadd="adv">+ دفعة مقدمة</button><button type="button" class="btn sm" data-dadd="other">+ استقطاع آخر</button></div>`}`}
     <div class="totals"><span>المجموع</span><span class="num" id="t-sub" style="text-align:end">0.00</span>${isSp?"":`<span>الاستقطاعات</span><span class="num" id="t-ded" style="text-align:end">0.00</span>`}
-      <label for="e-disc">الخصم</label><input class="i ltr num" id="e-disc" value="${esc(e.discount||0)}" inputmode="decimal" ${dis}>
+      <span class="disc"><select class="i" id="e-dtype" ${dis} aria-label="نوع الخصم"><option value="discount" ${e.discType!=="retention"?"selected":""}>خصم (Discount)</option><option value="retention" ${e.discType==="retention"?"selected":""}>احتجاز (Retention)</option></select><input class="i ltr" id="e-dpct" value="${esc(e.discPct??"")}" placeholder="%" inputmode="decimal" aria-label="النسبة" ${dis}></span><input class="i ltr num" id="e-disc" value="${esc(blank(e.discPct)||!Number(e.discPct)?e.discount||0:"")}" placeholder="مبلغ" inputmode="decimal" ${dis||(!blank(e.discPct)&&Number(e.discPct)?"disabled":"")}>
       <span class="big">الصافي</span><span class="num big" id="t-tot" style="text-align:end">0.00</span></div>
     <p class="hint" id="t-words" style="text-align:end;margin:6px 0 0"></p>
   </div>`}
@@ -1113,6 +1150,8 @@ function readEditor(){
   set("warrantyType",v("e-wt")); set("notes",v("e-notes")); set("purpose",v("e-purpose")?.trim()); set("coverStyle",v("e-cov"));
   if(v("e-wm")!==undefined) ED.warrantyMonths=Math.max(0,parseInt(v("e-wm"),10)||0);
   if(v("e-disc")!==undefined) ED.discount=r2(String(v("e-disc")).replace(/,/g,""));
+  if(v("e-dtype")!==undefined) ED.discType=v("e-dtype");
+  if(v("e-dpct")!==undefined) ED.discPct=String(v("e-dpct")).trim()===""?null:Number(String(v("e-dpct")).replace(/,/g,""));
   const st=$("#e-stamp"); if(st) ED.stamp=st.checked;
   const k=$("#e-kind"); if(k && !k.disabled) ED.kind=k.value;
 }
@@ -1120,6 +1159,7 @@ function updateTotals(){
   if(ED.kind==="special"&&ED.mode==="grouped") return;
   const c=calc(ED); const a=$("#t-sub"), b=$("#t-tot"), w=$("#t-words"), dd=$("#t-ded");
   if(a) a.textContent=fmt(c.sub); if(b) b.textContent=fmt(c.total); if(dd) dd.textContent=fmt(c.ded); if(w) w.textContent=amountAr(c.total);
+  const de=$("#e-disc"); if(de&&de.disabled&&ED.discPct) de.placeholder=fmt(discAmt(ED,c.sub));
   $$("#ded-box tr[data-dk]").forEach(tr=>{ const d=ED.deductions[+tr.dataset.dk]; const td=tr.querySelector("[data-dtot]"); if(d&&td) td.textContent=fmt(dedAmount(d,c.sub)); });
 }
 function applyCustomer(id){
@@ -1136,6 +1176,7 @@ function buildRecord(base){
   } else {
     data.lines=(data.lines||[]).map(l=>l.heading?{desc:String(l.desc||""),heading:true}:{desc:String(l.desc||""),unit:String(l.unit||""),qty:blank(l.qty)?null:Number(l.qty),price:blank(l.price)?null:Number(l.price),...(blank(l.qty)&&blank(l.price)&&!blank(l.amount)?{amount:Number(l.amount)}:{})});
     const sub=calc(data).sub;
+    data.discount=discAmt(data, sub);
     data.deductions=(data.deductions||[]).filter(d=>String(d.label||"").trim()||Number(d.pct)||Number(d.amount)).map(d=>({label:String(d.label||""),pct:blank(d.pct)?null:Number(d.pct),amount:dedAmount(d,sub)}));
   }
   const c=calc(data);
@@ -1303,7 +1344,7 @@ function viewInvoice(id){
    ${isSp&&linked.length?`<div class="tw"><table class="t"><thead><tr><th>الفاتورة</th><th>التاريخ</th><th>الموقع</th><th class="n">المبلغ</th><th>حالتها الآن</th></tr></thead><tbody>${linked.map(x=>`<tr class="click" data-open="${esc(x.id)}"><td class="code">${esc(x.no)}</td><td class="num">${dmy(x.date)}</td><td>${esc(x.site||"")}</td><td class="n">${fmt(x.amount)}</td><td>${x.inv?chip(statusOf(x.inv)):"—"}</td></tr>`).join("")}</tbody><tfoot><tr><td colspan="3">الإجمالي</td><td class="n">${fmt(c.total)}</td><td></td></tr></tfoot></table></div>`
    :`<div class="tw"><table class="t"><thead><tr><th>#</th><th>الوصف</th><th>الوحدة</th><th class="n">الكمية</th><th class="n">السعر</th><th class="n">الإجمالي</th></tr></thead><tbody>
      ${(()=>{let n=0;return (i.lines||[]).map(l=>l.heading?`<tr><td></td><td colspan="5"><b>${esc(l.desc)}</b></td></tr>`:`<tr><td>${++n}</td><td style="white-space:pre-line">${esc(l.desc)}</td><td>${esc(l.unit||"")}</td><td class="n">${l.qty??""}</td><td class="n">${l.price!=null?fmt(l.price):""}</td><td class="n">${fmt(lineTotal(l))}</td></tr>`).join("");})()}
-     </tbody><tfoot><tr><td colspan="5">المجموع</td><td class="n">${fmt(c.sub)}</td></tr>${(i.deductions||[]).map(d=>`<tr><td colspan="5" class="ltr" style="text-align:start">${esc(d.label)}</td><td class="n">(${fmt(dedAmount(d,c.sub))})</td></tr>`).join("")}${i.discount?`<tr><td colspan="5">الخصم</td><td class="n">(${fmt(i.discount)})</td></tr>`:''}<tr><td colspan="5">الصافي</td><td class="n">${fmt(c.total)}</td></tr></tfoot></table></div>`}
+     </tbody><tfoot><tr><td colspan="5">المجموع</td><td class="n">${fmt(c.sub)}</td></tr>${(i.deductions||[]).map(d=>`<tr><td colspan="5" class="ltr" style="text-align:start">${esc(d.label)}</td><td class="n">(${fmt(dedAmount(d,c.sub))})</td></tr>`).join("")}${discAmt(i,c.sub)?`<tr><td colspan="5">${i.discType==="retention"?"احتجاز (Retention)":"الخصم"}${i.discPct?" "+i.discPct+"%":""}</td><td class="n">(${fmt(discAmt(i,c.sub))})</td></tr>`:''}<tr><td colspan="5">الصافي</td><td class="n">${fmt(c.total)}</td></tr></tfoot></table></div>`}
      <p class="hint">${amountAr(c.total)}</p></div>
    <div class="stack">
     <div class="panel"><h2>البيانات</h2><dl class="dl">
@@ -1356,19 +1397,19 @@ function docCtx(i){
 function letterhead(i){
   const {company:co,bank:b}=coFor(i);
   return `<div class="lh"><div class="co">
-    <div class="r1">${esc(co.nameEn)} &nbsp;|&nbsp; <span class="ar">${esc(co.nameAr)}</span></div>
-    <div class="ar">السجل التجاري : ${esc(co.cr)} &nbsp;|&nbsp; الشكل القانوني : ${esc(co.legalAr)} .</div>
-    <div class="ar">رقم الحساب : ${esc(b.nameAr||"البنك التجاري")} : <span class="ltr">${esc(b.account)}</span> &nbsp;|&nbsp; رأس المال <span class="ltr">${esc(co.capital)}</span> ريال قطري</div>
-    <div>IBAN | ${esc(b.iban)}</div></div><img src="${IMG.logo}" alt=""></div>`;
+    <div class="r0">${esc(co.nameEn)}</div>
+    <div>C.R. No. : <b>${esc(co.cr)}</b> &nbsp;|&nbsp; Limited Liability Company &nbsp;|&nbsp; Capital : QAR ${esc(fmt0(co.capital))}</div>
+    <div>${esc(co.city||"Doha , Qatar")} &nbsp;|&nbsp; IBAN : ${esc(b.iban)}</div></div><img src="${IMG.logo}" alt=""></div>`;
 }
-function footer(i){ const {company:co}=coFor(i); return `<div class="foot">${[co.web, co.email?"Email : "+co.email:"", co.phone, co.pobox?"P.O.Box "+co.pobox+" , "+(co.city||""):""].filter(Boolean).map(esc).join("  &nbsp;|&nbsp;  ")}</div>`; }
+function footer(i){ const {company:co}=coFor(i); return co.web?`<div class="foot">${esc(co.web)}</div>`:""; }
 function watermark(i){ return i.status==="cancelled"?'<div class="watermark">CANCELLED</div>':["draft","pending"].includes(i.status)?'<div class="watermark draft">DRAFT</div>':""; }
 function signBlock(i, stamp, label){
   const {company:co}=coFor(i);
-  return `<div class="signblock"><div class="co">${esc(label||co.shortEn)} .<small>Authorized Signature &amp; Stamp</small></div>
+  return `<div class="signblock"><div class="co">${esc(label||co.shortEn)} .</div>
    <div class="stampbox">${stamp?`<img class="stamp" src="${IMG.stamp}" alt=""><img class="sign" src="${IMG.sign}" alt="">`:""}</div></div>`;
 }
-function bankTable(i){ const {bank:b}=coFor(i); return `<table class="bank"><tr class="hd"><td colspan="2">Bank Details :-</td></tr><tr><td>Name :-</td><td>${esc(b.holder)}</td></tr><tr><td>Bank A/C no. :</td><td>${esc(b.account)}</td></tr><tr><td>Bank Name:</td><td>${esc(b.name)}</td></tr><tr><td>IBAN :</td><td>${esc(b.iban)}</td></tr><tr><td>Swift Code :</td><td>${esc(b.swift)}</td></tr></table>`; }
+function bankTable(i){ const {bank:b}=coFor(i); return `<div class="bankbox"><span class="t">Bank Details</span><b>Account Name :</b><span>${esc(b.holder)}</span><b>Bank :</b><span>${esc(b.name)}</span><b>A/C No. :</b><span>${esc(b.account)}</span><b>SWIFT :</b><span>${esc(b.swift)}</span><b>IBAN :</b><span style="grid-column:2/-1">${esc(b.iban)}</span></div>`; }
+function bankTableOld(i){ const {bank:b}=coFor(i); return `<table class="bank"><tr class="hd"><td colspan="2">Bank Details :-</td></tr><tr><td>Name :-</td><td>${esc(b.holder)}</td></tr><tr><td>Bank A/C no. :</td><td>${esc(b.account)}</td></tr><tr><td>Bank Name:</td><td>${esc(b.name)}</td></tr><tr><td>IBAN :</td><td>${esc(b.iban)}</td></tr><tr><td>Swift Code :</td><td>${esc(b.swift)}</td></tr></table>`; }
 function billTo(i){
   return `<div class="billto"><b>Name :-</b><span class="v">${esc(i.customerNameEn||i.customerName)}</span><b>Address :-</b><span class="v">${esc(i.customerAddress||"")}</span>
    <b>Phone:-</b><span class="v">${esc(i.customerPhone||"")}</span><b>P.O Box:-</b><span class="v">${esc(i.customerPobox||"")}</span></div>`;
@@ -1395,8 +1436,8 @@ function docInvoice(i, o){
    ${!isSp&&(i.site||i.workOrder)?`<div class="purpose"><b>Site :-</b> ${esc(i.site||"")} ${i.workOrder?" &nbsp; <b>W.O :-</b> "+esc(i.workOrder):""}${i.ref?" &nbsp; <b>Ref :-</b> "+esc(i.ref):""}</div>`:""}
    <table class="items">${grouped?`<thead><tr><th style="width:36px">Ser.</th><th style="width:100px">Invoice No.</th><th style="width:110px">Invoice Date</th><th>Description</th><th style="width:70px">Work Order</th><th style="width:150px">Site / School</th><th style="width:90px">Amount</th></tr></thead>`
      :`<thead><tr><th style="width:40px">Ser.</th><th>Description</th><th style="width:60px">Unit.</th><th style="width:60px">Qty.</th><th style="width:90px">Unit Price</th><th style="width:110px">TOTAL Amount</th></tr></thead>`}<tbody>${rows}</tbody></table>
-   <div class="sumrow"><div class="w">${esc(amountEn(c.total))}<span class="ar">${esc(amountAr(c.total))}</span></div>
-     <table class="tot"><tr><td>${(i.deductions||[]).length?"Sub-Total":"Total"}</td><td>${fmt(c.sub)}</td></tr>${dedRowsH}<tr><td>Dis.</td><td>${fmt(i.discount||0)}</td></tr><tr class="net"><td>Net Balance</td><td>${fmt(c.total)}</td></tr></table></div>
+   <div class="sumrow"><div class="w">${esc(amountEn(c.total))}</div>
+     <table class="tot"><tr><td>${(i.deductions||[]).length?"Sub-Total":"Total"}</td><td>${fmt(c.sub)}</td></tr>${dedRowsH}<tr><td>${esc(discLabel(i))}</td><td>${fmt(discAmt(i,c.sub))}</td></tr><tr class="net"><td>Net Balance</td><td>${fmt(c.total)}</td></tr></table></div>
    ${isSp?'<div class="note-box">This document groups the invoices listed above for transfer purposes only. It is not a new revenue invoice.</div>':""}
    ${bankTable(i)}
    ${signBlock(i, o.stamp)}${footer(i)}</div>`;
@@ -1420,7 +1461,8 @@ function docWarranty(i, o){
   return `<div class="sheet">${letterhead(i)}${watermark(i)}
    <div class="dateno">${docNoLine(i,"warranty")}<span><b>Invoice Ref :-</b> ${esc(dispNo(i))}</span></div>
    <div class="dateno" style="margin-top:6px"><span><b>Date :</b> ${esc(longDate(i.completedDate||i.date))}</span><span><b>Ref :</b> ${esc(x.ref)}${x.workOrder?" – Order No. "+esc(x.workOrder):""}</span></div>
-   <div class="wtitle"><div><b>${esc(x.typeOfWorks||"Works")}</b><small>Work Warranty Certificate</small></div><div style="font-size:13px">${esc(x.site)}</div></div>
+   <div class="doc-title"><b>WARRANTY CERTIFICATE</b></div>
+   <div class="wtitle" style="margin-top:4px"><div><b>${esc(x.typeOfWorks||"Works")}</b><small>Work Warranty Certificate</small></div><div style="font-size:13px">${esc(x.site)}</div></div>
    <table class="kv" style="margin-top:14px"><tr><td>Client Name</td><td>${esc(x.client)}</td></tr><tr><td>School Name / Pin</td><td>${esc(x.site)}</td></tr><tr><td>Work Order</td><td>${esc(x.workOrder)}</td></tr><tr><td>Quotation Reference</td><td>${esc(x.ref)}</td></tr><tr><td>Work Completion Date</td><td>${esc(x.completedDate)}</td></tr><tr><td>Warranty Period</td><td>${esc(x.warranty)}${until?" — valid until "+esc(until):""}</td></tr></table>
    <div class="cert-body"><p>${esc(fill(w.body,x))}</p>${ex.length?`<h4>Warranty Exclusions:</h4><ol>${ex.map(e=>`<li>${esc(fill(e,x))}</li>`).join("")}</ol>`:''}<h4>Reporting Defects:</h4><p>${esc(fill(t.warrantyReporting,x))}</p></div>
    ${signBlock(i, o.stamp)}${footer(i)}</div>`;
@@ -1446,12 +1488,11 @@ function docReceipt(i, k, o){
   const {company:co}=coFor(i);
   return `<div class="sheet">${letterhead(i)}${p.reversed?'<div class="watermark">REVERSED</div>':""}
    <div class="dateno"><span><b>Date :-</b> ${esc(dayDate(p.date))}</span><span><b>No. :-</b> <span class="red">${esc(p.rcv?.no||"—")}</span></span></div>
-   <div class="doc-title"><b>RECEIPT VOUCHER</b><small>سند قبض</small></div>
+   <div class="doc-title"><b>RECEIPT VOUCHER</b></div>
    <div class="rcpt-box">
     <div><b>Received from :</b> ${esc(i.customerNameEn||i.customerName)}</div>
     <div><b>The sum of :</b> <span class="amt">QAR ${fmt(p.amount)}</span></div>
     <div><b>Amount in words :</b> ${esc(amountEn(p.amount))}</div>
-    <div class="ar" style="text-align:right">${esc(amountAr(p.amount))}</div>
     <div><b>Payment method :</b> ${esc(METHODS_EN[p.method]||p.method||"")} ${p.ref?" — Ref : "+esc(p.ref):""}</div>
     <div><b>Against Invoice No. :</b> ${esc(dispNo(i))} dated ${esc(dmy(i.date))} — Invoice amount QAR ${fmt(calc(i).total)}</div>
     <div><b>Balance after this payment :</b> QAR ${fmt(Math.max(0, calc({...i,payments:(i.payments||[]).slice(0,k+1)}).balance))}</div>
@@ -1466,7 +1507,7 @@ function docDelivery(i, o){
   return `<div class="sheet">${letterhead(i)}${watermark(i)}
    <div class="dateno">${docNoLine(i,"delivery")}<span><b>Invoice Ref :-</b> ${esc(dispNo(i))}</span></div>
    <div class="dateno" style="margin-top:6px"><span><b>Date :-</b> ${esc(dayDate(i.completedDate||i.date))}</span>${x.workOrder?`<span><b>W.O :-</b> ${esc(x.workOrder)}</span>`:""}</div>
-   <div class="doc-title"><b>DELIVERY NOTE</b><small>إذن تسليم</small></div>
+   <div class="doc-title"><b>DELIVERY NOTE</b></div>
    ${billTo(i)}
    ${x.site||x.location?`<div class="purpose"><b>Delivery Site :-</b> ${esc([x.site,x.location].filter(Boolean).join(" , "))}</div>`:""}
    <table class="items"><thead><tr><th style="width:44px">Ser.</th><th>Description</th><th style="width:80px">Unit</th><th style="width:90px">Qty.</th></tr></thead><tbody>${rows}</tbody></table>
@@ -1486,12 +1527,11 @@ function docHtml(kind, i, o){
 }
 const DOC_NAMES={invoice:"Invoice",completion:"Completion-Certificate",warranty:"Warranty-Certificate",cover:"Cover-Letter",delivery:"Delivery-Note",pack:"Documents-Pack"};
 const DOC_AR={invoice:"الفاتورة",completion:"شهادة إنجاز الأعمال",warranty:"شهادة الضمان",cover:"كتاب التغطية",delivery:"إذن التسليم",pack:"ملف المستندات الكامل"};
-function docOpts(i){ return {stamp: S.doc.stamp==null ? !!i.stamp : S.doc.stamp, lang:S.doc.lang, style: S.doc.styleSet ? S.doc.style : (i.coverStyle||"detailed")}; }
+function docOpts(i){ return {stamp: S.doc.stamp==null ? !!i.stamp : S.doc.stamp, lang:"en", style: S.doc.styleSet ? S.doc.style : (i.coverStyle||"detailed")}; }
 function docToolbar(i, kind){
   const o=docOpts(i);
   return `<label class="chk btn"><input type="checkbox" id="doc-stamp" ${o.stamp?"checked":""}>بالختم والتوقيع</label>
-   ${kind==="cover"||kind==="pack"?`<select class="i" id="doc-lang" style="width:auto" aria-label="لغة كتاب التغطية"><option value="en" ${o.lang==="en"?"selected":""}>كتاب التغطية: English</option><option value="ar" ${o.lang==="ar"?"selected":""}>كتاب التغطية: عربي</option></select>
-     <select class="i" id="doc-style" style="width:auto" aria-label="نموذج كتاب التغطية"><option value="detailed" ${o.style==="detailed"?"selected":""}>مفصل</option><option value="short" ${o.style==="short"?"selected":""}>مختصر</option></select>`:''}
+   ${kind==="cover"||kind==="pack"?`<select class="i" id="doc-style" style="width:auto" aria-label="نموذج كتاب التغطية"><option value="detailed" ${o.style==="detailed"?"selected":""}>كتاب التغطية: مفصل</option><option value="short" ${o.style==="short"?"selected":""}>كتاب التغطية: مختصر</option></select>`:''}
    ${S.mode==="local"?`<button class="btn" id="doc-print">${IC.print}طباعة</button>`:''}
    <button class="btn primary" id="doc-pdf">${IC.pdf}تنزيل PDF للطباعة</button>`;
 }
@@ -1567,7 +1607,7 @@ function invoiceXlsx(i){
   if(!window.XLSX){ toast("مكتبة Excel لم تُحمّل بعد"); return; }
   const c=calc(i); const aoa=[["Invoice No.",dispNo(i)],["Date",i.date],["Customer",i.customerNameEn||i.customerName],["Site",i.site||""],["Work Order",i.workOrder||""],["Ref",i.ref||""],[],["Ser.","Description","Unit","Qty","Unit Price","Total"]];
   let n=0; (i.lines||[]).forEach(l=>aoa.push(l.heading?["",l.desc]:[++n,l.desc,l.unit||"",l.qty??"",l.price??"",lineTotal(l)]));
-  aoa.push([],["","","","","Sub-Total",c.sub]); (i.deductions||[]).forEach(d=>aoa.push(["","","","",d.label,-dedAmount(d,c.sub)])); aoa.push(["","","","","Discount",-(+i.discount||0)],["","","","","Net",c.total],[],["",amountEn(c.total)]);
+  aoa.push([],["","","","","Sub-Total",c.sub]); (i.deductions||[]).forEach(d=>aoa.push(["","","","",d.label,-dedAmount(d,c.sub)])); aoa.push(["","","","",discLabel(i),-discAmt(i,c.sub)],["","","","","Net",c.total],[],["",amountEn(c.total)]);
   const ws=XLSX.utils.aoa_to_sheet(aoa.map(r=>r.map(xlsSafe))); ws["!cols"]=[{wch:12},{wch:60},{wch:10},{wch:10},{wch:14},{wch:14}];
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Invoice");
   saveFile(`Invoice-${safeName(dispNo(i))}.xlsx`, new Blob([XLSX.write(wb,{type:"array",bookType:"xlsx"})])); audit("تصدير فاتورة Excel", dispNo(i));
@@ -1887,7 +1927,9 @@ function bind(){
   if(r==="dashboard"){ const y=$("#dash-year"); y&&(y.onchange=()=>{S.year=+y.value; render();});
     $$("[data-goto-status]").forEach(a=>a.onclick=()=>{ S.list={...S.list,tab:"all",status:a.dataset.gotoStatus}; });
     $$("[data-goto-tab]").forEach(a=>a.onclick=()=>{ S.list={...S.list,tab:a.dataset.gotoTab,status:""}; });
-    $$("[data-goto-rep]").forEach(a=>a.onclick=()=>{ S.repTab="grouped"; S.rep={...S.rep,group:a.dataset.gotoRep,kind:"accounts"}; }); }
+    $$("[data-goto-rep]").forEach(a=>a.onclick=()=>{ S.repTab="grouped"; S.rep={...S.rep,group:a.dataset.gotoRep,kind:"accounts"}; });
+    $$("[data-goto-bal]").forEach(a=>a.onclick=()=>{ S.repTab="balances"; });
+    $$("[data-stmt]").forEach(tr=>tr.onclick=()=>{ if(tr.dataset.stmt) go("statement-"+tr.dataset.stmt); }); }
   if(r==="invoices"||r==="special") bindList(r==="special");
   if(r==="approvals") bindApprovals();
   if(r==="new"||r==="edit") bindEditor();
@@ -1953,7 +1995,9 @@ function bindEditor(){
     db.addEventListener("click",e=>{ const b=e.target.closest("[data-ddel]"); if(!b) return; ED.deductions.splice(+b.dataset.ddel,1); db.innerHTML=dedRows(false); updateTotals(); });
     $$("[data-dadd]").forEach(b=>b.onclick=()=>{ const t=b.dataset.dadd; ED.deductions.push(t==="ret"?{label:"Less: Retention (5%)",pct:5,amount:""}:t==="adv"?{label:"Less: Advance payment",pct:"",amount:""}:{label:"",pct:"",amount:""}); db.innerHTML=dedRows(false); updateTotals(); });
   }
-  const disc=$("#e-disc"); if(disc&&!disc.disabled) disc.oninput=()=>{ ED.discount=r2(disc.value.replace(/,/g,"")); updateTotals(); };
+  const disc=$("#e-disc"); if(disc) disc.oninput=()=>{ ED.discount=r2(disc.value.replace(/,/g,"")); updateTotals(); };
+  const dp=$("#e-dpct"); if(dp&&!dp.disabled) dp.oninput=()=>{ const v=dp.value.replace(/,/g,"").trim(); ED.discPct=v===""?null:Number(v); disc.disabled=!!(ED.discPct); if(ED.discPct) disc.value=""; updateTotals(); };
+  const dt=$("#e-dtype"); if(dt&&!dt.disabled) dt.onchange=()=>{ ED.discType=dt.value; updateTotals(); };
   const cu=$("#e-cust"); if(cu&&!cu.disabled) cu.onchange=()=>applyCustomer(cu.value);
   const ac=$("#e-addcust"); if(ac) ac.onclick=()=>quickCustomerModal(id=>{ readEditor(); const sel=$("#e-cust"); sel.innerHTML=`<option value="">— اختر العميل —</option>`+S.customers.map(c=>`<option value="${esc(c.id)}" ${c.id===id?"selected":""}>${esc(c.name)}</option>`).join(""); applyCustomer(id); });
   const kind=$("#e-kind"); if(kind&&!kind.disabled) kind.onchange=()=>{ readEditor(); ED.kind=kind.value; ED._kind=kind.value; history.replaceState(null,"","#"+(ED.kind==="invoice"?"new":"new-"+ED.kind)); S.route={name:"new",arg:ED.kind}; render(); };
