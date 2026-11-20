@@ -922,7 +922,7 @@ function viewInvoices(special){
     <label class="f">إلى تاريخ<input type="date" class="i" id="f-to" value="${L.to}"></label>
   </div>
   <div class="actions" style="margin-bottom:10px" id="bulk" ${S.selected.size?"":"hidden"}><span class="muted" id="bulk-n">${S.selected.size} محددة:</span>
-   <button class="btn sm" data-bulk="pack">${IC.pdf}تنزيل الفواتير PDF</button>
+   ${can("edit")?`<button class="btn sm" data-bulk="repeat">${IC.copy}تكرار</button>`:""}<button class="btn sm" data-bulk="pack">${IC.pdf}تنزيل الفواتير PDF</button>
    ${isAdmin()?'<button class="btn sm" data-bulk="rev-paid">مراجعة: مدفوعة بالكامل</button><button class="btn sm" data-bulk="rev-unpaid">مراجعة: غير مدفوعة</button><button class="btn sm" data-bulk="paid">تسجيل دفعة كاملة</button>':''}
    <button class="btn sm" data-bulk="clear">إلغاء التحديد</button></div>
   ${invTable(list,{select:true})}`;
@@ -949,7 +949,7 @@ function viewEditor(id, kind){
   const e=ED, isSp=e.kind==="special", locked=!!id && isLocked(invById(id)), dis=locked?"disabled":"";
   const custOpts=`<option value="">— اختر العميل —</option>`+S.customers.map(c=>`<option value="${esc(c.id)}" ${e.customerId===c.id?"selected":""}>${esc(c.name)}</option>`).join("");
   const dl=(idd,f)=>`<datalist id="${idd}">${suggest(f).map(v=>`<option value="${esc(v)}">`).join("")}</datalist>`;
-  return `<div class="top"><div><h1>${id?"تعديل "+(isSp?"الفاتورة المجمعة":KIND[e.kind])+" "+esc(dispNo(e)):"إنشاء "+KIND[e.kind]}</h1><p>${locked?"الفاتورة معتمدة: البيانات المالية مقفلة. يمكن تعديل بيانات المشروع والشهادات وخيار الختم فقط.":isSp?"تسلسل خاص لا يدخل في الحسابات العامة.":"تُحفظ كمسودة، ويُعطى الرقم التسلسلي الرسمي عند الاعتماد."}</p></div>
+  return `<div class="top"><div><h1>${id?"تعديل "+(isSp?"الفاتورة المجمعة":KIND[e.kind])+" "+esc(dispNo(e)):"إنشاء "+KIND[e.kind]}</h1><p>${e.repeatOf&&!id?"نسخة مكررة من "+esc(e.repeatOf)+" — راجع البيانات وعدّل ما تريد. ":""}${locked?"الفاتورة معتمدة: البيانات المالية مقفلة. يمكن تعديل بيانات المشروع والشهادات وخيار الختم فقط.":isSp?"تسلسل خاص لا يدخل في الحسابات العامة.":"تُحفظ كمسودة، ويُعطى الرقم التسلسلي الرسمي عند الاعتماد."}</p></div>
   <div class="actions"><a class="btn ghost" href="${id?"#inv-"+esc(id):"#invoices"}">${IC.back}رجوع</a></div></div>
   <form id="editor-form" class="stack" novalidate>
   <div class="panel"><h2>بيانات ${isSp?"الفاتورة المجمعة":"الفاتورة"} ${locked?`<span class="lock">${IC.lock}مقفلة بعد الاعتماد</span>`:""}</h2>
@@ -1109,6 +1109,62 @@ async function issueExisting(i){
   toast("تم الاعتماد برقم "+data.no);
 }
 
+/* ---------------- repeat (monthly contracts) ----------------
+   Copies an invoice into a new DRAFT with a new date; the official number is given on issue.
+   Optionally moves month names in the descriptions forward (e.g. "October 2026" -> "November 2026"). */
+function nextMonth(iso){ const [y,m,d]=(iso||todayISO()).split("-").map(Number); const t=new Date(y,m,1); const last=new Date(t.getFullYear(),t.getMonth()+1,0).getDate(); return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(Math.min(d,last)).padStart(2,"0")}`; }
+const MONTHS_EN3=MONTHS_EN.map(m=>m.slice(0,3));
+function shiftMonthText(txt, fromISO, toISO){
+  if(!txt || !fromISO || !toISO) return txt;
+  const [fy,fm]=fromISO.split("-").map(Number), [ty,tm]=toISO.split("-").map(Number);
+  if(fy===ty && fm===tm) return txt;
+  let s=String(txt);
+  const yr=t=>fy!==ty?t.replace(new RegExp("(^|\\D)"+fy+"(?!\\d)","g"),"$1"+ty):t;
+  const swap=(from,to,flags)=>{ s=s.replace(new RegExp("(^|[^A-Za-z\\u0600-\\u06FF])("+from+")((?:\\s*[-/,]?\\s*)"+fy+")?(?![A-Za-z\\u0600-\\u06FF])",flags),(all,pre,name,y)=>pre+to+(y?yr(y):"")); };
+  swap(MONTHS_EN[fm-1], MONTHS_EN[tm-1], "gi");
+  swap(MONTHS_EN3[fm-1], MONTHS_EN3[tm-1], "g");
+  swap(MONTHS_AR[fm-1], MONTHS_AR[tm-1], "g");
+  const pad=n=>String(n).padStart(2,"0");
+  s=s.replace(new RegExp("(^|\\D)"+pad(fm)+"([/-])"+fy+"(?!\\d)","g"),"$1"+pad(tm)+"$2"+ty);
+  return s;
+}
+const REPEAT_DROP=["id","no","snap","docNos","issuedAt","issuedBy","imported","reviewed","reviewedAt","reviewedBy","sheet","cancelReason","cancelledAt","cancelledBy","convertedTo","fromProforma","createdAt","createdBy","updatedAt","updatedBy","transferredDate","transferRef","transferAmount"];
+function repeatDraft(i, newDate, shift){
+  const n=clone(i); for(const k of REPEAT_DROP) delete n[k];
+  const sh=t=>shift?shiftMonthText(t,i.date,newDate):t;
+  n.lines=(n.lines||[]).map(l=>({...l, desc:sh(l.desc)}));
+  Object.assign(n,{date:newDate, completedDate:newDate, payments:[], history:[], status:"draft", repeatOf:dispNo(i), notes:(i.notes&&!isLegacy(i))?i.notes:"", worksList:sh(n.worksList||""), purpose:sh(n.purpose||""), spStatus:n.kind==="special"?"open":n.spStatus});
+  if(n.kind==="special" && n.mode==="grouped"){ n.linked=[]; }
+  return n;
+}
+function repeatModal(ids){
+  const list=ids.map(invById).filter(Boolean).filter(i=>i.status!=="cancelled");
+  if(!list.length){ toast("لا توجد فواتير قابلة للتكرار"); return; }
+  const one=list.length===1, i0=list[0];
+  const preview=()=>{ const d=$("#rp-d")?.value, sh=$("#rp-s")?.checked; if(!d||!sh) return ""; const l=(i0.lines||[]).find(x=>x.desc&&shiftMonthText(x.desc,i0.date,d)!==x.desc); return l?shiftMonthText(l.desc,i0.date,d):"لا يوجد اسم شهر في الوصف — ستبقى البنود كما هي"; };
+  modal(`<h3>${one?"تكرار الفاتورة "+esc(dispNo(i0)):"تكرار "+list.length+" فواتير"}</h3>
+   <p class="hint">تُنشأ ${one?"نسخة":"نسخ"} كمسودة بنفس العميل والبنود وبيانات المشروع، بتاريخ جديد. الرقم التسلسلي الجديد يُعطى عند الاعتماد، ويمكن تعديل أي بيان قبل ذلك.</p>
+   <div class="grid g2">
+    <label class="f">${one?"تاريخ الفاتورة الجديدة":"التاريخ"}${one?`<input type="date" class="i" id="rp-d" value="${nextMonth(i0.date)}">`:`<select class="i" id="rp-mode"><option value="next">الشهر التالي لكل فاتورة</option><option value="fixed">تاريخ موحد</option></select>`}</label>
+    ${one?"":`<label class="f">التاريخ الموحد<input type="date" class="i" id="rp-d" value="${todayISO()}" disabled></label>`}
+   </div>
+   <label class="chk" style="margin-top:12px"><input type="checkbox" id="rp-s" checked>تحديث اسم الشهر في وصف البنود (مثل October → November)</label>
+   ${one?`<p class="hint" id="rp-prev" style="margin-top:8px" dir="auto"></p>`:""}
+   <div class="foot"><button class="btn" data-close>إلغاء</button>${one?`<button class="btn" id="rp-save">حفظ كمسودة</button><button class="btn primary" id="rp-open">${IC.edit}فتح للتعديل</button>`:`<button class="btn primary" id="rp-save">إنشاء ${list.length} مسودات</button>`}</div>`,(bg)=>{
+    const pv=()=>{ const el=$("#rp-prev",bg); if(el){ const t=preview(); el.textContent=t?"معاينة البند الأول: "+t:""; } };
+    const md=$("#rp-mode",bg); if(md) md.onchange=()=>{ $("#rp-d",bg).disabled=md.value!=="fixed"; };
+    ["#rp-d","#rp-s"].forEach(s=>{ const el=$(s,bg); if(el) el.addEventListener("input",pv); }); pv();
+    const build=i=>{ const d=one||$("#rp-mode",bg).value==="fixed" ? $("#rp-d",bg).value : nextMonth(i.date); return repeatDraft(i, d||todayISO(), $("#rp-s",bg).checked); };
+    const op=$("#rp-open",bg); if(op) op.onclick=()=>{ const n=build(i0); bg.remove(); ED=n; ED._id=null; ED._kind=n.kind; location.hash=n.kind==="invoice"?"new":"new-"+n.kind; };
+    $("#rp-save",bg).onclick=async()=>{ const b=$("#rp-save",bg); b.disabled=true; let made=[];
+      try{ for(const i of list){ const n=build(i); const now=new Date().toISOString(); const data=buildRecord(n); Object.assign(data,{status:"draft",createdAt:now,createdBy:actor(),updatedAt:now,updatedBy:actor(),history:[{at:now,by:actor(),action:"تكرار من "+dispNo(i)}]}); const id=uid("inv"); await Store.save("invoices",id,data); made.push(id); }
+        await audit("تكرار فواتير", list.map(dispNo).join("، "), made.length+" مسودة");
+        bg.remove(); S.selected.clear(); toast(`تم إنشاء ${made.length} مسودة — راجعها ثم اعتمدها`);
+        if(made.length===1) go("inv-"+made[0]); else { S.list={...S.list,tab:"all",status:"draft"}; go("invoices"); }
+      }catch(e){ b.disabled=false; toast("تعذر الحفظ: "+(e.message||e.code||e)); } };
+  });
+}
+
 /* ---------------- invoice detail ---------------- */
 function viewInvoice(id){
   const i=invById(id);
@@ -1127,14 +1183,14 @@ function viewInvoice(id){
    ${draft&&can("edit")?`<a class="btn" href="#edit-${esc(i.id)}">${IC.edit}تعديل المسودة</a>`:""}
    ${draft&&can("issue")?`<button class="btn primary" id="issue">${IC.check}اعتماد وإعطاء الرقم</button>`:""}
    ${!draft&&!cancelled&&can("edit")?`<a class="btn" href="#edit-${esc(i.id)}">${IC.edit}${isLegacy(i)&&isAdmin()?"تعديل":"بيانات المشروع والطباعة"}</a>`:""}
-   ${can("edit")&&!isSp?`<button class="btn" id="dup">${IC.copy}نسخ كمسودة جديدة</button>`:""}
+   ${can("edit")&&!cancelled?`<button class="btn" id="dup">${IC.copy}تكرار الفاتورة</button>`:""}
    ${i.kind==="proforma"&&!draft&&!cancelled&&!i.convertedTo&&can("issue")?'<button class="btn gold" id="convert">تحويل إلى فاتورة</button>':''}
    ${!isSp?`<button class="btn primary" id="pack">${IC.pdf}كل المستندات PDF</button>`:""}</div></div>
   <div class="stack">
   ${draft?'<div class="banner info">مسودة — لم يُعطَ لها رقم رسمي بعد. المستندات المطبوعة تحمل علامة DRAFT.</div>':''}
   ${cancelled?`<div class="banner bad">ملغاة — السبب: ${esc(i.cancelReason||"—")} (${esc(i.cancelledBy||"")}، ${i.cancelledAt?new Date(i.cancelledAt).toLocaleDateString("en-GB"):""})</div>`:''}
   ${awaitingReview(i)?`<div class="banner"><span>فاتورة مستوردة من Excel (الورقة: ${esc(i.sheet||"")}) — حالة السداد غير مؤكدة، ولا تدخل في مؤشرات التحصيل حتى تُراجع.</span>${isAdmin()?'<span class="actions"><button class="btn sm" id="rev-paid">مدفوعة بالكامل</button><button class="btn sm" id="rev-unpaid">غير مدفوعة</button></span>':''}</div>`:''}
-  ${i.convertedTo?`<div class="banner info">حُوّلت إلى الفاتورة ${esc(i.convertedTo)}</div>`:''}${i.fromProforma?`<div class="banner info">منشأة من الفاتورة المبدئية ${esc(i.fromProforma)}</div>`:''}
+  ${i.repeatOf?`<div class="banner info">مكررة من الفاتورة ${esc(i.repeatOf)}</div>`:''}${i.convertedTo?`<div class="banner info">حُوّلت إلى الفاتورة ${esc(i.convertedTo)}</div>`:''}${i.fromProforma?`<div class="banner info">منشأة من الفاتورة المبدئية ${esc(i.fromProforma)}</div>`:''}
   ${lsp.length?`<div class="banner info">مدرجة في الفاتورة المجمعة ${lsp.map(s=>`<a href="#inv-${esc(s.id)}" class="code">${esc(dispNo(s))}</a>`).join("، ")}</div>`:''}
   <div class="kpis">
     <div class="kpi"><div class="l">${isSp?"إجمالي التحويل":"صافي الفاتورة"}</div><div class="v">${fmt(c.total)} <small>ر.ق</small></div><div class="s">${c.ded?"بعد استقطاعات "+fmt(c.ded):""}${i.discount?" وخصم "+fmt(i.discount):""}</div></div>
@@ -1672,6 +1728,7 @@ function bindList(special){
   $$("[data-bulk]").forEach(b=>b.onclick=async()=>{
     const ids=[...S.selected], a=b.dataset.bulk;
     if(a==="clear"){ S.selected.clear(); render(); return; }
+    if(a==="repeat"){ repeatModal(ids); return; }
     if(a==="pack"){ const html=ids.map(invById).filter(Boolean).map(i=>docInvoice(i,{stamp:!!i.stamp})).join(""); await makePdf(html,`Invoices-${ids.length}.pdf`); audit("تنزيل فواتير مجمعة PDF", ids.length+" فاتورة"); return; }
     if(a==="rev-paid"||a==="rev-unpaid") confirmBox(`تأكيد ${ids.length} فاتورة مستوردة كـ${a==="rev-paid"?"مدفوعة بالكامل":"غير مدفوعة"}؟ الفواتير غير المستوردة تُتجاهل.`,"تأكيد المراجعة",async()=>{
       let n=0; for(const id of ids){ const i=invById(id); if(!i||!awaitingReview(i)) continue; await reviewLegacy(i, a==="rev-paid"); n++; } S.selected.clear(); toast(`تمت مراجعة ${n} فاتورة`); });
@@ -1737,7 +1794,7 @@ function bindInvoice(){
     if(activePays(i).length){ toast("لا يمكن الإلغاء مع وجود دفعات — اعكس الدفعات أولاً"); return; }
     if(linkedSpecials(i.id).length){ toast("الفاتورة مدرجة في فاتورة مجمعة مفتوحة — ألغِ المجمعة أولاً"); return; }
     confirmBox(`إلغاء ${dispNo(i)}؟ يبقى الرقم محفوظاً مع ختم CANCELLED ولا يُعاد استخدامه.`,"إلغاء نهائي",async reason=>{ await patchInvoice(i.id,{status:"cancelled",cancelReason:reason,cancelledAt:new Date().toISOString(),cancelledBy:actor(),spStatus:i.kind==="special"?"cancelled":(i.spStatus||null)},"إلغاء — "+reason); toast("تم الإلغاء"); },true,true); };
-  const dup=$("#dup"); if(dup) dup.onclick=()=>{ const n=clone(i); for(const k of ["id","no","snap","docNos","issuedAt","issuedBy","imported","reviewed","reviewedAt","reviewedBy","sheet","cancelReason","cancelledAt","cancelledBy","convertedTo","fromProforma"]) delete n[k]; Object.assign(n,{payments:[],history:[],status:"draft",date:todayISO(),completedDate:todayISO(),notes:""}); ED=n; ED._id=null; ED._kind=n.kind; location.hash=n.kind==="invoice"?"new":"new-"+n.kind; };
+  const dup=$("#dup"); if(dup) dup.onclick=()=>repeatModal([i.id]);
   const cv=$("#convert"); if(cv) cv.onclick=()=>confirmBox("تحويل الفاتورة المبدئية إلى فاتورة رسمية برقم INV جديد؟ تبقى المبدئية محفوظة كمرجع.","تحويل واعتماد",async()=>{
     const n=clone(i); for(const k of ["id","docNos","snap","history"]) delete n[k]; const d=todayISO(), now=new Date().toISOString();
     Object.assign(n,{kind:"invoice",date:d,payments:[],status:"issued",fromProforma:i.no,createdAt:now,createdBy:actor(),issuedAt:now,issuedBy:actor(),snap:snapshot()});
