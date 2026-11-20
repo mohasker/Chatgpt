@@ -1,4 +1,5 @@
-"""Build the two deliverables from src/app.html, inlining the brand images.
+"""Build the two deliverables from src/app.html, inlining the brand images
+and the embedded cheque system (src/cheques.html).
 
   dist/artifact.html  page body published as the Claude Artifact (cloud database)
   dist/index.html     standalone copy that runs from any web host or a local
@@ -6,6 +7,7 @@
 
 Usage:  python3 build.py
 """
+import json
 from pathlib import Path
 
 root = Path(__file__).parent
@@ -13,6 +15,12 @@ html = (root / "src" / "app.html").read_text(encoding="utf-8")
 for key in ("logo", "strip", "sign", "stamp"):
     data = (root / "assets" / f"{key}.b64").read_text().strip()
     html = html.replace("{{%s}}" % key.upper(), data)
+
+cheques = root / "src" / "cheques.html"
+if cheques.exists():
+    # JSON string literal; "</" escaped so the embedded page cannot close our <script>
+    lit = json.dumps(cheques.read_text(encoding="utf-8"), ensure_ascii=False).replace("</", "<\\/")
+    html = html.replace("{{CHEQUE_HTML}}", lit)
 
 dist = root / "dist"
 dist.mkdir(exist_ok=True)

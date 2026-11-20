@@ -80,6 +80,9 @@ main{min-width:0;padding-block:22px 60px;padding-left:max(22px,env(safe-area-ins
   main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 60px}
 }
 
+/* embedded cheque system */
+.chq-frame{display:block;width:100%;height:calc(100vh - 44px);border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+@media (max-width:860px){.chq-frame{height:calc(100vh - 110px)}}
 /* navy rail */
 .rail .nav a{color:var(--rail-ink)} .rail .nav a:hover{background:var(--rail-hover)} .rail .nav a.on{background:var(--rail-on);color:var(--rail-gold)}
 .rail .nav .sep{background:rgba(255,255,255,.12)} .rail .brand small,.rail .rail-foot{color:var(--rail-muted)} .rail .brand b{color:#fff}
@@ -370,7 +373,8 @@ document.documentElement.setAttribute("dir","rtl"); document.documentElement.set
    ========================================================================== */
 const IMG = {logo:"{{LOGO}}", sign:"{{SIGN}}", stamp:"{{STAMP}}"};
 
-const APP_VERSION = "V.0.1.0";
+const APP_VERSION = "V.0.0.1";
+const CHEQUE_HTML = {{CHEQUE_HTML}};
 const SERIES = {invoice:"INV", proforma:"PRO", special:"CON", completion:"WCC", warranty:"WRN", cover:"CVL", delivery:"DN", receipt:"RCV"};
 const DOC_KINDS = ["completion","warranty","cover","delivery"];
 const SERIES_AR = {INV:"الفواتير", PRO:"الفواتير المبدئية", CON:"الفواتير المجمعة", WCC:"شهادات الإنجاز", WRN:"شهادات الضمان", CVL:"كتب التغطية", DN:"أذونات التسليم", RCV:"سندات القبض"};
@@ -467,7 +471,7 @@ const S = {
   mode:"loading", canWrite:true, isPlatformAdmin:true, uid:null, session:null,
   invoices:[], customers:[], counters:{}, users:{}, settings:clone(DEFAULT_SETTINGS),
   loaded:{inv:false,cus:false,set:false,users:false}, stale:false,
-  route:{name:"dashboard", arg:""}, year:new Date().getFullYear(),
+  route:{name:"", arg:""}, year:new Date().getFullYear(),
   list:{tab:"all", q:"", status:"", customer:"", from:"", to:""}, selected:new Set(),
   repTab:"register", rep:{from:"",to:"",customer:"",status:"",kind:"accounts",group:"month"},
   reg:{type:"", q:""}, custQ:"",
@@ -656,7 +660,7 @@ function subscribe(){
 }
 let _rs=null;
 function renderSoon(){ if(_rs) return; _rs=requestAnimationFrame(()=>{ _rs=null; if(isEditing()){ refreshChrome(); return; } render(); }); }
-function isEditing(){ return !!$("#editor-form") || !!$(".modal-bg") || !!$("#login-form") || !!$("#pw-form"); }
+function isEditing(){ return (S.route && S.route.name==="cheques" && !!$("#chq-frame")) || !!$("#editor-form") || !!$(".modal-bg") || !!$("#login-form") || !!$("#pw-form"); }
 
 /* ---------------- authentication ----------------
    Usernames/password hashes live in settings/main (PBKDF2-SHA256, per-user salt).
@@ -690,10 +694,10 @@ function validateSession(){
 
 /* ---------------- routing ---------------- */
 const pendingCount = () => S.invoices.filter(i=>i.status==="pending").length;
-const ROUTE_PERM = {approvals:"approve", dashboard:"dashboard", invoices:"invoices", special:"invoices", new:"edit", edit:"edit", inv:"invoices", register:"register", reports:"reports", customers:"customers", customer:"customers", statement:"statement", config:"settings", audit:"audit", sequences:"reports", rcpt:"print"};
+const ROUTE_PERM = {cheques:"cheques", approvals:"approve", dashboard:"dashboard", invoices:"invoices", special:"invoices", new:"edit", edit:"edit", inv:"invoices", register:"register", reports:"reports", customers:"customers", customer:"customers", statement:"statement", config:"settings", audit:"audit", sequences:"reports", rcpt:"print"};
 function parseHash(){
   const h=decodeURIComponent((location.hash||"").slice(1));
-  const simple=["approvals","dashboard","invoices","special","register","reports","customers","config","audit","sequences"];
+  const simple=["cheques","approvals","dashboard","invoices","special","register","reports","customers","config","audit","sequences"];
   if(!h) return {name:"", arg:""};
   if(simple.includes(h)) return {name:h, arg:""};
   if(h==="new"||h==="new-invoice") return {name:"new",arg:"invoice"};
@@ -752,13 +756,14 @@ const IC = {
   back:'<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>',
   lock:'<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>',
   out:'<svg viewBox="0 0 24 24"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/></svg>',
-  check:'<svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>'
+  check:'<svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>',
+  cheque:'<svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 14h5M6 10h8M16 14h2"/></svg>'
 };
 
 /* ---------------- shell ---------------- */
 const NAV=[
   ["dashboard","لوحة التحكم",IC.dash,"dashboard"],["approvals","بانتظار الاعتماد",IC.check,"approve"],["invoices","الفواتير",IC.inv,"invoices"],["new","فاتورة جديدة",IC.plus,"edit"],
-  ["special","الفواتير المجمعة",IC.stack,"invoices"],["register","سجل المستندات",IC.reg,"register"],["reports","التقارير",IC.rep,"reports"],
+  ["special","الفواتير المجمعة",IC.stack,"invoices"],["register","سجل المستندات",IC.reg,"register"],["reports","التقارير",IC.rep,"reports"],["cheques","الشيكات",IC.cheque,"cheques"],
   ["sep"],["customers","العملاء",IC.users,"customers"],["sequences","التسلسل",IC.hash,"reports"],["audit","سجل التدقيق",IC.shield,"audit"],["config","الإعدادات",IC.gear,"settings"]
 ];
 function navActive(n){ const r=S.route.name; if(n==="invoices") return ["invoices","inv","edit","rcpt"].includes(r)||r.startsWith("doc"); if(n==="customers") return ["customers","customer","statement"].includes(r); return r===n; }
@@ -796,6 +801,7 @@ function render(){
   try{
     if(r==="dashboard") html=viewDashboard();
     else if(r==="approvals") html=viewApprovals();
+    else if(r==="cheques") html=`<iframe id="chq-frame" class="chq-frame" title="نظام الشيكات"></iframe>`;
     else if(r==="invoices") html=viewInvoices(false);
     else if(r==="special") html=viewInvoices(true);
     else if(r==="new") html=viewEditor(null, S.route.arg||"invoice");
@@ -1932,6 +1938,7 @@ function bind(){
     $$("[data-stmt]").forEach(tr=>tr.onclick=()=>{ if(tr.dataset.stmt) go("statement-"+tr.dataset.stmt); }); }
   if(r==="invoices"||r==="special") bindList(r==="special");
   if(r==="approvals") bindApprovals();
+  if(r==="cheques"){ const f=$("#chq-frame"); if(f && !f.srcdoc) f.srcdoc=CHEQUE_HTML; audit("فتح نظام الشيكات",""); }
   if(r==="new"||r==="edit") bindEditor();
   if(r==="inv") bindInvoice();
   if(r.startsWith("doc-")) bindDoc(r.slice(4));
