@@ -18,9 +18,14 @@ for key in ("logo", "strip", "sign", "stamp"):
 
 cheques = root / "src" / "cheques.html"
 if cheques.exists():
-    # JSON string literal; "</" escaped so the embedded page cannot close our <script>
-    lit = json.dumps(cheques.read_text(encoding="utf-8"), ensure_ascii=False).replace("</", "<\\/")
-    html = html.replace("{{CHEQUE_HTML}}", lit)
+    import sys
+    sys.path.insert(0, str(root / "tools"))
+    from embed_cheques import transform
+    css, body, js = transform(cheques.read_text(encoding="utf-8"))
+    esc = lambda v: json.dumps(v, ensure_ascii=False).replace("</", "<\\/")
+    assert "</script" not in js.lower().replace("<\\/script", ""), "cheque code contains a closing script tag"
+    # styles/markup as data, code inline (no eval: the artifact frame may forbid it)
+    html = html.replace("{{CHEQUE_HTML}}", "{css:%s,html:%s};\n%s" % (esc(css), esc(body), js))
 
 dist = root / "dist"
 dist.mkdir(exist_ok=True)

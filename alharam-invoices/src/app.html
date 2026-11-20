@@ -1,7 +1,7 @@
 <title>نظام فواتير الحرم</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Kufi+Arabic:wght@500;700&family=Noto+Naskh+Arabic:wght@400;700&family=Tinos:ital,wght@0,400;0,700;1,400&family=Arimo:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Kufi+Arabic:wght@500;700&family=Noto+Naskh+Arabic:wght@400;500;700&family=Tinos:ital,wght@0,400;0,700;1,400&family=Arimo:wght@400;700&display=swap">
 <style>
 /* Layout: right-hand rail (RTL) for ledger sections, wide work area; documents render as true A4 paper sheets matching the company's Excel originals */
 :root{
@@ -81,8 +81,7 @@ main{min-width:0;padding-block:22px 60px;padding-left:max(22px,env(safe-area-ins
 }
 
 /* embedded cheque system */
-.chq-frame{display:block;width:100%;height:calc(100vh - 44px);border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
-@media (max-width:860px){.chq-frame{height:calc(100vh - 110px)}}
+.chq-host{display:block;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
 /* navy rail */
 .rail .nav a{color:var(--rail-ink)} .rail .nav a:hover{background:var(--rail-hover)} .rail .nav a.on{background:var(--rail-on);color:var(--rail-gold)}
 .rail .nav .sep{background:rgba(255,255,255,.12)} .rail .brand small,.rail .rail-foot{color:var(--rail-muted)} .rail .brand b{color:#fff}
@@ -660,7 +659,7 @@ function subscribe(){
 }
 let _rs=null;
 function renderSoon(){ if(_rs) return; _rs=requestAnimationFrame(()=>{ _rs=null; if(isEditing()){ refreshChrome(); return; } render(); }); }
-function isEditing(){ return (S.route && S.route.name==="cheques" && !!$("#chq-frame")) || !!$("#editor-form") || !!$(".modal-bg") || !!$("#login-form") || !!$("#pw-form"); }
+function isEditing(){ return (S.route && S.route.name==="cheques" && !!$("#chq-slot")) || !!$("#editor-form") || !!$(".modal-bg") || !!$("#login-form") || !!$("#pw-form"); }
 
 /* ---------------- authentication ----------------
    Usernames/password hashes live in settings/main (PBKDF2-SHA256, per-user salt).
@@ -801,7 +800,7 @@ function render(){
   try{
     if(r==="dashboard") html=viewDashboard();
     else if(r==="approvals") html=viewApprovals();
-    else if(r==="cheques") html=`<iframe id="chq-frame" class="chq-frame" title="نظام الشيكات"></iframe>`;
+    else if(r==="cheques") html=`<div id="chq-slot"></div>`;
     else if(r==="invoices") html=viewInvoices(false);
     else if(r==="special") html=viewInvoices(true);
     else if(r==="new") html=viewEditor(null, S.route.arg||"invoice");
@@ -1038,6 +1037,21 @@ function viewInvoices(special){
    ${can("issue")?'<button class="btn sm" data-bulk="approve">اعتماد المحدد</button><button class="btn sm" data-bulk="paid">تسجيل كمدفوعة بالكامل</button>':''}
    <button class="btn sm" data-bulk="clear">إلغاء التحديد</button></div>
   ${invTable(list,{select:true})}`;
+}
+
+/* ---------------- cheque system (embedded, isolated in a shadow root) ---------------- */
+let CHQ_HOST=null;
+function mountCheques(){
+  const slot=$("#chq-slot"); if(!slot) return;
+  if(!CHQ_HOST){
+    CHQ_HOST=document.createElement("div"); CHQ_HOST.className="chq-host"; CHQ_HOST.dir="rtl";
+    const root=CHQ_HOST.attachShadow({mode:"open"});
+    root.innerHTML="<style>"+CHEQUE_HTML.css+"</style>"+CHEQUE_HTML.html;
+    try{ window.__chequeApp(root); }
+    catch(e){ console.error(e); root.innerHTML='<div style="padding:24px;font-family:sans-serif">تعذر تشغيل نظام الشيكات: '+esc(e.message)+'</div>'; }
+    audit("فتح نظام الشيكات","");
+  }
+  slot.appendChild(CHQ_HOST);
 }
 
 /* ---------------- management approval ---------------- */
@@ -1938,7 +1952,7 @@ function bind(){
     $$("[data-stmt]").forEach(tr=>tr.onclick=()=>{ if(tr.dataset.stmt) go("statement-"+tr.dataset.stmt); }); }
   if(r==="invoices"||r==="special") bindList(r==="special");
   if(r==="approvals") bindApprovals();
-  if(r==="cheques"){ const f=$("#chq-frame"); if(f && !f.srcdoc) f.srcdoc=CHEQUE_HTML; audit("فتح نظام الشيكات",""); }
+  if(r==="cheques") mountCheques();
   if(r==="new"||r==="edit") bindEditor();
   if(r==="inv") bindInvoice();
   if(r.startsWith("doc-")) bindDoc(r.slice(4));
