@@ -1453,7 +1453,7 @@ function viewInvoice(id){
    ${can("edit")&&!cancelled?`<button class="btn" id="dup">${IC.copy}تكرار الفاتورة</button>`:""}
    ${i.kind==="proforma"&&!draft&&!cancelled&&!i.convertedTo&&can("issue")?'<button class="btn gold" id="convert">تحويل إلى فاتورة</button>':''}
    ${!cancelled&&can("send")?`<button class="btn" id="send">إرسال / تصدير</button>`:""}
-   ${!isSp?`<button class="btn primary" id="pack">${IC.pdf}كل المستندات PDF</button>`:""}</div></div>
+   ${!isSp?`<button class="btn" id="pack-print">${IC.print}طباعة كل المستندات</button><button class="btn primary" id="pack">${IC.pdf}كل المستندات PDF</button>`:""}</div></div>
   <div class="stack">
   ${draft?`<div class="banner info">مسودة — لم يُعطَ لها رقم رسمي بعد. المستندات المطبوعة تحمل علامة DRAFT.${i.returnNote?" — <b>أعادتها الإدارة:</b> "+esc(i.returnNote):""}</div>`:''}
   ${pending?`<div class="banner"><span>بانتظار اعتماد الإدارة — أرسلها ${esc(i.submittedBy||"")} ${i.submittedAt?new Date(i.submittedAt).toLocaleString("en-GB"):""}.</span>${!isAdmin()&&waAdminLink(i)?`<a class="btn sm" target="_blank" rel="noopener" href="${esc(waAdminLink(i))}">إبلاغ الإدارة عبر واتساب</a>`:""}</div>`:''}
@@ -1472,7 +1472,7 @@ function viewInvoice(id){
   </div>
   <div class="panel"><h2>المستندات <small>نماذج ثابتة، وإعادة طباعة في أي وقت</small></h2>
     ${missing.length?`<div class="banner">بيانات ناقصة للشهادات: ${missing.join("، ")}. ${can("edit")&&!cancelled?`<a href="#edit-${esc(i.id)}">أكملها</a>`:''}</div>`:''}
-    <div class="docgrid">${docs.map(([k,t,h])=>`<div class="doccard"><b>${t}</b><span class="hint">${esc(h)}</span><div class="row"><a class="btn sm" href="#doc-${k}-${esc(i.id)}">معاينة</a><button class="btn sm primary" data-pdf="${k}">${IC.pdf}PDF</button>${k==="cover"&&SAMPLE&&can("edit")&&!cancelled?`<button class="btn sm gold" data-aicover>✨ ${i.coverCustom?"النص المخصص":"صياغة ذكية"}</button>`:""}</div></div>`).join("")}</div>
+    <div class="docgrid">${docs.map(([k,t,h])=>`<div class="doccard"><b>${t}</b><span class="hint">${esc(h)}</span><div class="row"><a class="btn sm" href="#doc-${k}-${esc(i.id)}">معاينة</a><button class="btn sm primary" data-print="${k}">${IC.print}طباعة</button><button class="btn sm" data-pdf="${k}">${IC.pdf}PDF</button>${k==="cover"&&SAMPLE&&can("edit")&&!cancelled?`<button class="btn sm gold" data-aicover>✨ ${i.coverCustom?"النص المخصص":"صياغة ذكية"}</button>`:""}</div></div>`).join("")}</div>
     <p class="hint" style="margin:10px 0 0">الختم والتوقيع: ${i.stamp?"يظهران افتراضياً":"لا يظهران افتراضياً"} — يمكن التبديل من صفحة المعاينة.</p>
   </div>
   <div class="cols">
@@ -1674,8 +1674,8 @@ function docToolbar(i, kind){
   const o=docOpts(i);
   return `<label class="chk btn"><input type="checkbox" id="doc-stamp" ${o.stamp?"checked":""}>بالختم والتوقيع</label>
    ${kind==="cover"||kind==="pack"?`<select class="i" id="doc-style" style="width:auto" aria-label="نموذج كتاب التغطية"><option value="detailed" ${o.style==="detailed"?"selected":""}>كتاب التغطية: مفصل</option><option value="short" ${o.style==="short"?"selected":""}>كتاب التغطية: مختصر</option></select>`:''}
-   ${S.mode==="local"?`<button class="btn" id="doc-print">${IC.print}طباعة</button>`:''}
-   <button class="btn primary" id="doc-pdf">${IC.pdf}تنزيل PDF للطباعة</button>`;
+   <button class="btn primary" id="doc-print">${IC.print}طباعة</button>
+   <button class="btn" id="doc-pdf">${IC.pdf}تصدير PDF</button>`;
 }
 function viewDoc(kind, id){
   const i=invById(id);
@@ -1721,7 +1721,7 @@ async function saveFile(filename, data){
 async function makePdf(html, filename){
   const blob=await renderPdfBlob(html,3); if(blob) await saveFile(filename, blob);
 }
-async function renderPdfBlob(html, scale){
+async function renderPdfBlob(html, scale, autoPrint){
   if(!window.html2canvas || !window.jspdf){ toast("مكتبات PDF لم تُحمّل بعد — أعد المحاولة بعد لحظات"); return null; }
   toast("جارٍ تجهيز ملف PDF…");
   const root=$("#render-root"); root.innerHTML=html;
@@ -1742,6 +1742,7 @@ async function renderPdfBlob(html, scale){
       }
     }
   } finally { root.innerHTML=""; }
+  if(autoPrint){ try{ pdf.autoPrint(); }catch(e){} }
   return pdf.output("blob");
 }
 const blobToB64 = b => new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(",")[1]); r.onerror=rej; r.readAsDataURL(b); });
@@ -1819,9 +1820,19 @@ async function outputDoc(kind, id, how){
   i = await ensureDocNos(i, kind==="pack"?["completion","warranty","cover"]:[kind]);
   const o=docOpts(i), html=docHtml(kind,i,o);
   await audit((how==="print"?"طباعة ":"تنزيل ")+DOC_AR[kind], dispNo(i), o.stamp?"بالختم":"بدون ختم");
-  if(how==="print") return printDirect(html);
+  if(how==="print") return printDoc(html, `${DOC_NAMES[kind]}-${safeName(kind==="invoice"||kind==="pack"?dispNo(i):(i.docNos?.[kind]?.no||dispNo(i)))}.pdf`);
   const no = kind==="invoice"||kind==="pack" ? dispNo(i) : (i.docNos?.[kind]?.no||dispNo(i));
   await makePdf(html, `${DOC_NAMES[kind]}-${safeName(no)}.pdf`);
+}
+/* Print: the claude.ai viewer blocks window.print(), so there we build a PDF that opens the print dialog by itself.
+   We try to open it in a new tab; if the browser blocks that, it is downloaded and prints when opened. */
+async function printDoc(html, filename){
+  if(S.mode==="local"){ printDirect(html); return; }
+  const blob=await renderPdfBlob(html,3,true); if(!blob) return;
+  let w=null; try{ w=window.open(URL.createObjectURL(blob),"_blank"); }catch(e){ w=null; }
+  if(w){ toast("فُتح الملف في تبويب جديد — تظهر نافذة الطباعة تلقائياً"); return; }
+  const ok=await saveFile(filename.replace(/\.pdf$/,"")+"-PRINT.pdf", blob);
+  if(ok!==false) toast("افتح الملف المحفوظ — تظهر نافذة الطباعة تلقائياً");
 }
 function printDirect(html){ const p=$("#print-root"); p.innerHTML=html; setTimeout(()=>{ try{ window.print(); }catch(e){} },300); }
 
@@ -2695,6 +2706,8 @@ function bindInvoice(){
   const i=invById(S.route.arg); if(!i) return;
   const err=e=>toast("تعذر: "+(e.message||e.code||e));
   $$("[data-pdf]").forEach(b=>b.onclick=()=>outputDoc(b.dataset.pdf,i.id,"pdf").then(()=>render()).catch(err));
+  $$("[data-print]").forEach(b=>b.onclick=()=>outputDoc(b.dataset.print,i.id,"print").then(()=>render()).catch(err));
+  const pkp=$("#pack-print"); if(pkp) pkp.onclick=()=>outputDoc("pack",i.id,"print").then(()=>render()).catch(err);
   const pk=$("#pack"); if(pk) pk.onclick=()=>outputDoc("pack",i.id,"pdf").then(()=>render()).catch(err);
   const sbm=$("#submit"); if(sbm) sbm.onclick=()=>confirmBox("إرسال الفاتورة لاعتماد الإدارة؟","إرسال",async()=>{ await patchInvoice(i.id,{status:"pending",submittedAt:new Date().toISOString(),submittedBy:actor(),returnNote:null},"إرسال لاعتماد الإدارة"); toast("أُرسلت للاعتماد"); notifySubmit(invById(i.id)); });
   const rt=$("#return"); if(rt) rt.onclick=()=>returnModal(i);
@@ -2747,7 +2760,7 @@ function bindReceipt(){
   const i=invById(S.route.arg), k=S.route.k; if(!i) return;
   bindDocToolbar(async how=>{ const fresh=await ensureReceipt(i,k); const html=docReceipt(fresh,k,docOpts(fresh)); const no=fresh.payments[k].rcv?.no||"receipt";
     await audit((how==="print"?"طباعة ":"تنزيل ")+"سند قبض", no);
-    if(how==="print") printDirect(html); else await makePdf(html,`Receipt-${safeName(no)}.pdf`); render(); });
+    if(how==="print") await printDoc(html,`Receipt-${safeName(no)}.pdf`); else await makePdf(html,`Receipt-${safeName(no)}.pdf`); render(); });
 }
 function bindReports(){
   $$("[data-rtab]").forEach(b=>b.onclick=()=>{S.repTab=b.dataset.rtab; render();});
