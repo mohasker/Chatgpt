@@ -386,7 +386,7 @@ document.documentElement.setAttribute("dir","rtl"); document.documentElement.set
    ========================================================================== */
 const IMG = {logo:"{{LOGO}}", sign:"{{SIGN}}", stamp:"{{STAMP}}"};
 
-const APP_VERSION = "V.0.0.5";
+const APP_VERSION = "V.0.0.6";
 const PAL = ["#0E9A6C","#1F7FC8","#E07A0F","#7A4FD1","#C2185B","#13958A","#C9A227","#5D6B82","#2E7D32","#8E5B3A"];
 const QCOL = ["#0E9A6C","#1F7FC8","#7A4FD1","#C2185B"];
 const CHEQUE_HTML = {{CHEQUE_HTML}};
@@ -656,7 +656,8 @@ async function boot(){
       try{ S.isPlatformAdmin = await USER.canEdit(); }catch(e){}
     }
     subscribe();
-  } else { S.mode="local"; localLoad(); }
+  } else if(window.claude && typeof window.claude.use==="function"){ S.mode="nodb"; }  /* inside claude.ai but the database is not reachable (signed out / no access): never show an empty local copy */
+  else { S.mode="local"; localLoad(); }
   S.session = ssGet("alharam-session") || lsGet("alharam-session");
   render();
 }
@@ -828,6 +829,10 @@ function shell(content){
 function refreshChrome(){ const f=$(".rail-foot .conn"); if(f) f.outerHTML=connLabel(); }
 
 function render(){
+  if(S.mode==="nodb"){ $("#app").innerHTML=`<div class="login-wrap"><div class="login"><div class="brand"><img src="${IMG.logo}" alt=""><b>نظام فواتير الحرم</b></div>
+    <div class="banner bad" style="margin:0">تعذر الوصول إلى قاعدة بيانات النظام من هذا المتصفح.</div>
+    <p style="margin:0;line-height:1.9">البيانات محفوظة بأمان على claude.ai، وتظهر فقط بعد:<br>1) تسجيل الدخول إلى <b>claude.ai</b> بنفس الحساب صاحب النظام، أو بحساب تمت مشاركة النظام معه.<br>2) ثم إعادة فتح رابط النظام.</p>
+    <button class="btn primary" style="justify-content:center" onclick="location.reload()">إعادة المحاولة</button><div class="hint ver" style="text-align:center">${APP_VERSION}</div></div></div>`; return; }
   if(S.mode==="loading" || (S.mode==="cloud" && (!S.loaded.set || !S.loaded.users))){ $("#app").innerHTML=`<div class="login-wrap"><div class="login"><div class="brand"><img src="${IMG.logo}" alt=""><b>نظام فواتير الحرم</b><small class="muted">جارٍ الاتصال بقاعدة البيانات…</small></div></div></div>`; return; }
   validateSession();
   if(!S.session){ $("#app").innerHTML=viewLogin(); bindLogin(); return; }
