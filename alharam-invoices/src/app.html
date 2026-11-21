@@ -145,6 +145,10 @@ input.ltr,textarea.ltr{direction:ltr;text-align:left}
 @media (max-width:860px){.g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:520px){.g2,.g3,.g4{grid-template-columns:minmax(0,1fr)}}
 .span2{grid-column:span 2} @media (max-width:520px){.span2{grid-column:auto}}
+.checks{list-style:none;margin:0;padding:0;display:grid;gap:6px}.checks li{border-inline-start:4px solid var(--muted);background:var(--bg);padding:7px 10px;border-radius:6px;font-size:13.5px}
+.ai-out{white-space:pre-line;background:var(--gold-soft);border-radius:8px;padding:10px 12px;margin-top:10px;font-size:14px;line-height:1.8}
+.ai-card h3{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.ai-card h3 .btn{margin-inline-start:auto}
+.btn.rec{background:#C62828;color:#fff;border-color:#C62828;animation:pulse 1.2s infinite}@keyframes pulse{50%{opacity:.7}}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;min-width:0}
 .panel h2{font-family:var(--f-display);font-size:15px;margin:0 0 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .panel h2 small{font-family:var(--f-body);font-weight:500;color:var(--muted);font-size:12px}
@@ -331,7 +335,7 @@ table.bank td:first-child{font-weight:700;white-space:nowrap}
 .stampbox img.sign{position:absolute;width:150px;bottom:24px;left:80px}
 .signs3{margin-top:auto;padding-top:20px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px;text-align:center;font-size:13px}
 .signs3>div>div:last-child{border-top:1px solid var(--paper-line);padding-top:5px}
-.foot{position:absolute;left:40px;right:40px;bottom:22px;border-top:1px solid var(--paper-gold);padding-top:7px;text-align:center;font-family:var(--f-doc-sans);font-size:12px;color:var(--paper-navy);letter-spacing:.6px}
+.sheet .foot{position:absolute;left:40px;right:40px;bottom:22px;border-top:1px solid var(--paper-gold);padding-top:7px;text-align:center;font-family:var(--f-doc-sans);font-size:12px;color:var(--paper-navy);letter-spacing:.6px}
 .cert-meta{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:20px;margin-top:16px;align-items:start}
 table.kv td{border:1px solid var(--paper-line);padding:4px 8px;font-size:12.5px;vertical-align:top;font-family:var(--f-doc-sans)}
 table.kv td:first-child{font-weight:700;background:var(--paper-soft);white-space:nowrap;width:1%}
@@ -382,7 +386,7 @@ document.documentElement.setAttribute("dir","rtl"); document.documentElement.set
    ========================================================================== */
 const IMG = {logo:"{{LOGO}}", sign:"{{SIGN}}", stamp:"{{STAMP}}"};
 
-const APP_VERSION = "V.0.0.3";
+const APP_VERSION = "V.0.0.4";
 const PAL = ["#0E9A6C","#1F7FC8","#E07A0F","#7A4FD1","#C2185B","#13958A","#C9A227","#5D6B82","#2E7D32","#8E5B3A"];
 const QCOL = ["#0E9A6C","#1F7FC8","#7A4FD1","#C2185B"];
 const CHEQUE_HTML = {{CHEQUE_HTML}};
@@ -400,6 +404,8 @@ const DEFAULT_SETTINGS = {
   numbering:{prefix:"ALH", start:{INV:1001, PRO:1, CON:1, WCC:1, WRN:1, CVL:1, DN:1, RCV:1}},
   stampDefault:false,
   users:[],
+  auto:{digestOn:false, digestEmail:"", backupOn:false, backupDays:7, teamsChat:"", teamsChatName:"", waAdmin:""},
+  qb:{itemId:"", itemName:"", terms:30},
   tpl:{
     completionIntro:"This is to certify that {company}, has successfully completed the {typeOfWorks}, ( Ref : {ref} ) Work Order No. {workOrder}, project located at : {location}, as per the agreed upon scope of work and specifications.",
     completionDate:"The works were completed on {completedDate} and have been inspected and found to be in accordance with the approved plans and specifications.",
@@ -486,9 +492,10 @@ const S = {
   list:{tab:"all", q:"", status:"", customer:"", from:"", to:""}, selected:new Set(), ret:{status:"open", customer:"", q:""},
   repTab:"register", rep:{from:"",to:"",customer:"",status:"",kind:"accounts",group:"month"},
   reg:{type:"", q:""}, custQ:"",
-  doc:{lang:"en", style:"detailed", stamp:null}
+  doc:{lang:"en", style:"detailed", stamp:null},
+  meta:{}, ai:{}, chqs:null, qbMonth:""
 };
-let DB=null, USER=null, DL=null, MCP=null;
+let DB=null, USER=null, DL=null, MCP=null, SAMPLE=null, DICT=null;
 function allUsers(){ const m={}; for(const u of DEFAULT_USERS) m[u.u]={...u, builtin:true}; for(const [id,u] of Object.entries(S.users||{})) m[id]={...(m[id]||{}), ...u, u:id, builtin:false}; return Object.values(m); }
 const saveUser = (u,data) => Store.save("users", u, data);
 const role = () => S.session?.role || "";
@@ -624,7 +631,7 @@ function localLoad(){
   S.invoices=Object.entries(d.invoices||{}).map(([id,v])=>({...v,id}));
   S.customers=Object.entries(d.customers||{}).map(([id,v])=>({...v,id}));
   S.settings=deepMerge(DEFAULT_SETTINGS, d.settings||{});
-  S.counters=d.counters||{}; S.users=d.users||{};
+  S.counters=d.counters||{}; S.users=d.users||{}; S.meta=d.meta||{};
   S.loaded={inv:true,cus:true,set:true,users:true};
   sortData(); renderSoon();
 }
@@ -641,6 +648,8 @@ async function boot(){
     try{ USER = await window.claude.use("user"); }catch(e){ USER=null; }
     try{ DL = await window.claude.use("downloads"); }catch(e){ DL=null; }
     try{ MCP = await window.claude.use("mcp"); }catch(e){ MCP=null; }
+    try{ SAMPLE = await window.claude.use("sample"); }catch(e){ SAMPLE=null; }
+    try{ DICT = await window.claude.use("dictation"); }catch(e){ DICT=null; }
     if(USER){
       try{ S.uid = await USER.id(); }catch(e){}
       try{ const w=await USER.can("data.write"); S.canWrite = w!==false; }catch(e){}
@@ -663,6 +672,7 @@ function subscribe(){
     if(!snap.metadata.fromCache) S.loaded.cus=true; done(); sortData(); renderSoon();
   }, ()=>{ S.loaded.cus=true; S.stale=true; render(); });
   DB.collection("users").onSnapshot(snap=>{ const u={}; snap.docs.forEach(d=>u[d.id]=d.data()); S.users=u; if(!snap.metadata.fromCache) S.loaded.users=true; renderSoon(); }, ()=>{ S.loaded.users=true; renderSoon(); });
+  DB.collection("meta").onSnapshot(snap=>{ const m={}; snap.docs.forEach(d=>m[d.id]=d.data()); S.meta=m; }, ()=>{});
   DB.collection("counters").onSnapshot(snap=>{ const c={}; snap.docs.forEach(d=>c[d.id]=d.data()); S.counters=c; }, ()=>{});
   DB.doc("settings/main").onSnapshot(snap=>{
     S.settings = deepMerge(DEFAULT_SETTINGS, snap.exists ? snap.data() : {});
@@ -720,10 +730,10 @@ const daysUntil = iso => Math.round((new Date(iso+"T00:00:00")-new Date(todayISO
 const RET_AR={held:"محتجزة",due:"تستحق خلال 30 يوماً",expired:"انتهت المدة — للتحصيل",released:"تم التحصيل"};
 const RET_CHIP={held:"issued",due:"pending",expired:"cancelled-red",released:"paid"};
 const retAlerts = () => S.invoices.map(retInfo).filter(r=>r&&(r.status==="due"||r.status==="expired")).length;
-const ROUTE_PERM = {retentions:"retention", cheques:"cheques", approvals:"approve", dashboard:"dashboard", invoices:"invoices", special:"invoices", new:"edit", edit:"edit", inv:"invoices", register:"register", reports:"reports", customers:"customers", customer:"customers", statement:"statement", config:"settings", audit:"audit", sequences:"reports", rcpt:"print"};
+const ROUTE_PERM = {automation:"automation", retentions:"retention", cheques:"cheques", approvals:"approve", dashboard:"dashboard", invoices:"invoices", special:"invoices", new:"edit", edit:"edit", inv:"invoices", register:"register", reports:"reports", customers:"customers", customer:"customers", statement:"statement", config:"settings", audit:"audit", sequences:"reports", rcpt:"print"};
 function parseHash(){
   const h=decodeURIComponent((location.hash||"").slice(1));
-  const simple=["retentions","cheques","approvals","dashboard","invoices","special","register","reports","customers","config","audit","sequences"];
+  const simple=["automation","retentions","cheques","approvals","dashboard","invoices","special","register","reports","customers","config","audit","sequences"];
   if(!h) return {name:"", arg:""};
   if(simple.includes(h)) return {name:h, arg:""};
   if(h==="new"||h==="new-invoice") return {name:"new",arg:"invoice"};
@@ -753,7 +763,7 @@ function modal(html, onMount){
   return close;
 }
 function confirmBox(msg, okLabel, fn, danger, withReason){
-  modal(`<h3>تأكيد</h3><p>${esc(msg)}</p>${withReason?'<label class="f">السبب (إلزامي)<textarea class="i" id="cb-reason"></textarea></label>':''}<div class="foot"><button class="btn" data-close>رجوع</button><button class="btn ${danger?"danger":"primary"}" id="cb-ok">${esc(okLabel)}</button></div>`,(bg,close)=>{
+  modal(`<h3>تأكيد</h3><p style="white-space:pre-line">${esc(msg)}</p>${withReason?'<label class="f">السبب (إلزامي)<textarea class="i" id="cb-reason"></textarea></label>':''}<div class="foot"><button class="btn" data-close>رجوع</button><button class="btn ${danger?"danger":"primary"}" id="cb-ok">${esc(okLabel)}</button></div>`,(bg,close)=>{
     $("#cb-ok",bg).onclick=async()=>{ const reason=withReason?$("#cb-reason",bg).value.trim():""; if(withReason&&reason.length<3){ toast("اكتب السبب"); return; } bg.remove(); try{ await fn(reason); }catch(e){ console.error(e); toast("تعذرت العملية: "+(e.message||e.code||e)); } renderSoon(); };
   });
 }
@@ -783,13 +793,16 @@ const IC = {
   lock:'<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>',
   out:'<svg viewBox="0 0 24 24"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/></svg>',
   check:'<svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>',
-  cheque:'<svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 14h5M6 10h8M16 14h2"/></svg>'
+  cheque:'<svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 14h5M6 10h8M16 14h2"/></svg>',
+  bolt:'<svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>',
+  mic:'<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>',
+  img:'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 17l-5-5-9 8"/></svg>'
 };
 
 /* ---------------- shell ---------------- */
 const NAV=[
   ["dashboard","لوحة التحكم",IC.dash,"dashboard"],["approvals","بانتظار الاعتماد",IC.check,"approve"],["retentions","المحتجزات",IC.lock,"retention"],["invoices","الفواتير",IC.inv,"invoices"],["new","فاتورة جديدة",IC.plus,"edit"],
-  ["special","الفواتير المجمعة",IC.stack,"invoices"],["register","سجل المستندات",IC.reg,"register"],["reports","التقارير",IC.rep,"reports"],["cheques","الشيكات",IC.cheque,"cheques"],
+  ["special","الفواتير المجمعة",IC.stack,"invoices"],["register","سجل المستندات",IC.reg,"register"],["reports","التقارير",IC.rep,"reports"],["cheques","الشيكات",IC.cheque,"cheques"],["automation","الأتمتة والتكامل",IC.bolt,"automation"],
   ["sep"],["customers","العملاء",IC.users,"customers"],["sequences","التسلسل",IC.hash,"reports"],["audit","سجل التدقيق",IC.shield,"audit"],["config","الإعدادات",IC.gear,"settings"]
 ];
 function navActive(n){ const r=S.route.name; if(n==="invoices") return ["invoices","inv","edit","rcpt"].includes(r)||r.startsWith("doc"); if(n==="customers") return ["customers","customer","statement"].includes(r); return r===n; }
@@ -844,9 +857,11 @@ function render(){
     else if(r==="statement") html=viewStatement(S.route.arg);
     else if(r==="config") html=viewSettings();
     else if(r==="audit") html=viewAudit();
+    else if(r==="automation") html=viewAutomation();
   }catch(e){ console.error(e); html=`<div class="banner bad">حدث خطأ أثناء العرض: ${esc(e.message)}</div>`; }
   $("#app").innerHTML = shell(html);
   bind();
+  maybeRunAuto();
 }
 
 /* ---------------- login & first setup ---------------- */
@@ -951,6 +966,7 @@ function viewDashboard(){
     <a class="kpi" href="#special"><div class="l">مجمعة مفتوحة (خارج الحسابات)</div><div class="v">${fmt0(spAmt)} <small>ر.ق · ${spOpen.length}</small></div></a>
     <a class="kpi" href="#invoices" data-goto-tab="proforma"><div class="l">مبدئية لم تُحوّل</div><div class="v">${fmt0(pfAmt)} <small>ر.ق · ${pfOpen.length}</small></div></a>
   </div>
+  ${aiSummaryCard()}
   <div class="dash2">
     <div class="card"><h3>الحركة الشهرية ${Y} — مفوتر مقابل محصل <small>ر.ق</small></h3>${monthChart(mi,mc,mp)}
       <div class="chart-legend"><span><i style="background:linear-gradient(90deg,${QCOL.join(",")})"></i>مفوتر ${Y} (لون لكل ربع)</span><span><i class="dot" style="background:var(--c-line)"></i>محصل</span><span><i style="background:var(--gold);height:3px"></i>مفوتر ${Y-1}</span></div></div>
@@ -977,6 +993,7 @@ function viewDashboard(){
       <a class="rowcard" href="#retentions" style="text-decoration:none;color:inherit"><span>محتجزات انتهت مدتها أو تستحق خلال 30 يوماً</span><b>${retAlerts()}</b></a>
       <div class="rowcard"><span>بانتظار اعتماد الإدارة</span><b>${pend.length}</b></div>
       <div class="rowcard"><span>مسودات لم تُرسل</span><b>${drafts.length}</b></div>
+      <a class="rowcard" href="#automation" style="text-decoration:none;color:inherit"><span>عقود شهرية مفعّلة / مسودات تلقائية تنتظر</span><b>${contractRoots().length} / ${S.invoices.filter(i=>i.autoGenerated&&i.status==="draft").length}</b></a>
       <div class="rowcard"><span>آخر رقم فاتورة</span><b class="code">${esc(lastSerial("INV")||"—")}</b></div></div>
   </div>
   </div>`;
@@ -1063,7 +1080,7 @@ function viewInvoices(special){
     <label class="f">إلى تاريخ<input type="date" class="i" id="f-to" value="${L.to}"></label>
   </div>
   <div class="actions" style="margin-bottom:10px" id="bulk" ${S.selected.size?"":"hidden"}><span class="muted" id="bulk-n">${S.selected.size} محددة:</span>
-   ${can("edit")?`<button class="btn sm" data-bulk="repeat">${IC.copy}تكرار</button>`:""}<button class="btn sm" data-bulk="pack">${IC.pdf}تنزيل الفواتير PDF</button>
+   ${can("edit")?`<button class="btn sm" data-bulk="repeat">${IC.copy}تكرار</button>`:""}<button class="btn sm" data-bulk="pack">${IC.pdf}تنزيل الفواتير PDF</button>${isAdmin()&&MCP?`<button class="btn sm" data-bulk="qb">ترحيل إلى QuickBooks</button>`:""}
    ${can("issue")?'<button class="btn sm" data-bulk="approve">اعتماد المحدد</button><button class="btn sm" data-bulk="paid">تسجيل كمدفوعة بالكامل</button>':''}
    <button class="btn sm" data-bulk="clear">إلغاء التحديد</button></div>
   ${invTable(list,{select:true})}`;
@@ -1145,14 +1162,14 @@ function viewApprovals(){
   const L=S.invoices.filter(i=>i.status==="pending").sort((a,b)=>String(a.submittedAt||"").localeCompare(String(b.submittedAt||"")));
   return `<div class="top"><div><h1>بانتظار اعتماد الإدارة</h1><p>فواتير أعدّها المحاسب وأرسلها للاعتماد. عند الاعتماد يُعطى الرقم الرسمي، أو تُعاد للمحاسب مع ملاحظة.</p></div>
    <div class="actions">${L.length?`<button class="btn primary" id="ap-all">${IC.check}اعتماد الكل (${L.length})</button>`:""}</div></div>
-   ${L.length?`<div class="tw"><table class="t"><thead><tr><th>المسودة</th><th>النوع</th><th>التاريخ</th><th>العميل</th><th>الموقع / الأعمال</th><th class="n">القيمة</th><th>أرسلها</th><th></th></tr></thead><tbody>
-   ${L.map(i=>`<tr class="click" data-open="${esc(i.id)}"><td class="code">${esc(dispNo(i))}</td><td>${KIND[i.kind]}</td><td class="num">${dmy(i.date)}</td><td><bdi>${esc(i.customerName)}</bdi></td><td class="muted">${esc([i.site,i.typeOfWorks].filter(Boolean).join(" — ")||i.purpose||"")}</td><td class="n">${fmt(calc(i).total)}</td><td>${esc(i.submittedBy||"")}<div class="hint">${i.submittedAt?new Date(i.submittedAt).toLocaleString("en-GB"):""}</div></td>
+   ${L.length?`<div class="tw"><table class="t"><thead><tr><th>المسودة</th><th>النوع</th><th>التاريخ</th><th>العميل</th><th>الموقع / الأعمال</th><th class="n">القيمة</th><th>أرسلها</th><th>الفحص</th><th></th></tr></thead><tbody>
+   ${L.map(i=>`<tr class="click" data-open="${esc(i.id)}"><td class="code">${esc(dispNo(i))}</td><td>${KIND[i.kind]}</td><td class="num">${dmy(i.date)}</td><td><bdi>${esc(i.customerName)}</bdi></td><td class="muted">${esc([i.site,i.typeOfWorks].filter(Boolean).join(" — ")||i.purpose||"")}</td><td class="n">${fmt(calc(i).total)}</td><td>${esc(i.submittedBy||"")}<div class="hint">${i.submittedAt?new Date(i.submittedAt).toLocaleString("en-GB"):""}</div></td><td>${checkBadge(i)}</td>
      <td style="white-space:nowrap"><a class="btn sm" href="#doc-invoice-${esc(i.id)}">معاينة</a> <button class="btn sm primary" data-ap="${esc(i.id)}">اعتماد</button> <button class="btn sm" data-ret="${esc(i.id)}">إعادة</button></td></tr>`).join("")}
    </tbody></table></div>`:'<div class="empty"><b>لا توجد فواتير بانتظار الاعتماد</b>عندما يرسل المحاسب فاتورة للاعتماد تظهر هنا.</div>'}`;
 }
 function returnModal(i){ confirmBox(`إعادة ${dispNo(i)} للمحاسب كمسودة؟ ستظهر له ملاحظتك.`,"إعادة للمحاسب",async note=>{ await patchInvoice(i.id,{status:"draft",returnNote:note,returnedBy:actor(),returnedAt:new Date().toISOString()},"إعادة للمحاسب — "+note); toast("تمت الإعادة"); },false,true); }
 function bindApprovals(){
-  $$("[data-ap]").forEach(b=>b.onclick=e=>{ e.stopPropagation(); const i=invById(b.dataset.ap); confirmBox(`اعتماد ${KIND[i.kind]} للعميل ${i.customerName} بقيمة ${fmt(calc(i).total)}؟`,"اعتماد",async()=>{ await issueExisting(i); }); });
+  $$("[data-ap]").forEach(b=>b.onclick=e=>{ e.stopPropagation(); const i=invById(b.dataset.ap); const w=checkInvoice(i).filter(x=>x.lvl!=="info"); confirmBox(`اعتماد ${KIND[i.kind]} للعميل ${i.customerName} بقيمة ${fmt(calc(i).total)}؟`+(w.length?`\n\nملاحظات الفحص:\n`+w.map(x=>"• "+x.msg).join("\n"):""),"اعتماد",async()=>{ await issueExisting(i); }); });
   $$("[data-ret]").forEach(b=>b.onclick=e=>{ e.stopPropagation(); returnModal(invById(b.dataset.ret)); });
   const all=$("#ap-all"); if(all) all.onclick=()=>{ const L=S.invoices.filter(i=>i.status==="pending"); confirmBox(`اعتماد ${L.length} فاتورة وإعطاؤها أرقاماً رسمية؟`,"اعتماد الكل",async()=>{ for(const i of L) await issueExisting(invById(i.id),true); toast(`تم اعتماد ${L.length} فاتورة`); }); };
 }
@@ -1179,7 +1196,7 @@ function viewEditor(id, kind){
   const custOpts=`<option value="">— اختر العميل —</option>`+S.customers.filter(c=>!c.archived||c.id===e.customerId).map(c=>`<option value="${esc(c.id)}" ${e.customerId===c.id?"selected":""}>${esc(c.name)}</option>`).join("");
   const dl=(idd,f)=>`<datalist id="${idd}">${suggest(f).map(v=>`<option value="${esc(v)}">`).join("")}</datalist>`;
   return `<div class="top"><div><h1>${id?"تعديل "+(isSp?"الفاتورة المجمعة":KIND[e.kind])+" "+esc(dispNo(e)):"إنشاء "+KIND[e.kind]}</h1>${e.returnNote?`<div class="banner">ملاحظة الإدارة عند الإعادة: ${esc(e.returnNote)}</div>`:""}<p>${e.repeatOf&&!id?"نسخة مكررة من "+esc(e.repeatOf)+" — راجع البيانات وعدّل ما تريد. ":""}${locked?"الفاتورة معتمدة: البيانات المالية مقفلة. يمكن تعديل بيانات المشروع والشهادات وخيار الختم فقط.":isSp?"تسلسل خاص لا يدخل في الحسابات العامة.":"تُحفظ كمسودة، ويُعطى الرقم التسلسلي الرسمي عند الاعتماد."}</p></div>
-  <div class="actions"><a class="btn ghost" href="${id?"#inv-"+esc(id):"#invoices"}">${IC.back}رجوع</a></div></div>
+  <div class="actions">${!locked&&!(isSp&&e.mode==="grouped")&&SAMPLE?`<button type="button" class="btn gold" id="e-ai">✨ إدخال ذكي — صوت / صورة / نص</button>`:""}<a class="btn ghost" href="${id?"#inv-"+esc(id):"#invoices"}">${IC.back}رجوع</a></div></div>
   <form id="editor-form" class="stack" novalidate>
   <div class="panel"><h2>بيانات ${isSp?"الفاتورة المجمعة":"الفاتورة"} ${locked?`<span class="lock">${IC.lock}مقفلة بعد الاعتماد</span>`:""}</h2>
     <div class="grid ghead">
@@ -1333,6 +1350,7 @@ async function saveEditor(mode){
     await Store.save("invoices",id,data);
     await audit(issue?"اعتماد "+KIND[data.kind]:submit?"إرسال للاعتماد":(orig&&isLegacy(orig)?"تعديل فاتورة مستوردة":id0?"تعديل مسودة":"إنشاء مسودة"), data.no||dispNo({id}), fmt(data.total));
     toast(issue?"تم الاعتماد برقم "+data.no:submit?"أُرسلت لاعتماد الإدارة":"تم الحفظ");
+    if(submit) notifySubmit({...data,id});
     ED=null; go("inv-"+id);
   }catch(e){ console.error(e); fail("تعذر الحفظ: "+(e.message||e.code||e)); }
 }
@@ -1429,7 +1447,8 @@ function viewInvoice(id){
    ${!isSp?`<button class="btn primary" id="pack">${IC.pdf}كل المستندات PDF</button>`:""}</div></div>
   <div class="stack">
   ${draft?`<div class="banner info">مسودة — لم يُعطَ لها رقم رسمي بعد. المستندات المطبوعة تحمل علامة DRAFT.${i.returnNote?" — <b>أعادتها الإدارة:</b> "+esc(i.returnNote):""}</div>`:''}
-  ${pending?`<div class="banner">بانتظار اعتماد الإدارة — أرسلها ${esc(i.submittedBy||"")} ${i.submittedAt?new Date(i.submittedAt).toLocaleString("en-GB"):""}.</div>`:''}
+  ${pending?`<div class="banner"><span>بانتظار اعتماد الإدارة — أرسلها ${esc(i.submittedBy||"")} ${i.submittedAt?new Date(i.submittedAt).toLocaleString("en-GB"):""}.</span>${!isAdmin()&&waAdminLink(i)?`<a class="btn sm" target="_blank" rel="noopener" href="${esc(waAdminLink(i))}">إبلاغ الإدارة عبر واتساب</a>`:""}</div>`:''}
+  ${(draft||pending)&&!isSp?checksPanel(i):""}
   ${cancelled?`<div class="banner bad">ملغاة — السبب: ${esc(i.cancelReason||"—")} (${esc(i.cancelledBy||"")}، ${i.cancelledAt?new Date(i.cancelledAt).toLocaleDateString("en-GB"):""})</div>`:''}
   ${awaitingReview(i)?`<div class="banner"><span>فاتورة مستوردة من Excel (الورقة: ${esc(i.sheet||"")}) — حالة السداد غير مؤكدة، ولا تدخل في مؤشرات التحصيل حتى تُراجع.</span>${isAdmin()?'<span class="actions"><button class="btn sm" id="rev-paid">مدفوعة بالكامل</button><button class="btn sm" id="rev-unpaid">غير مدفوعة</button></span>':''}</div>`:''}
   ${i.repeatOf?`<div class="banner info">مكررة من الفاتورة ${esc(i.repeatOf)}</div>`:''}${i.convertedTo?`<div class="banner info">حُوّلت إلى الفاتورة ${esc(i.convertedTo)}</div>`:''}${i.fromProforma?`<div class="banner info">منشأة من الفاتورة المبدئية ${esc(i.fromProforma)}</div>`:''}
@@ -1444,7 +1463,7 @@ function viewInvoice(id){
   </div>
   <div class="panel"><h2>المستندات <small>نماذج ثابتة، وإعادة طباعة في أي وقت</small></h2>
     ${missing.length?`<div class="banner">بيانات ناقصة للشهادات: ${missing.join("، ")}. ${can("edit")&&!cancelled?`<a href="#edit-${esc(i.id)}">أكملها</a>`:''}</div>`:''}
-    <div class="docgrid">${docs.map(([k,t,h])=>`<div class="doccard"><b>${t}</b><span class="hint">${esc(h)}</span><div class="row"><a class="btn sm" href="#doc-${k}-${esc(i.id)}">معاينة</a><button class="btn sm primary" data-pdf="${k}">${IC.pdf}PDF</button></div></div>`).join("")}</div>
+    <div class="docgrid">${docs.map(([k,t,h])=>`<div class="doccard"><b>${t}</b><span class="hint">${esc(h)}</span><div class="row"><a class="btn sm" href="#doc-${k}-${esc(i.id)}">معاينة</a><button class="btn sm primary" data-pdf="${k}">${IC.pdf}PDF</button>${k==="cover"&&SAMPLE&&can("edit")&&!cancelled?`<button class="btn sm gold" data-aicover>✨ ${i.coverCustom?"النص المخصص":"صياغة ذكية"}</button>`:""}</div></div>`).join("")}</div>
     <p class="hint" style="margin:10px 0 0">الختم والتوقيع: ${i.stamp?"يظهران افتراضياً":"لا يظهران افتراضياً"} — يمكن التبديل من صفحة المعاينة.</p>
   </div>
   <div class="cols">
@@ -1472,6 +1491,7 @@ function viewInvoice(id){
       <dt>تاريخ الاستحقاق</dt><dd>${dmy(r.due)} ${r.rel?"":r.left>=0?`<span class="hint">(بعد ${r.left} يوماً)</span>`:`<span class="hint" style="color:var(--bad)">(منذ ${-r.left} يوماً)</span>`}</dd>
       ${r.rel?`<dt>التحصيل</dt><dd>${fmt(r.rel.amount)} ر.ق بتاريخ ${dmy(r.rel.releasedAt)} ${r.rel.ref?"— "+esc(r.rel.ref):""} <span class="hint">(${esc(r.rel.by||"")})</span></dd>`:""}</dl>
       <div class="actions" style="margin-top:10px">${!r.rel&&can("pay")?`<button class="btn sm primary" id="ret-collect">تسجيل تحصيل المحتجزات</button>`:""}${r.rel&&isAdmin()?`<button class="btn sm" id="ret-undo">إلغاء تسجيل التحصيل</button>`:""}</div></div>`; })()}
+    ${contractPanel(i)}${qbPanel(i)}
     <div class="panel"><h2>سجل العمليات</h2>${(i.history||[]).slice().reverse().map(h=>`<div class="hint">${esc(h.action)} — ${new Date(h.at).toLocaleString("en-GB")} ${h.by?"— "+esc(h.by):""}</div>`).join("")||'<p class="hint">—</p>'}
       <div class="actions" style="margin-top:10px">
       ${(draft||pending)&&can("edit")?`<button class="btn sm danger" id="del-draft">${IC.trash}حذف المسودة</button>`:''}
@@ -1585,7 +1605,7 @@ function docCover(i, o){
   const items = ar ? [`فاتورة رقم ( ${dispNo(i)} ) بتاريخ ${dmy(i.date)} بمبلغ ${x.total} ريال قطري`,"شهادة إنجاز الأعمال"+(i.docNos?.completion?.no?" رقم "+i.docNos.completion.no:""),"شهادة ضمان الأعمال لمدة "+warrantyText(i)+(i.docNos?.warranty?.no?" رقم "+i.docNos.warranty.no:"")]
                    : [`Invoice No. ${dispNo(i)} dated ${dmy(i.date)} – QAR ${x.total}`,"Completion Certificate"+(i.docNos?.completion?.no?" No. "+i.docNos.completion.no:""),"Warranty Certificate ("+warrantyText(i)+")"+(i.docNos?.warranty?.no?" No. "+i.docNos.warranty.no:"")];
   const tpl = short ? (ar?t.coverShortAr:t.coverShortEn) : (ar?t.coverAr:t.coverEn);
-  const body=fill(tpl, {...x, date:dmy(i.date), client:ar?(i.customerName||x.client):x.client, list:"@@LIST@@"});
+  const body=(i.coverCustom&&!ar) ? String(i.coverCustom).replace(/\[\[DOCUMENTS\]\]/g,"@@LIST@@") : fill(tpl, {...x, date:dmy(i.date), client:ar?(i.customerName||x.client):x.client, list:"@@LIST@@"});
   const html=esc(body).split("@@LIST@@").join(`</p><ol>${items.map(s=>`<li>${esc(s)}</li>`).join("")}</ol><p>`).split(/\n\n+/).map(p=>p.trim()?`<p>${p.replace(/\n/g,"<br>")}</p>`:"").join("").replace(/<p>\s*<\/p>/g,"").replace(/<p><\/p><ol>/g,"<ol>");
   return `<div class="sheet ${ar?"rtl":""}">${letterhead(i)}${watermark(i)}
    <div class="dateno">${docNoLine(i,"cover")}<span><b>Ref :</b> Invoice No. <b>${esc(dispNo(i))}</b></span></div>
@@ -2055,6 +2075,487 @@ function viewSettings(){
    ${S.canWrite?`<label class="btn" for="bk-file">استعادة من ملف</label><input type="file" id="bk-file" accept=".json,application/json" hidden>`:''}</div></div>`;
 }
 
+/* ======================================================================
+   V.0.0.4 — AI assistant, voice entry, pre-approval checks, monthly contracts,
+   alerts digest, Drive backup, approval notifications, QuickBooks export/posting.
+   Everything that writes outside the system runs on an explicit click, or on an
+   automation the admin switched on in "الأتمتة والتكامل".
+   ====================================================================== */
+const SRV={gmail:"Gmail", ms:"Microsoft 365", drive:"Google Drive", qb:"Intuit QuickBooks Labs"};
+const arrOf = p => Array.isArray(p)?p:(p&&(p.items||p.chats||p.value||p.results||p.data||p.files||p.transactions))||[];
+const mcpErr = e => MCP_ERR[e&&e.code]||(e&&e.message)||String(e||"");
+async function mcpCall(srv, tool, input){ if(!MCP) throw {code:"server_not_connected", message:"الربط متاح فقط عند فتح النظام داخل claude.ai"}; const r=await MCP.callTool(srv,tool,input); return r&&r.payload!==undefined?r.payload:r; }
+const AI_ERR={not_granted:"لم يُسمح باستخدام Claude في هذه الصفحة",rate_limited:"طلبات كثيرة — انتظر دقيقة ثم أعد المحاولة",invalid_json:"لم يُفهم الرد — أعد المحاولة بصياغة أوضح",images_unavailable:"إرسال الصور غير متاح في هذا العرض",prompt_too_large:"النص طويل جداً",cancelled:"أُلغي"};
+const aiErr = e => AI_ERR[e&&e.code]||(e&&e.message)||"تعذر الاتصال بـ Claude";
+const metaAuto = () => (S.meta&&S.meta.auto)||{};
+async function setMeta(patch){ const d={...metaAuto(),...patch}; S.meta={...(S.meta||{}),auto:d}; await Store.save("meta","auto",d); }
+const ym = iso => String(iso||"").slice(0,7);
+const median = a => { const s=[...a].sort((x,y)=>x-y); if(!s.length) return 0; const m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; };
+
+/* ---------------- 1) smart entry: voice / photo / text -> draft ---------------- */
+function aiCustomersBrief(){ return S.customers.filter(c=>!c.archived).map(c=>({id:c.id,name:c.name,nameEn:c.nameEn||""})); }
+function aiHistoryBrief(){
+  const top=f=>{ const m={}; S.invoices.forEach(i=>{ const v=(i[f]||"").trim(); if(v) m[v]=(m[v]||0)+1; }); return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,25).map(x=>x[0]); };
+  return {typeOfWorks:top("typeOfWorks"), sites:top("site"), locations:top("location"), sampleLines:S.invoices.filter(i=>i.kind==="invoice").slice(0,8).flatMap(i=>(i.lines||[]).filter(l=>!l.heading&&l.desc).slice(0,2).map(l=>({desc:l.desc,unit:l.unit||"",qty:l.qty,price:l.price}))).slice(0,12)};
+}
+function smartPrompt(text, hasImages){
+  return `You are filling an invoice draft for "Al Haram for Maintenance and Agriculture" (Qatar, currency QAR). Today is ${todayISO()}.
+The user dictated or typed the request below (Arabic or English)${hasImages?", and attached image(s) of a work order / quotation / message / previous invoice":""}.
+Extract the invoice. Printed documents are ENGLISH ONLY: write line descriptions, typeOfWorks, site and location in professional English (translate Arabic), in the same style as the sample lines below. Keep numbers, work-order numbers and references exactly as given.
+Pick customerId ONLY from the customer list (match Arabic or English names, abbreviations like "درويش" = Darwish). If no customer matches, leave customerId "" and put the spoken name in customerName.
+Amounts: qty and price as numbers; for a lump-sum line leave qty null and put the amount in price. "احتجاز/محتجزات/retention X%" -> discType "retention" with discPct X. "خصم X%" -> discType "discount", discPct X. A fixed discount amount -> discount. Advance payments or other deductions -> deductions [{label:"Less: ...", pct, amount}].
+Dates as YYYY-MM-DD ("اليوم"=today, month names -> first of that month only if no day given). Do not invent data that was not given: leave unknown fields "".
+Reply with ONLY one JSON object:
+{"customerId":"","customerName":"","date":"","typeOfWorks":"","site":"","location":"","workOrder":"","ref":"","completedDate":"","lines":[{"desc":"","unit":"","qty":null,"price":null}],"discType":"discount","discPct":null,"discount":null,"deductions":[],"notes":"","warnings":["short Arabic notes about anything unclear"]}
+
+Customers: ${JSON.stringify(aiCustomersBrief())}
+Known values: ${JSON.stringify(aiHistoryBrief())}
+
+User request:
+${text||"(see image)"}`;
+}
+function applySmart(d, replaceLines){
+  if(!d || typeof d!=="object") throw new Error("رد غير صالح");
+  const s=v=>typeof v==="string"?v.trim():"";
+  const num=v=>v===null||v===undefined||v===""||isNaN(Number(v))?"":String(Number(v));
+  if(s(d.customerId) && custById(s(d.customerId))) applyCustomer(s(d.customerId));
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s(d.date))) ED.date=s(d.date);
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s(d.completedDate))) ED.completedDate=s(d.completedDate); else if(/^\d{4}-\d{2}-\d{2}$/.test(s(d.date))) ED.completedDate=s(d.date);
+  for(const k of ["typeOfWorks","site","location","workOrder","ref"]) if(s(d[k])) ED[k]=s(d[k]);
+  const L=Array.isArray(d.lines)?d.lines.filter(l=>l&&(s(l.desc)||num(l.price))).map(l=>({desc:s(l.desc),unit:s(l.unit),qty:num(l.qty),price:num(l.price)})):[];
+  if(L.length){ const cur=(ED.lines||[]).filter(l=>String(l.desc||"").trim()||!blank(l.price)); ED.lines=replaceLines||!cur.length?L:[...cur,...L]; }
+  if(d.discType==="retention"||d.discType==="discount") ED.discType=d.discType;
+  if(num(d.discPct)){ ED.discPct=Number(d.discPct); ED.discount=0; } else if(num(d.discount)){ ED.discPct=null; ED.discount=Number(d.discount); }
+  if(Array.isArray(d.deductions)&&d.deductions.length) ED.deductions=[...(ED.deductions||[]),...d.deductions.filter(x=>x&&(s(x.label)||num(x.pct)||num(x.amount))).map(x=>({label:s(x.label)||"Less:",pct:num(x.pct),amount:num(x.amount)}))];
+  if(s(d.notes)) ED.notes=[ED.notes,s(d.notes)].filter(Boolean).join("\n");
+  const w=(Array.isArray(d.warnings)?d.warnings.map(s).filter(Boolean):[]);
+  if(!ED.customerId && s(d.customerName)) w.unshift("لم يُعثر على العميل \""+s(d.customerName)+"\" في القائمة — اختره أو أضفه.");
+  return w;
+}
+let _dictOff=[];
+function stopDictation(){ _dictOff.forEach(f=>{ try{ f(); }catch(e){} }); _dictOff=[]; if(DICT){ try{ if(DICT.active()) DICT.stop().catch(()=>{}); }catch(e){} } }
+function bindMic(btn, target, partialEl){
+  if(!btn||!DICT) return;
+  const label=btn.querySelector("span");
+  _dictOff.push(DICT.onPartial(({text})=>{ if(partialEl) partialEl.textContent=text; }));
+  _dictOff.push(DICT.onFinal(({text})=>{ if(!text) return; target.value=(target.value?target.value.replace(/\s*$/," "):"")+text; if(partialEl) partialEl.textContent=""; target.dispatchEvent(new Event("input")); }));
+  _dictOff.push(DICT.onState(({state,reason})=>{ const on=state==="listening"; btn.classList.toggle("rec",on); if(label) label.textContent=on?"إيقاف التسجيل":"تحدّث"; if(!on&&reason==="not_granted"){ btn.disabled=true; if(label) label.textContent="الميكروفون غير مسموح"; } }));
+  btn.onclick=()=>{ if(DICT.active()){ DICT.stop().catch(()=>{}); return; } DICT.start().catch(e=>{ if(e&&e.code==="not_granted"){ btn.disabled=true; if(label) label.textContent="الميكروفون غير مسموح"; } else toast("تعذر تشغيل الميكروفون"); }); };
+}
+function smartEntryModal(){
+  if(!SAMPLE){ toast("المساعد الذكي متاح عند فتح النظام داخل claude.ai"); return; }
+  readEditor();
+  const hasLines=(ED.lines||[]).some(l=>String(l.desc||"").trim()||!blank(l.price));
+  modal(`<h3>✨ إدخال ذكي للفاتورة</h3>
+   <p class="hint">تكلّم أو اكتب أو أرفق صورة (أمر عمل، عرض سعر، رسالة، فاتورة سابقة)، فيملأ Claude المسودة. لا يُحفظ شيء حتى تراجع وتضغط حفظ.</p>
+   <label class="f">ماذا تريد في الفاتورة؟<textarea class="i" id="ai-t" rows="5" dir="auto" placeholder="مثال: فاتورة لدرويش، دهانات داخلية مدرسة حسان بن ثابت، أمر عمل 26-3267، 450 متر مربع بسعر 18 ريال، احتجاز 10%"></textarea></label>
+   <div class="hint" id="ai-partial" dir="auto" style="min-height:18px;font-style:italic"></div>
+   <div class="actions">
+     ${DICT?`<button type="button" class="btn" id="ai-mic">${IC.mic}<span>تحدّث</span></button>`:""}
+     <label class="btn" id="ai-imgl" hidden>${IC.img}إرفاق صورة<input type="file" id="ai-img" accept="image/*" multiple hidden></label>
+     <span class="hint" id="ai-files"></span></div>
+   <label class="chk" style="margin-top:10px"><input type="checkbox" id="ai-rep" ${hasLines?"":"checked"}>استبدال البنود الحالية بالبنود المستخرجة</label>
+   <div class="banner info" id="ai-res" style="margin-top:10px" hidden role="status"></div>
+   <div class="foot"><button class="btn" data-close>إغلاق</button><button class="btn primary" id="ai-go">✨ تحليل وتعبئة المسودة</button></div>`,(bg,close)=>{
+    let files=[], ctl=null; const t=$("#ai-t",bg), res=$("#ai-res",bg), go=$("#ai-go",bg);
+    const say=(m,bad)=>{ res.hidden=false; res.className="banner "+(bad?"bad":"info"); res.innerHTML=m; };
+    bindMic($("#ai-mic",bg), t, $("#ai-partial",bg));
+    const obs=new MutationObserver(()=>{ if(!document.body.contains(bg)){ stopDictation(); if(ctl) ctl.abort(); obs.disconnect(); } }); obs.observe(document.body,{childList:true});
+    SAMPLE.limits().then(l=>{ if(l&&l.images){ $("#ai-imgl",bg).hidden=false; $("#ai-img",bg).accept=(l.images.mediaTypes||[]).join(",")||"image/*"; S._imgLim=l.images; } }).catch(()=>{});
+    $("#ai-img",bg).onchange=e=>{ const lim=S._imgLim||{maxCount:4,maxInputBytes:8e6}; files=[...e.target.files].filter(f=>f.size<=lim.maxInputBytes).slice(0,lim.maxCount); $("#ai-files",bg).textContent=files.length?files.map(f=>f.name).join("، "):"الملف كبير جداً"; };
+    go.onclick=async()=>{
+      const text=t.value.trim(); if(!text&&!files.length){ say("اكتب أو تحدّث أو أرفق صورة أولاً",true); return; }
+      if(DICT&&DICT.active()) await DICT.stop().catch(()=>{});
+      go.disabled=true; say("Claude يقرأ الطلب ويجهّز البنود… (قد يستغرق حتى دقيقة)"); ctl=new AbortController();
+      try{
+        const d=await SAMPLE.json(smartPrompt(text,files.length>0),{signal:ctl.signal,...(files.length?{images:files}:{})});
+        const warns=applySmart(d,$("#ai-rep",bg).checked);
+        await audit("إدخال ذكي لمسودة", ED._id?dispNo(ED):"جديدة", (files.length?"صورة ":"")+(text?"نص/صوت":""));
+        bg.remove(); stopDictation(); render(); updateTotals();
+        toast("تمت تعبئة المسودة — راجع البيانات ثم احفظ");
+        if(warns.length) setTimeout(()=>modal(`<h3>ملاحظات المساعد</h3><ul style="margin:0;padding-inline-start:18px">${warns.map(w=>`<li>${esc(w)}</li>`).join("")}</ul><div class="foot"><button class="btn primary" data-close>حسناً</button></div>`),200);
+      }catch(e){ say(esc(aiErr(e)),true); go.disabled=false; }
+    };
+  });
+}
+
+/* ---------------- 2) pre-approval checks ---------------- */
+function checkInvoice(i){
+  const out=[], add=(lvl,msg)=>out.push({lvl,msg});
+  if(!i || i.kind==="special") return out;
+  const c=calc(i), others=S.invoices.filter(x=>x.id!==i.id&&x.status!=="cancelled"&&x.kind===i.kind);
+  const dDays=(a,b)=>Math.abs((new Date(a+"T00:00:00")-new Date(b+"T00:00:00"))/86400000);
+  const dup=others.find(x=>x.customerId===i.customerId&&x.date&&i.date&&dDays(x.date,i.date)<=60&&Math.abs(calc(x).total-c.total)<0.5);
+  if(dup) add("warn",`مطابقة في العميل والمبلغ لفاتورة ${dispNo(dup)} بتاريخ ${dmy(dup.date)} — تأكد أنها ليست مكررة`);
+  if(i.workOrder){ const wo=others.filter(x=>(x.workOrder||"").trim().toLowerCase()===i.workOrder.trim().toLowerCase()&&x.customerId===i.customerId); if(wo.length&&!i.contractRoot&&!i.repeatOf) add("warn",`أمر العمل ${i.workOrder} مستخدم في ${wo.slice(0,3).map(dispNo).join("، ")}`); }
+  if(i.contractRoot){ const sm=others.find(x=>x.contractRoot===i.contractRoot&&ym(x.date)===ym(i.date)); if(sm) add("warn",`يوجد للعقد الشهري نفسه فاتورة في نفس الشهر: ${dispNo(sm)}`); }
+  const hist=S.invoices.filter(x=>x.id!==i.id&&inAccounts(x)&&x.customerId===i.customerId).map(x=>calc(x).total).filter(v=>v>0);
+  if(hist.length>=5){ const m=median(hist); if(m>0&&c.total>m*3) add("warn",`القيمة ${fmt0(c.total)} أعلى بكثير من المعتاد لهذا العميل (الوسيط ${fmt0(m)})`); if(m>0&&c.total>0&&c.total<m*0.15) add("info",`القيمة أقل بكثير من المعتاد لهذا العميل (الوسيط ${fmt0(m)})`); }
+  const dsc=discAmt(i,c.sub); if(c.sub>0&&i.discType!=="retention"&&dsc/c.sub>0.15) add("warn",`الخصم ${Math.round(dsc/c.sub*100)}% من المجموع`);
+  if(c.sub>0&&c.ded/c.sub>0.5) add("warn","الاستقطاعات أكثر من نصف قيمة الفاتورة");
+  if(c.total<=0) add("bad","صافي الفاتورة صفر أو أقل");
+  if(i.date){ const dd=daysUntil(i.date); if(dd>7) add("warn","تاريخ الفاتورة في المستقبل ("+dmy(i.date)+")"); if(dd<-90&&["draft","pending"].includes(i.status)) add("info","تاريخ الفاتورة أقدم من 90 يوماً"); }
+  const zero=(i.lines||[]).filter(l=>!l.heading&&!blank(l.qty)&&!(Number(l.price)));
+  if(zero.length) add("warn",`${zero.length} بند بكمية بدون سعر`);
+  const missing=[!i.typeOfWorks&&"نوع الأعمال",!i.workOrder&&"أمر العمل",!i.site&&"الموقع"].filter(Boolean);
+  if(missing.length&&i.kind==="invoice") add("info","تنقص بيانات الشهادات: "+missing.join("، "));
+  if(!i.customerEmail&&!custById(i.customerId)?.email) add("info","لا يوجد بريد للعميل لإرسال الفاتورة");
+  return out;
+}
+const CHK_COL={bad:"var(--bad)",warn:"var(--c-line)",info:"var(--muted)"};
+function checkBadge(i){ const L=checkInvoice(i), w=L.filter(x=>x.lvl!=="info").length; return w?`<span class="chip pending" title="${esc(L.map(x=>"• "+x.msg).join("\n"))}">⚠ ${w}</span>`:`<span class="chip paid" title="${esc(L.map(x=>"• "+x.msg).join("\n")||"لا ملاحظات")}">✓ سليمة</span>`; }
+function checksPanel(i){
+  const L=checkInvoice(i);
+  return `<div class="panel"><h2>فحص ما قبل الاعتماد <small>قواعد تلقائية + مراجعة اختيارية بالذكاء الاصطناعي</small>${SAMPLE?`<button class="btn sm gold" id="ai-review">✨ مراجعة ذكية</button>`:""}</h2>
+   ${L.length?`<ul class="checks">${L.map(x=>`<li style="border-inline-start-color:${CHK_COL[x.lvl]}">${esc(x.msg)}</li>`).join("")}</ul>`:'<p class="hint">✓ لا توجد ملاحظات — الأرقام والبيانات متسقة مع سجل العميل.</p>'}
+   <div id="ai-review-out" class="ai-out" hidden dir="auto"></div></div>`;
+}
+async function aiReview(i, out, btn){
+  const hist=S.invoices.filter(x=>x.id!==i.id&&x.customerId===i.customerId&&x.status!=="cancelled").slice(0,10).map(x=>({no:dispNo(x),date:x.date,total:calc(x).total,typeOfWorks:x.typeOfWorks,site:x.site,lines:(x.lines||[]).filter(l=>!l.heading).slice(0,4).map(l=>[l.desc,l.unit,l.qty,l.price])}));
+  const cur={no:dispNo(i),date:i.date,customer:i.customerName,typeOfWorks:i.typeOfWorks,site:i.site,location:i.location,workOrder:i.workOrder,ref:i.ref,lines:(i.lines||[]).map(l=>l.heading?["HEADING",l.desc]:[l.desc,l.unit,l.qty,l.price,lineTotal(l)]),deductions:i.deductions,discount:discAmt(i,calc(i).sub),discType:i.discType||"discount",total:calc(i).total};
+  out.hidden=false; out.textContent="Claude يراجع الفاتورة…"; btn.disabled=true;
+  try{ await SAMPLE(`أنت مراجع فواتير لشركة صيانة وزراعة في قطر. راجع الفاتورة التالية قبل اعتمادها، وقارنها بفواتير نفس العميل السابقة.
+اكتب بالعربية في 3 إلى 6 نقاط قصيرة: أي خطأ حسابي، أو سعر وحدة مختلف عن المعتاد، أو بند مكرر، أو أخطاء إملائية في الوصف الإنجليزي، أو بيانات ناقصة. إن كانت سليمة قل ذلك في سطر واحد. لا تقترح أشياء عامة.
+الفاتورة: ${JSON.stringify(cur)}
+فواتير سابقة للعميل: ${JSON.stringify(hist)}`,{onText:({text})=>{ out.textContent=text; }}); }
+  catch(e){ out.textContent=e.text||aiErr(e); }
+  btn.disabled=false;
+}
+
+/* ---------------- 3) AI dashboard summary ---------------- */
+function aiSummaryCard(){
+  if(!SAMPLE) return "";
+  const s=S.ai&&S.ai.sum&&S.ai.sum.y===S.year?S.ai.sum.text:"";
+  return `<div class="card ai-card"><h3>✨ ملخص ذكي <small>${S.year}</small><button class="btn sm gold" id="ai-sum">${s?"تحديث":"اكتب الملخص"}</button></h3><div id="ai-sum-out" class="ai-out" dir="auto">${s?esc(s):'<span class="hint">يكتب Claude قراءة مختصرة للأرقام: ما تغيّر هذا العام، وأين التركيز، وما يحتاج متابعة.</span>'}</div></div>`;
+}
+function dashFacts(){
+  const Y=S.year, inY=(i,y)=>(i.date||"").startsWith(String(y)), acc=S.invoices.filter(inAccounts);
+  const m=y=>{ const a=Array(12).fill(0); acc.filter(i=>inY(i,y)).forEach(i=>a[+i.date.slice(5,7)-1]+=calc(i).total); return a.map(r2); };
+  const grp=(f,y)=>{ const g={}; acc.filter(i=>inY(i,y)).forEach(i=>{ const k=(f(i)||"").trim()||"غير محدد"; g[k]=(g[k]||0)+calc(i).total; }); return Object.entries(g).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>[k,r2(v)]); };
+  const R=S.invoices.map(retInfo).filter(Boolean);
+  return {today:todayISO(),year:Y,monthly:m(Y),monthlyPrevYear:m(Y-1),count:acc.filter(i=>inY(i,Y)).length,countPrev:acc.filter(i=>inY(i,Y-1)).length,topCustomers:grp(i=>i.customerName,Y),topCustomersPrev:grp(i=>i.customerName,Y-1),workTypes:grp(i=>i.typeOfWorks,Y),sites:grp(i=>i.site,Y).slice(0,5),
+    pendingApproval:S.invoices.filter(i=>i.status==="pending").length,drafts:S.invoices.filter(i=>i.status==="draft").length,
+    retention:{held:r2(R.filter(r=>r.status!=="released").reduce((s,r)=>s+r.amount,0)),dueOrExpired:R.filter(r=>r.status==="due"||r.status==="expired").length},
+    contracts:contractRoots().length};
+}
+async function aiSummary(btn){
+  const out=$("#ai-sum-out"); btn.disabled=true; out.textContent="Claude يقرأ الأرقام…";
+  try{ const {text}=await SAMPLE(`أنت محلل مالي لشركة صيانة وزراعة في قطر (العملة ر.ق). اكتب للمدير التنفيذي ملخصاً بالعربية من 4 إلى 6 نقاط قصيرة جداً (سطر لكل نقطة تبدأ بـ •) عن سنة ${S.year}:
+الاتجاه مقارنة بالسنة السابقة لنفس الأشهر، أعلى الأشهر وأضعفها، تركّز العملاء (هل يعتمد العمل على عميل واحد؟)، أنواع الأعمال الأهم، ثم نقطة "يحتاج متابعة" (اعتمادات، محتجزات، مسودات). استخدم الأرقام الفعلية بالأرقام الإنجليزية مع فواصل الآلاف. لا تخترع معلومات غير موجودة.
+البيانات: ${JSON.stringify(dashFacts())}`,{onText:({text})=>{ out.textContent=text; }});
+    S.ai={...(S.ai||{}),sum:{y:S.year,text}}; }
+  catch(e){ out.textContent=e.text||aiErr(e); }
+  btn.disabled=false; btn.textContent="تحديث";
+}
+
+/* ---------------- 4) AI cover letter ---------------- */
+function aiCoverModal(i){
+  const x=docCtx(i);
+  modal(`<h3>✨ صياغة كتاب التغطية — <span class="code">${esc(dispNo(i))}</span></h3>
+   <p class="hint">يكتب Claude نص الخطاب بالإنجليزية حسب هذه الفاتورة. عدّل النص كما تريد ثم احفظه؛ يُستخدم بدل النموذج الثابت لهذه الفاتورة فقط. السطر [[DOCUMENTS]] يُستبدل بقائمة المرفقات.</p>
+   <label class="f">توجيه إضافي (اختياري)<input class="i" id="cv-hint" dir="auto" placeholder="مثال: اذكر أن الأعمال نُفذت خلال الإجازة الصيفية واطلب سرعة الصرف"></label>
+   <label class="f" style="margin-top:10px">نص الخطاب<textarea class="i ltr" id="cv-t" rows="12">${esc(i.coverCustom||"")}</textarea></label>
+   <p class="hint" id="cv-res"></p>
+   <div class="foot"><button class="btn" data-close>إغلاق</button>${i.coverCustom?'<button class="btn" id="cv-clear">الرجوع للنموذج الثابت</button>':""}<button class="btn gold" id="cv-gen">✨ اكتب النص</button><button class="btn primary" id="cv-save">حفظ</button></div>`,(bg,close)=>{
+    const ta=$("#cv-t",bg), res=$("#cv-res",bg);
+    $("#cv-gen",bg).onclick=async()=>{ const b=$("#cv-gen",bg); b.disabled=true; res.textContent="Claude يكتب…";
+      try{ await SAMPLE(`Write the BODY of a formal English cover letter from "${coFor(i).company.shortEn}" (Qatar) submitting invoice documents to the client. Start with "Dear Sir / Madam," and end with "Yours faithfully,". 120-180 words, plain text, paragraphs separated by blank lines, no subject line, no addresses, no signature name. Put the exact line [[DOCUMENTS]] on its own where the list of enclosed documents should go. Mention the total amount QAR ${x.total} (${x.words}) and request payment by bank transfer to the account in the invoice.
+Facts: invoice ${dispNo(i)} dated ${dmy(i.date)}; client ${x.client}; type of works ${x.typeOfWorks||"-"}; site ${x.site||"-"}; location ${x.location||"-"}; work order ${x.workOrder||"-"}; ref ${x.ref||"-"}; completed ${x.completedDate||"-"}.
+${$("#cv-hint",bg).value.trim()?"Extra instruction from the user (may be Arabic): "+$("#cv-hint",bg).value.trim():""}`,{onText:({text})=>{ ta.value=text; }}); res.textContent="راجع النص ثم احفظ"; }
+      catch(e){ res.textContent=aiErr(e); } b.disabled=false; };
+    $("#cv-save",bg).onclick=async()=>{ const v=ta.value.trim(); if(!v){ res.textContent="النص فارغ"; return; } await patchInvoice(i.id,{coverCustom:v},"نص مخصص لكتاب التغطية"); close(); toast("تم حفظ نص الخطاب — يظهر في معاينة كتاب التغطية"); };
+    const cl=$("#cv-clear",bg); if(cl) cl.onclick=async()=>{ await patchInvoice(i.id,{coverCustom:null},"الرجوع لنموذج كتاب التغطية"); close(); toast("تم"); };
+  });
+}
+
+/* ---------------- 5) monthly contracts (automatic drafts) ---------------- */
+const contractRoots = () => S.invoices.filter(i=>i.contract&&i.contract.on&&i.status!=="cancelled");
+const contractChain = root => S.invoices.filter(x=>x.id===root.id||x.contractRoot===root.id).filter(x=>x.status!=="cancelled").sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+const addYm = (m,n) => { const [y,mo]=m.split("-").map(Number); const d=new Date(y,mo-1+n,1); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); };
+function contractDate(month, day){ const [y,m]=month.split("-").map(Number); const last=new Date(y,m,0).getDate(); return `${month}-${String(Math.min(Math.max(1,day||1),last)).padStart(2,"0")}`; }
+function contractDue(root){
+  const c=root.contract, cur=ym(todayISO()), out=[]; let m=addYm(c.lastMonth||ym(root.date),1);
+  while(m<=cur && out.length<3){ const d=contractDate(m,c.day); if(d<=todayISO() && (!c.until||m<=c.until)) out.push(m); m=addYm(m,1); }
+  return out;
+}
+async function generateContract(root){
+  const made=[]; const months=contractDue(root);
+  for(const m of months){
+    const chain=contractChain(root);
+    if(chain.some(x=>ym(x.date)===m) || ((root.site||root.typeOfWorks)&&S.invoices.some(x=>x.status!=="cancelled"&&x.kind===root.kind&&x.customerId===root.customerId&&(x.site||"")===(root.site||"")&&(x.typeOfWorks||"")===(root.typeOfWorks||"")&&ym(x.date)===m&&x.id!==root.id))){ continue; }
+    const src=chain[chain.length-1]||root, d=contractDate(m,root.contract.day);
+    const n=repeatDraft(src,d,root.contract.shift!==false); const now=new Date().toISOString();
+    const data=buildRecord(n); Object.assign(data,{status:"draft",contractRoot:root.id,autoGenerated:true,createdAt:now,createdBy:actor()||"auto",updatedAt:now,updatedBy:actor()||"auto",history:[{at:now,by:actor()||"auto",action:"مسودة تلقائية من العقد الشهري ("+m+")"}]});
+    delete data.contract; const id=uid("inv"); await Store.save("invoices",id,data); made.push(id);
+  }
+  if(months.length){ const fresh=invById(root.id)||root; await patchInvoice(root.id,{contract:{...fresh.contract,lastMonth:months[months.length-1]}},"العقد الشهري: آخر شهر "+months[months.length-1]); }
+  if(made.length) await audit("مسودات العقود الشهرية", dispNo(root), made.length+" مسودة");
+  return made.length;
+}
+async function runContracts(manual){
+  if(!can("edit")) return 0;
+  const roots=contractRoots().filter(r=>contractDue(r).length); if(!roots.length){ if(manual) toast("لا توجد عقود مستحقة الآن"); return 0; }
+  let lease={acquired:true};
+  if(S.mode==="cloud"){ try{ lease=await DB.doc("counters/AUTO").acquire({holder:actor()+"-"+(S.uid||"x"),ttlMs:30000}); }catch(e){ lease={acquired:true}; } }
+  if(!lease.acquired){ if(manual) toast("جهاز آخر ينشئ المسودات الآن"); return 0; }
+  let n=0; for(const r of roots) n+=await generateContract(r);
+  if(n) toast(`العقود الشهرية: أُنشئت ${n} مسودة جديدة — راجعها في الفواتير`); else if(manual) toast("كل العقود محدثة");
+  return n;
+}
+function contractPanel(i){
+  if(i.kind==="special"||i.status==="cancelled"||!can("edit")) return "";
+  const root=i.contractRoot?invById(i.contractRoot):null;
+  if(root) return `<div class="panel"><h2>العقد الشهري</h2><p class="hint">هذه الفاتورة ضمن العقد الشهري الأصلي <a class="code" href="#inv-${esc(root.id)}">${esc(dispNo(root))}</a>.${i.autoGenerated?" أُنشئت تلقائياً.":""}</p></div>`;
+  const c=i.contract||{};
+  return `<div class="panel"><h2>العقد الشهري ${c.on?'<span class="chip paid">مفعّل</span>':""}</h2>
+   <p class="hint">${c.on?`تُنشأ تلقائياً مسودة جديدة يوم ${c.day||1} من كل شهر (آخر شهر: ${esc(c.lastMonth||ym(i.date))}${c.until?" — حتى "+esc(c.until):""}). المسودة تنتظر المراجعة والاعتماد.`:"للعقود الشهرية (صيانة، تنظيف، زراعة…): يُنشئ النظام مسودة الشهر التالي تلقائياً بنفس العميل والبنود مع تحديث اسم الشهر."}</p>
+   <button class="btn sm ${c.on?"":"primary"}" id="ct-set">${c.on?"تعديل / إيقاف":"تفعيل كعقد شهري"}</button></div>`;
+}
+function contractModal(i){
+  const c=i.contract||{};
+  modal(`<h3>العقد الشهري — <span class="code">${esc(dispNo(i))}</span></h3>
+   <div class="grid g2"><label class="f">يوم إنشاء المسودة من كل شهر<input class="i ltr" id="ct-day" inputmode="numeric" value="${esc(c.day||+String(i.date).slice(8,10)||1)}"></label>
+   <label class="f">ينتهي العقد بعد شهر (اختياري)<input type="month" class="i" id="ct-until" value="${esc(c.until||"")}"></label></div>
+   <label class="chk" style="margin-top:10px"><input type="checkbox" id="ct-shift" ${c.shift===false?"":"checked"}>تحديث اسم الشهر في وصف البنود تلقائياً</label>
+   <label class="f" style="margin-top:10px">أول شهر تُنشأ له مسودة تلقائية<input type="month" class="i" id="ct-first" value="${esc(addYm(c.lastMonth||(addYm(ym(i.date),1)<ym(todayISO())?addYm(ym(todayISO()),-1):ym(i.date)),1))}"></label>
+   <p class="hint">تُنشأ المسودة عند أول دخول لأي مستخدم بعد يوم الاستحقاق، ولا تُنشأ إن وُجدت فاتورة لنفس العميل والموقع ونوع الأعمال في ذلك الشهر.</p>
+   <div class="foot"><button class="btn" data-close>إلغاء</button>${c.on?'<button class="btn danger" id="ct-off">إيقاف العقد</button>':""}<button class="btn primary" id="ct-ok">حفظ وتفعيل</button></div>`,(bg,close)=>{
+    $("#ct-ok",bg).onclick=async()=>{ const day=Math.min(28,Math.max(1,parseInt($("#ct-day",bg).value,10)||1));
+      await patchInvoice(i.id,{contract:{on:true,day,shift:$("#ct-shift",bg).checked,until:$("#ct-until",bg).value||"",lastMonth:addYm($("#ct-first",bg).value||addYm(ym(i.date),1),-1),since:c.since||new Date().toISOString(),by:actor()}},"تفعيل عقد شهري (يوم "+day+")"); close(); toast("تم تفعيل العقد الشهري");
+      const n=await runContracts(false); if(n) render(); };
+    const off=$("#ct-off",bg); if(off) off.onclick=async()=>{ await patchInvoice(i.id,{contract:{...c,on:false}},"إيقاف العقد الشهري"); close(); toast("تم إيقاف العقد"); };
+  });
+}
+
+/* ---------------- 6) alerts, email digest ---------------- */
+async function loadCheques(){
+  if(S.mode!=="cloud"){ S.chqs=[]; return; }
+  try{ const snap=await DB.collection("cheques").limit(1000).get(); S.chqs=snap.docs.map(d=>({...d.data(),id:d.id})); }catch(e){ S.chqs=[]; }
+}
+function alertsList(){
+  const A=[];
+  S.invoices.map(i=>({i,r:retInfo(i)})).filter(x=>x.r&&(x.r.status==="expired"||x.r.status==="due")).forEach(({i,r})=>A.push({k:"ret",lvl:r.status==="expired"?"bad":"warn",t:`محتجزات ${fmt(r.amount)} ر.ق — ${i.customerName} (${dispNo(i)}) ${r.status==="expired"?"انتهت مدتها في "+dmy(r.due):"تستحق في "+dmy(r.due)}`,href:"#inv-"+i.id}));
+  (S.chqs||[]).filter(c=>["written","delivered"].includes(c.status)&&c.dueDate&&daysUntil(c.dueDate)<=7).sort((a,b)=>a.dueDate<b.dueDate?-1:1).forEach(c=>{ const d=daysUntil(c.dueDate); A.push({k:"chq",lvl:d<=0?"bad":"warn",t:`شيك ${c.no||""} — ${c.payee||""} بمبلغ ${fmt(c.amount)} ر.ق ${d<0?"متأخر "+(-d)+" يوم":d===0?"يستحق اليوم":"يستحق بعد "+d+" يوم"} (${dmy(c.dueDate)})`,href:"#cheques"}); });
+  const pend=S.invoices.filter(i=>i.status==="pending"); if(pend.length) A.push({k:"ap",lvl:"warn",t:`${pend.length} فاتورة بانتظار اعتمادك بقيمة ${fmt(pend.reduce((s,i)=>s+calc(i).total,0))} ر.ق`,href:"#approvals"});
+  const auto=S.invoices.filter(i=>i.autoGenerated&&i.status==="draft"); if(auto.length) A.push({k:"ct",lvl:"info",t:`${auto.length} مسودة من العقود الشهرية تنتظر المراجعة`,href:"#invoices"});
+  const old=S.invoices.filter(i=>i.status==="draft"&&!i.autoGenerated&&i.createdAt&&(Date.now()-new Date(i.createdAt))>7*864e5); if(old.length) A.push({k:"dr",lvl:"info",t:`${old.length} مسودة عمرها أكثر من أسبوع`,href:"#invoices"});
+  return A;
+}
+function digestHtml(A){
+  const co=S.settings.company, col={bad:"#B42318",warn:"#B54708",info:"#475467"};
+  return `<div dir="rtl" style="font-family:Tahoma,Arial,sans-serif;font-size:14px;color:#1d2939"><h2 style="color:#16213B;margin:0 0 6px">تنبيهات نظام الفواتير — ${dmy(todayISO())}</h2><p style="margin:0 0 12px;color:#667085">${esc(co.nameAr)}</p>
+   <ul style="padding-inline-start:18px;margin:0">${A.map(a=>`<li style="margin:6px 0;color:${col[a.lvl]}">${esc(a.t)}</li>`).join("")}</ul>
+   <p style="color:#98A2B3;font-size:12px;margin-top:16px">رسالة تلقائية من نظام الفواتير ${APP_VERSION}.</p></div>`;
+}
+async function sendDigest(manual){
+  const to=(S.settings.auto.digestEmail||"").split(/[;,\s]+/).filter(Boolean);
+  if(!to.length){ if(manual) toast("أدخل بريد التنبيهات أولاً واحفظ"); return false; }
+  if(S.chqs===null) await loadCheques();
+  const A=alertsList(); if(!A.length){ if(manual) toast("لا توجد تنبيهات اليوم"); return false; }
+  await mcpCall(SRV.gmail,"send_message",{to,subject:`تنبيهات الفواتير والمحتجزات والشيكات — ${dmy(todayISO())} (${A.length})`,htmlBody:digestHtml(A),body:A.map(a=>"- "+a.t).join("\n")});
+  await setMeta({digestAt:new Date().toISOString(),digestCount:A.length}); await audit("إرسال ملخص التنبيهات بالبريد", to.join(", "), A.length+" تنبيه");
+  if(manual) toast("تم إرسال ملخص التنبيهات"); return true;
+}
+
+/* ---------------- 7) Google Drive backup ---------------- */
+function backupData(){ const st=clone(S.settings); delete st.users; return {app:"alharam-invoices",version:2,exportedAt:new Date().toISOString(),settings:st,counters:S.counters,customers:S.customers,invoices:S.invoices}; }
+async function driveBackup(manual){
+  const name=`Alharam-Backup-${todayISO()}.json`;
+  const p=await mcpCall(SRV.drive,"create_file",{title:name,textContent:JSON.stringify(backupData()),contentMimeType:"application/json",disableConversionToGoogleType:true});
+  const link=p&&(p.webViewLink||p.alternateLink||p.url||(p.file&&p.file.webViewLink))||"";
+  await setMeta({backupAt:new Date().toISOString(),backupName:name,backupLink:link}); await audit("نسخة احتياطية على Google Drive", name, S.invoices.length+" فاتورة");
+  if(manual) toast("تم حفظ النسخة على Google Drive: "+name); return true;
+}
+
+/* ---------------- 8) approval notifications (Teams / WhatsApp) ---------------- */
+function submitText(i){ const c=calc(i); return `فاتورة بانتظار اعتمادك: ${KIND[i.kind]} للعميل ${i.customerName} بقيمة ${fmt(c.total)} ر.ق${i.site?" — "+i.site:""}${i.typeOfWorks?" ("+i.typeOfWorks+")":""}. أرسلها ${S.session?.name||actor()} من نظام الفواتير.`; }
+async function notifySubmit(i){
+  const a=S.settings.auto||{};
+  if(a.teamsChat && MCP){ try{ await mcpCall(SRV.ms,"teams_send_chat_message",{chatId:a.teamsChat,body:submitText(i)}); toast("أُرسل إشعار للإدارة على Teams"); }catch(e){ console.warn("teams",e); } }
+}
+function waAdminLink(i){ const n=waNumber((S.settings.auto||{}).waAdmin); return n?`https://wa.me/${n}?text=${encodeURIComponent(submitText(i))}`:""; }
+
+/* ---------------- 9) QuickBooks: monthly sheet + direct posting ---------------- */
+const qbOf = i => i.qb&&i.qb.id?i.qb:null;
+function qbName(i){ const c=custById(i.customerId); return (c&&c.qbName)||i.customerNameEn||c?.nameEn||i.customerName||""; }
+function qbLines(i){
+  const c=calc(i), out=[]; let hdr="";
+  (i.lines||[]).forEach(l=>{ if(l.heading){ hdr=l.desc||""; return; } const amt=lineTotal(l); if(!amt&&!String(l.desc||"").trim()) return;
+    const hasQ=!blank(l.qty)&&!blank(l.price); const desc=(hdr?hdr+" — ":"")+String(l.desc||"")+(l.unit?` (${l.unit})`:"");
+    out.push({desc, qty:hasQ?Number(l.qty):1, rate:hasQ?Number(l.price):amt, amount:amt}); });
+  (i.deductions||[]).forEach(d=>{ const a=dedAmount(d,c.sub); if(a) out.push({desc:d.label||"Deduction",qty:1,rate:-a,amount:-a}); });
+  const da=discAmt(i,c.sub); if(da) out.push({desc:discLabel(i),qty:1,rate:-da,amount:-da});
+  const diff=r2(c.total-out.reduce((s,x)=>s+x.amount,0)); if(Math.abs(diff)>=0.01) out.push({desc:"Rounding",qty:1,rate:diff,amount:diff});
+  return out;
+}
+const qbDate = iso => iso?dmy(iso):"";
+const qbDue = (iso, terms) => { if(!iso) return ""; const [y,m,d]=iso.split("-").map(Number); const t=new Date(Date.UTC(y,m-1,d+(Number(terms)||0))); return t.toISOString().slice(0,10); };
+function qbMonthInvoices(month){ return S.invoices.filter(i=>inAccounts(i)&&ym(i.date)===month).sort((a,b)=>(a.date||"").localeCompare(b.date||"")||dispNo(a).localeCompare(dispNo(b))); }
+function qbSheet(month, skipPosted){
+  if(!window.XLSX){ toast("مكتبة Excel لم تُحمّل بعد"); return; }
+  const L=qbMonthInvoices(month).filter(i=>!(skipPosted&&qbOf(i)));
+  if(!L.length){ toast("لا توجد فواتير معتمدة في هذا الشهر"+(skipPosted?" غير مرحّلة":"")); return; }
+  const terms=Number(S.settings.qb.terms)||30, item=S.settings.qb.itemName||"Services";
+  const head=["InvoiceNo","Customer","InvoiceDate","DueDate","Terms","Memo","Item(Product/Service)","ItemDescription","ItemQuantity","ItemRate","ItemAmount","Service Date"];
+  const rows=[]; L.forEach(i=>{ const due=qbDue(i.date,terms);
+    qbLines(i).forEach(x=>rows.push([dispNo(i),qbName(i),qbDate(i.date),qbDate(due),"Net "+terms,[i.typeOfWorks,i.site,i.workOrder&&"WO "+i.workOrder].filter(Boolean).join(" | "),item,x.desc,x.qty,r2(x.rate),r2(x.amount),qbDate(i.completedDate||i.date)])); });
+  const ws=XLSX.utils.aoa_to_sheet([head,...rows].map(r=>r.map(xlsSafe))); ws["!cols"]=[{wch:16},{wch:34},{wch:12},{wch:12},{wch:8},{wch:40},{wch:16},{wch:60},{wch:10},{wch:12},{wch:14},{wch:12}];
+  const sum=[["Month",month],["Invoices",L.length],["Total (QAR)",r2(L.reduce((s,i)=>s+calc(i).total,0))],[],["InvoiceNo","Customer","Date","Total"],...L.map(i=>[dispNo(i),qbName(i),qbDate(i.date),calc(i).total])];
+  const ws2=XLSX.utils.aoa_to_sheet(sum.map(r=>r.map(xlsSafe))); ws2["!cols"]=[{wch:16},{wch:40},{wch:12},{wch:14}];
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"QuickBooks Import"); XLSX.utils.book_append_sheet(wb,ws2,"Summary");
+  saveFile(`QuickBooks-Invoices-${month}.xlsx`, new Blob([XLSX.write(wb,{type:"array",bookType:"xlsx"})]));
+  const log=[...(metaAuto().qbExports||[]),{month,at:new Date().toISOString(),by:actor(),n:L.length}].slice(-36);
+  setMeta({qbExports:log}).catch(()=>{}); audit("تصدير شيت QuickBooks", month, L.length+" فاتورة");
+}
+async function qbEnsureItem(){
+  const q=S.settings.qb||{}; if(q.itemId) return q.itemId;
+  const p=await mcpCall(SRV.qb,"items_search",{types:["Service"],limit:50}); const L=arrOf(p);
+  const it=L.find(x=>/خدم|service/i.test(x.name||""))||L[0]; if(!it) throw new Error("لا يوجد صنف خدمات في QuickBooks — أنشئ صنفاً من نوع Service");
+  const st=clone(S.settings); st.qb={...(st.qb||{}),itemId:String(it.id),itemName:it.name||""}; if(isAdmin()){ try{ await Store.saveSettings(st); S.settings=deepMerge(DEFAULT_SETTINGS,st); }catch(e){} }
+  return String(it.id);
+}
+async function qbFindCustomer(i){
+  const c=custById(i.customerId); if(c&&c.qbId) return c.qbId;
+  const names=[qbName(i), c?.nameEn, c?.name, i.customerName].filter(Boolean);
+  const norm=s=>String(s||"").toLowerCase().replace(/\b(w\.?l\.?l|l\.?l\.?c|co|company|trading|contracting|for|and|&)\b/g," ").replace(/[^a-z0-9؀-ۿ]+/g," ").trim();
+  let found=[];
+  for(const nm of names){ const first=norm(nm).split(" ").filter(w=>w.length>2).slice(0,2).join(" "); if(!first) continue;
+    const p=await mcpCall(SRV.qb,"contacts_search",{type:"Customer",text:first,limit:10}); found=arrOf(p); if(found.length) break; }
+  const exact=found.find(x=>names.some(n=>norm(n)&&norm(x.display_name)===norm(n)));
+  const key=norm(names[0]).split(" ").filter(w=>w.length>2).slice(0,2).join(" ");
+  const pick=exact||(found.length===1&&key&&norm(found[0].display_name).includes(key)?found[0]:null);
+  if(pick){ await qbLinkCustomer(c,pick); return String(pick.id); }
+  return await new Promise((resolve,reject)=>{
+    modal(`<h3>ربط العميل في QuickBooks</h3><p class="hint">لم يُحدَّد العميل <b>${esc(qbName(i))}</b> تلقائياً. اختر المطابق، أو أنشئه في QuickBooks.</p>
+     ${found.length?`<div class="checkl">${found.map(x=>`<label><input type="radio" name="qbc" value="${esc(x.id)}"><span>${esc(x.display_name)}</span><span class="muted num">${esc(x.balance||"")}</span></label>`).join("")}</div>`:'<p class="hint">لا توجد نتائج بحث مشابهة.</p>'}
+     <label class="f" style="margin-top:10px">بحث باسم آخر<div style="display:flex;gap:6px"><input class="i ltr" id="qbc-q"><button class="btn sm" id="qbc-s">بحث</button></div></label>
+     <div class="foot"><button class="btn" data-close>إلغاء</button><button class="btn" id="qbc-new">إنشاء "${esc(qbName(i))}" في QuickBooks</button><button class="btn primary" id="qbc-ok">ربط المحدد</button></div>`,(bg,close)=>{
+      let L=found; const box=()=>bg.querySelector(".checkl");
+      $("#qbc-s",bg).onclick=async()=>{ try{ L=arrOf(await mcpCall(SRV.qb,"contacts_search",{type:"Customer",text:$("#qbc-q",bg).value.trim(),limit:15})); const h=L.map(x=>`<label><input type="radio" name="qbc" value="${esc(x.id)}"><span>${esc(x.display_name)}</span></label>`).join("")||'<p class="hint">لا نتائج</p>'; if(box()) box().innerHTML=h; else $("#qbc-q",bg).closest("label").insertAdjacentHTML("beforebegin",`<div class="checkl">${h}</div>`); }catch(e){ toast(mcpErr(e)); } };
+      $("#qbc-ok",bg).onclick=async()=>{ const v=bg.querySelector('input[name=qbc]:checked')?.value; if(!v){ toast("اختر عميلاً"); return; } const x=L.find(y=>String(y.id)===v)||{id:v}; await qbLinkCustomer(c,x); bg.remove(); resolve(String(v)); };
+      $("#qbc-new",bg).onclick=async()=>{ try{ const nm=qbName(i); const p=await mcpCall(SRV.qb,"contacts_create",{type:"Customer",display_name:nm,company_name:nm,...(c?.email?{email:c.email}:{}),...(c?.phone?{phone:c.phone}:{})}); const id=p&&(p.id||p.contact?.id||p.details?.id); if(!id) throw new Error("لم يُرجع QuickBooks رقم العميل"); await qbLinkCustomer(c,{id,display_name:nm}); bg.remove(); resolve(String(id)); }catch(e){ toast("تعذر الإنشاء: "+mcpErr(e)); } };
+      bg.addEventListener("click",e=>{ if(e.target===bg||e.target.closest("[data-close]")) reject(new Error("أُلغي")); });
+    });
+  });
+}
+async function qbLinkCustomer(c, x){ if(!c) return; const d={...c}; delete d.id; d.qbId=String(x.id); if(x.display_name) d.qbName=x.display_name; await Store.save("customers",c.id,d); }
+async function qbPost(i){
+  if(!inAccounts(i)) throw new Error("الترحيل للفواتير المعتمدة فقط");
+  if(qbOf(i)) return qbOf(i);
+  const no=dispNo(i).slice(0,21);
+  const ex=arrOf(await mcpCall(SRV.qb,"transactions_search",{types:["Invoice"],doc_number:no,limit:5}));
+  let rec=ex[0]?{id:String(ex[0].id),doc:ex[0].doc_number||no,linked:true}:null;
+  if(!rec){
+    const itemId=await qbEnsureItem(), cust=await qbFindCustomer(i);
+    const L=qbLines(i).map(x=>({kind:"Item",item_id:itemId,description:x.desc.slice(0,4000),quantity:x.qty,unit_price:String(r2(x.rate)),amount:String(r2(x.amount)),...(i.completedDate?{service_date:i.completedDate}:{})}));
+    const terms=Number(S.settings.qb.terms)||30, due=qbDue(i.date,terms);
+    const memo=[i.typeOfWorks,i.site,i.location,i.workOrder&&"WO "+i.workOrder,i.ref&&"Ref "+i.ref,"From Al Haram invoicing system"].filter(Boolean).join(" | ").slice(0,4000);
+    const p=await mcpCall(SRV.qb,"transactions_create",{type:"Invoice",contact_id:cust,txn_date:i.date,due_date:due,doc_number:no,memo,lines:L});
+    let id=p&&(p.id||p.transaction?.id||p.details?.id||p.record?.id);
+    if(!id){ const chk=arrOf(await mcpCall(SRV.qb,"transactions_search",{types:["Invoice"],doc_number:no,limit:2})); id=chk[0]&&chk[0].id; }
+    if(!id) throw new Error("لم يتأكد إنشاء الفاتورة في QuickBooks — تحقق هناك قبل إعادة المحاولة");
+    rec={id:String(id),doc:no,total:p&&(p.total||p.transaction?.total)||""};
+  }
+  const q={...rec,at:new Date().toISOString(),by:actor()};
+  await patchInvoice(i.id,{qb:q},rec.linked?"ربط بفاتورة موجودة في QuickBooks":"ترحيل إلى QuickBooks"); await audit("ترحيل إلى QuickBooks", dispNo(i), fmt(calc(i).total));
+  return q;
+}
+function qbPanel(i){
+  if(!isAdmin()||i.kind!=="invoice"||i.status==="draft"||i.status==="pending") return "";
+  const q=qbOf(i);
+  return `<div class="panel"><h2>QuickBooks ${q?'<span class="chip paid">مرحّلة</span>':""}</h2>
+   ${q?`<p class="hint">رُحّلت برقم <span class="code">${esc(q.doc||"")}</span> بتاريخ ${new Date(q.at).toLocaleDateString("en-GB")} — ${esc(q.by||"")}.</p>`
+   :inAccounts(i)?`<p class="hint">ترحيل الفاتورة مباشرة إلى QuickBooks Online بنفس الرقم والبنود (أو صدّرها ضمن شيت الشهر من صفحة الأتمتة).</p><button class="btn sm primary" id="qb-post" ${MCP?"":"disabled title=\"متاح داخل claude.ai\""}>ترحيل إلى QuickBooks</button>`:'<p class="hint">غير مدرجة في الحسابات.</p>'}
+   <p class="hint" id="qb-res"></p></div>`;
+}
+async function qbPostMany(ids){
+  const L=ids.map(invById).filter(i=>i&&inAccounts(i)&&!qbOf(i));
+  if(!L.length){ toast("لا توجد فواتير معتمدة غير مرحّلة في التحديد"); return; }
+  confirmBox(`ترحيل ${L.length} فاتورة إلى QuickBooks؟ تُنشأ كفواتير بنفس الأرقام، والفواتير الموجودة هناك بنفس الرقم تُربط ولا تتكرر.`,"ترحيل",async()=>{
+    let n=0; for(const i of L){ try{ toast(`جارٍ ترحيل ${dispNo(i)} (${n+1}/${L.length})`); await qbPost(invById(i.id)); n++; }catch(e){ toast(`توقف عند ${dispNo(i)}: ${mcpErr(e)}`); break; } }
+    S.selected.clear(); if(n) toast(`تم ترحيل ${n} فاتورة إلى QuickBooks`); });
+}
+
+/* ---------------- automation runner (once per session) ---------------- */
+let _autoRan=false;
+function maybeRunAuto(){
+  if(_autoRan||!S.session||S.session.mustChange) return;
+  if(S.mode==="cloud"&&!(S.loaded.inv&&S.loaded.cus&&S.loaded.set)) return;
+  _autoRan=true; setTimeout(()=>runAutomations().catch(e=>console.warn("auto",e)),1800);
+}
+async function runAutomations(){
+  await runContracts(false);
+  if(!isAdmin()) return;
+  const a=S.settings.auto||{}, m=metaAuto(), today=todayISO();
+  if(a.digestOn && MCP && String(m.digestAt||"").slice(0,10)!==today){ try{ await loadCheques(); if(alertsList().length) await sendDigest(false); }catch(e){ console.warn("digest",e); } }
+  if(a.backupOn && MCP){ const days=Number(a.backupDays)||7; const last=m.backupAt?new Date(m.backupAt):null; if(!last||(Date.now()-last)/864e5>=days){ try{ await driveBackup(false); toast("تم أخذ نسخة احتياطية أسبوعية على Google Drive"); }catch(e){ console.warn("backup",e); } } }
+}
+
+/* ---------------- automation & integrations page (admin) ---------------- */
+function viewAutomation(){
+  const a=S.settings.auto||{}, q=S.settings.qb||{}, m=metaAuto(), ro=S.mode==="cloud"&&!S.isPlatformAdmin;
+  if(S.chqs===null){ loadCheques().then(()=>{ if(S.route.name==="automation") renderSoon(); }); }
+  const A=alertsList(), roots=contractRoots();
+  const month=S.qbMonth||ym(todayISO()), ML=qbMonthInvoices(month), posted=ML.filter(qbOf).length;
+  const ai=[SAMPLE?"✓ المساعد الذكي (Claude) متاح":"✗ المساعد الذكي غير متاح في هذا العرض",DICT?"✓ الإدخال الصوتي متاح":"✗ الإدخال الصوتي يحتاج متصفح Chrome/Edge أو تطبيق Claude",MCP?"✓ الربط مع Gmail / Outlook / Drive / QuickBooks متاح":"✗ الربط متاح عند فتح النظام داخل claude.ai"];
+  return `<div class="top"><div><h1>الأتمتة والتكامل</h1><p>العقود الشهرية، التنبيهات بالبريد، النسخ الاحتياطي، إشعارات الاعتماد، وQuickBooks — كلها في مكان واحد.</p></div></div>
+  <div class="stack">
+  <div class="banner info">${ai.join(" · ")}</div>
+  <div class="panel"><h2>التنبيهات الآن <small>المحتجزات، الشيكات المستحقة خلال 7 أيام، الاعتمادات، المسودات</small></h2>
+    ${A.length?`<ul class="checks">${A.map(x=>`<li style="border-inline-start-color:${CHK_COL[x.lvl]}"><a href="${x.href}" style="color:inherit">${esc(x.t)}</a></li>`).join("")}</ul>`:'<p class="hint">✓ لا توجد تنبيهات.</p>'}
+    <div class="grid g3" style="margin-top:12px;align-items:end"><label class="f">بريد ملخص التنبيهات<input class="i ltr" id="au-mail" value="${esc(a.digestEmail||"")}" placeholder="ceo@alharam.qa" ${ro?"disabled":""}></label>
+      <label class="chk"><input type="checkbox" id="au-dig" ${a.digestOn?"checked":""} ${ro?"disabled":""}>إرسال الملخص تلقائياً مرة يومياً (عند أول دخول للإدارة)</label>
+      <div class="actions"><button class="btn" id="au-send" ${MCP?"":"disabled"}>إرسال الملخص الآن (Gmail)</button></div></div>
+    <p class="hint">${m.digestAt?"آخر إرسال: "+new Date(m.digestAt).toLocaleString("en-GB"):"لم يُرسل ملخص بعد."}</p></div>
+  <div class="panel"><h2>العقود الشهرية <small>مسودات تلقائية كل شهر — تُفعَّل من صفحة أي فاتورة</small><button class="btn sm" id="ct-run">إنشاء المستحق الآن</button></h2>
+    ${roots.length?`<div class="tw"><table class="t"><thead><tr><th>الفاتورة الأصل</th><th>العميل</th><th>الموقع / الأعمال</th><th class="n">القيمة</th><th>اليوم</th><th>آخر شهر</th><th>القادم</th><th>مسودات تنتظر</th></tr></thead><tbody>
+    ${roots.map(r=>{ const ch=contractChain(r), last=ch[ch.length-1]||r, nx=addYm(r.contract.lastMonth||ym(r.date),1); return `<tr class="click" data-open="${esc(r.id)}"><td class="code">${esc(dispNo(r))}</td><td><bdi>${esc(r.customerName)}</bdi></td><td class="muted">${esc([r.site,r.typeOfWorks].filter(Boolean).join(" — "))}</td><td class="n">${fmt(calc(last).total)}</td><td>${r.contract.day||1}</td><td class="num">${esc(r.contract.lastMonth||"")}</td><td class="num">${r.contract.until&&nx>r.contract.until?"انتهى":esc(contractDate(nx,r.contract.day))}</td><td>${ch.filter(x=>x.status==="draft").length}</td></tr>`; }).join("")}</tbody></table></div>`:'<p class="hint">لا توجد عقود شهرية مفعّلة. افتح فاتورة عقد شهري واضغط "تفعيل كعقد شهري".</p>'}</div>
+  <div class="panel"><h2>QuickBooks <small>شيت شهري للرفع + ترحيل مباشر لكل فاتورة</small></h2>
+    <div class="grid g4" style="align-items:end"><label class="f">الشهر<input type="month" class="i" id="qb-m" value="${esc(month)}"></label>
+      <label class="f">أيام الاستحقاق (Terms)<input class="i ltr" id="qb-terms" value="${esc(q.terms||30)}" ${ro?"disabled":""}></label>
+      <label class="f">صنف الخدمة في QuickBooks<div style="display:flex;gap:6px"><input class="i" id="qb-item" value="${esc(q.itemName||"")}" placeholder="يُختار تلقائياً" disabled><button class="btn sm" id="qb-items" ${MCP?"":"disabled"}>اختيار</button></div></label>
+      <label class="chk"><input type="checkbox" id="qb-skip" checked>استبعاد المرحّلة مباشرة من الشيت</label></div>
+    <div class="actions" style="margin-top:10px"><button class="btn primary" id="qb-xls">${IC.xls}تصدير شيت ${esc(month)} لـ QuickBooks</button><button class="btn" id="qb-all" ${MCP&&ML.length-posted?"":"disabled"}>ترحيل غير المرحّل مباشرة (${ML.length-posted})</button></div>
+    <p class="hint">${ML.length} فاتورة معتمدة في الشهر بقيمة ${fmt(ML.reduce((s,i)=>s+calc(i).total,0))} ر.ق — مرحّلة مباشرة: ${posted}. الشيت بصيغة استيراد الفواتير في QuickBooks Online (Sales → Import invoices). الخصومات والمحتجزات تظهر كبنود سالبة ليطابق الصافي.</p>
+    ${(m.qbExports||[]).length?`<p class="hint">آخر تصدير: ${(m.qbExports||[]).slice(-3).reverse().map(x=>`${esc(x.month)} (${x.n}) ${new Date(x.at).toLocaleDateString("en-GB")}`).join(" · ")}</p>`:""}
+    ${ML.length?`<div class="tw" style="margin-top:8px"><table class="t"><thead><tr><th>الفاتورة</th><th>التاريخ</th><th>العميل</th><th class="n">الصافي</th><th>QuickBooks</th></tr></thead><tbody>${ML.map(i=>`<tr class="click" data-open="${esc(i.id)}"><td class="code">${esc(dispNo(i))}</td><td class="num">${dmy(i.date)}</td><td><bdi>${esc(i.customerName)}</bdi></td><td class="n">${fmt(calc(i).total)}</td><td>${qbOf(i)?'<span class="chip paid">مرحّلة</span>':`<button class="btn sm" data-qbpost="${esc(i.id)}" ${MCP?"":"disabled"}>ترحيل</button>`}</td></tr>`).join("")}</tbody></table></div>`:""}</div>
+  <div class="panel"><h2>النسخ الاحتياطي على Google Drive</h2>
+    <div class="grid g3" style="align-items:end"><label class="chk"><input type="checkbox" id="au-bk" ${a.backupOn?"checked":""} ${ro?"disabled":""}>نسخة تلقائية كل</label><label class="f">عدد الأيام<input class="i ltr" id="au-bkd" value="${esc(a.backupDays||7)}" ${ro?"disabled":""}></label>
+    <div class="actions"><button class="btn" id="au-bknow" ${MCP?"":"disabled"}>نسخ الآن إلى Drive</button></div></div>
+    <p class="hint">${m.backupAt?`آخر نسخة: ${esc(m.backupName||"")} — ${new Date(m.backupAt).toLocaleString("en-GB")} ${m.backupLink?`<a href="${esc(m.backupLink)}" target="_blank" rel="noopener">فتح</a>`:""}`:"لم تؤخذ نسخة على Drive بعد."} الملف JSON يُستعاد من الإعدادات ← استعادة من ملف.</p></div>
+  <div class="panel"><h2>إشعار الإدارة عند إرسال فاتورة للاعتماد</h2>
+    <div class="grid g3" style="align-items:end"><label class="f">محادثة Teams<div style="display:flex;gap:6px"><input class="i" id="au-teams" value="${esc(a.teamsChatName||(a.teamsChat?"محادثة محددة":""))}" placeholder="لم تُحدد" disabled><button class="btn sm" id="au-teamsel" ${MCP?"":"disabled"}>اختيار</button>${a.teamsChat?'<button class="btn sm" id="au-teamsclr">إلغاء</button>':""}</div></label>
+    <label class="f">رقم واتساب الإدارة<input class="i ltr" id="au-wa" value="${esc(a.waAdmin||"")}" placeholder="+974 5xxx xxxx" ${ro?"disabled":""}></label><span></span></div>
+    <p class="hint">Teams: يُرسل الإشعار تلقائياً من حساب المحاسب عند ضغط "إرسال للاعتماد" (يحتاج ربط Microsoft 365 عنده). واتساب: يظهر للمحاسب زر يفتح واتساب برسالة جاهزة لرقمك.</p></div>
+  ${ro?"":`<div class="sticky-bar"><span class="hint">إعدادات الأتمتة تُحفظ في إعدادات النظام.</span><div class="actions"><button class="btn primary" id="au-save">حفظ إعدادات الأتمتة</button></div></div>`}
+  </div>`;
+}
+async function saveAutoSettings(patchAuto, patchQb){
+  const st=clone(S.settings); st.auto={...(st.auto||{}),...(patchAuto||{})}; st.qb={...(st.qb||{}),...(patchQb||{})};
+  await Store.saveSettings(st); S.settings=deepMerge(DEFAULT_SETTINGS,st);
+}
+function bindAutomation(){
+  const v=id=>$("#"+id);
+  const qm=v("qb-m"); if(qm) qm.onchange=()=>{ S.qbMonth=qm.value||ym(todayISO()); render(); };
+  const sv=v("au-save"); if(sv) sv.onclick=async()=>{ try{ await saveAutoSettings({digestEmail:v("au-mail").value.trim(),digestOn:v("au-dig").checked,backupOn:v("au-bk").checked,backupDays:Math.max(1,parseInt(v("au-bkd").value,10)||7),waAdmin:v("au-wa").value.trim()},{terms:Math.max(0,parseInt(v("qb-terms").value,10)||30)}); await audit("تعديل إعدادات الأتمتة",""); toast("تم الحفظ"); render(); }catch(e){ toast("تعذر الحفظ — تحتاج صلاحية محرر"); } };
+  const sd=v("au-send"); if(sd) sd.onclick=async()=>{ sd.disabled=true; try{ await sendDigest(true); render(); }catch(e){ toast("تعذر الإرسال: "+mcpErr(e)); } sd.disabled=false; };
+  const bk=v("au-bknow"); if(bk) bk.onclick=async()=>{ bk.disabled=true; toast("جارٍ رفع النسخة إلى Google Drive…"); try{ await driveBackup(true); render(); }catch(e){ toast("تعذر النسخ: "+mcpErr(e)); } bk.disabled=false; };
+  const cr=v("ct-run"); if(cr) cr.onclick=async()=>{ cr.disabled=true; try{ await runContracts(true); }catch(e){ toast("تعذر: "+(e.message||e)); } cr.disabled=false; render(); };
+  const qx=v("qb-xls"); if(qx) qx.onclick=()=>qbSheet(S.qbMonth||ym(todayISO()), v("qb-skip").checked);
+  const qa=v("qb-all"); if(qa) qa.onclick=()=>qbPostMany(qbMonthInvoices(S.qbMonth||ym(todayISO())).map(i=>i.id));
+  $$("[data-qbpost]").forEach(b=>b.onclick=async e=>{ e.stopPropagation(); b.disabled=true; try{ await qbPost(invById(b.dataset.qbpost)); toast("تم الترحيل"); render(); }catch(err){ toast("تعذر الترحيل: "+mcpErr(err)); b.disabled=false; } });
+  const qi=v("qb-items"); if(qi) qi.onclick=async()=>{ try{ const L=arrOf(await mcpCall(SRV.qb,"items_search",{types:["Service","NonInventory"],limit:100}));
+      modal(`<h3>صنف الخدمة لبنود الفواتير</h3><div class="checkl">${L.map(x=>`<label><input type="radio" name="qbi" value="${esc(x.id)}" ${String(x.id)===String((S.settings.qb||{}).itemId)?"checked":""}><span>${esc(x.name)}</span><span class="muted">${esc(x.type||"")}</span></label>`).join("")||'<p class="hint">لا توجد أصناف</p>'}</div><div class="foot"><button class="btn" data-close>إلغاء</button><button class="btn primary" id="qbi-ok">حفظ</button></div>`,(bg,close)=>{
+        $("#qbi-ok",bg).onclick=async()=>{ const id=bg.querySelector("input[name=qbi]:checked")?.value; const it=L.find(x=>String(x.id)===id); if(!it) return; await saveAutoSettings(null,{itemId:String(it.id),itemName:it.name}); close(); render(); }; });
+    }catch(e){ toast("تعذر: "+mcpErr(e)); } };
+  const ts=v("au-teamsel"); if(ts) ts.onclick=async()=>{ try{ const L=arrOf(await mcpCall(SRV.ms,"teams_list_chats",{limit:25})).filter(c=>c&&c.id);
+      const nm=c=>c.topic||(Array.isArray(c.members)?c.members.map(x=>x.displayName||x.name||x).filter(Boolean).slice(0,4).join("، "):"")||c.chatType||c.id;
+      modal(`<h3>اختر محادثة Teams للإشعارات</h3><p class="hint">يُفضل محادثة بينك وبين المحاسب، أو مجموعة للإدارة.</p><div class="checkl">${L.map(c=>`<label><input type="radio" name="tch" value="${esc(c.id)}"><span>${esc(nm(c))}</span></label>`).join("")||'<p class="hint">لا توجد محادثات</p>'}</div><div class="foot"><button class="btn" data-close>إلغاء</button><button class="btn primary" id="tch-ok">حفظ</button></div>`,(bg,close)=>{
+        $("#tch-ok",bg).onclick=async()=>{ const id=bg.querySelector("input[name=tch]:checked")?.value; const c=L.find(x=>x.id===id); if(!c) return; await saveAutoSettings({teamsChat:c.id,teamsChatName:String(nm(c)).slice(0,80)}); close(); toast("تم اختيار المحادثة"); render(); }; });
+    }catch(e){ toast("تعذر قراءة محادثات Teams: "+mcpErr(e)); } };
+  const tc=v("au-teamsclr"); if(tc) tc.onclick=async()=>{ await saveAutoSettings({teamsChat:"",teamsChatName:""}); render(); };
+}
+
 /* ---------------- events ---------------- */
 function bind(){
   const r=S.route.name;
@@ -2067,7 +2568,8 @@ function bind(){
     $$("[data-goto-tab]").forEach(a=>a.onclick=()=>{ S.list={...S.list,tab:a.dataset.gotoTab,status:""}; });
     $$("[data-goto-rep]").forEach(a=>a.onclick=()=>{ S.repTab="grouped"; S.rep={...S.rep,group:a.dataset.gotoRep,kind:"accounts"}; });
     $$("[data-goto-bal]").forEach(a=>a.onclick=()=>{ S.repTab="balances"; });
-    $$("[data-stmt]").forEach(tr=>tr.onclick=()=>{ if(tr.dataset.stmt) go("statement-"+tr.dataset.stmt); }); }
+    $$("[data-stmt]").forEach(tr=>tr.onclick=()=>{ if(tr.dataset.stmt) go("statement-"+tr.dataset.stmt); });
+    const as=$("#ai-sum"); if(as) as.onclick=()=>aiSummary(as); }
   if(r==="invoices"||r==="special") bindList(r==="special");
   if(r==="approvals") bindApprovals();
   if(r==="retentions") bindRetentions();
@@ -2081,6 +2583,7 @@ function bind(){
   if(r==="customers"){ $$("[data-cust]").forEach(tr=>tr.onclick=()=>go((isAdmin()?"statement-":"customer-")+tr.dataset.cust)); liveInput("#c-q",v=>S.custQ=v); const ca=$("#c-arch"); if(ca) ca.onchange=()=>{ S.showArchived=ca.checked; render(); }; }
   if(r==="customer") bindCustomer();
   if(r==="config") bindSettings();
+  if(r==="automation") bindAutomation();
   if(r==="audit"){ liveInput("#aud-q",v=>S.auditQ=v); const b=$("#aud-reload"); b&&(b.onclick=()=>{AUDIT=null; render();}); }
 }
 function liveInput(sel, set){ const el=$(sel); if(!el) return; el.oninput=()=>{ set(el.value); const p=el.selectionStart; render(); const n=$(sel); if(n){ n.focus(); try{ n.setSelectionRange(p,p); }catch(e){} } }; }
@@ -2095,6 +2598,7 @@ function bindList(special){
     const ids=[...S.selected], a=b.dataset.bulk;
     if(a==="clear"){ S.selected.clear(); render(); return; }
     if(a==="repeat"){ repeatModal(ids); return; }
+    if(a==="qb"){ qbPostMany(ids); return; }
     if(a==="approve"){ const L=ids.map(invById).filter(i=>i&&["draft","pending"].includes(i.status)); if(!L.length){ toast("لا توجد مسودات أو فواتير بانتظار الاعتماد في التحديد"); return; }
       confirmBox(`اعتماد ${L.length} فاتورة وإعطاؤها أرقاماً رسمية؟`,"اعتماد",async()=>{ for(const i of L) await issueExisting(invById(i.id),true); S.selected.clear(); toast(`تم اعتماد ${L.length} فاتورة`); }); return; }
     if(a==="pack"){ const html=ids.map(invById).filter(Boolean).map(i=>docInvoice(i,{stamp:!!i.stamp})).join(""); await makePdf(html,`Invoices-${ids.length}.pdf`); audit("تنزيل فواتير مجمعة PDF", ids.length+" فاتورة"); return; }
@@ -2147,6 +2651,7 @@ function bindEditor(){
     const ids=$$(".lk:checked",lb).map(x=>x.value);
     ED.linked=ids.map(id=>{ const i=invById(id); const keep=(ED.linked||[]).find(x=>x.id===id); return keep||{id,no:dispNo(i),date:i.date,amount:calc(i).balance,desc:[i.typeOfWorks,i.site].filter(Boolean).join(" , ")||(i.lines||[]).find(l=>!l.heading&&l.desc)?.desc||"",workOrder:i.workOrder||"",site:i.site||""}; });
     const s=$("#lk-sum"); if(s) s.textContent=`${ids.length} محددة — الإجمالي ${fmt(ED.linked.reduce((a,x)=>a+(+x.amount||0),0))} ر.ق`; });
+  const eai=$("#e-ai"); if(eai) eai.onclick=()=>smartEntryModal();
   form.addEventListener("submit",e=>{ e.preventDefault(); saveEditor(false); });
   const si=$("#save-issue"); if(si) si.onclick=()=>saveEditor("issue");
   const ssb=$("#save-submit"); if(ssb) ssb.onclick=()=>saveEditor("submit");
@@ -2157,7 +2662,7 @@ function bindInvoice(){
   const err=e=>toast("تعذر: "+(e.message||e.code||e));
   $$("[data-pdf]").forEach(b=>b.onclick=()=>outputDoc(b.dataset.pdf,i.id,"pdf").then(()=>render()).catch(err));
   const pk=$("#pack"); if(pk) pk.onclick=()=>outputDoc("pack",i.id,"pdf").then(()=>render()).catch(err);
-  const sbm=$("#submit"); if(sbm) sbm.onclick=()=>confirmBox("إرسال الفاتورة لاعتماد الإدارة؟","إرسال",async()=>{ await patchInvoice(i.id,{status:"pending",submittedAt:new Date().toISOString(),submittedBy:actor(),returnNote:null},"إرسال لاعتماد الإدارة"); toast("أُرسلت للاعتماد"); });
+  const sbm=$("#submit"); if(sbm) sbm.onclick=()=>confirmBox("إرسال الفاتورة لاعتماد الإدارة؟","إرسال",async()=>{ await patchInvoice(i.id,{status:"pending",submittedAt:new Date().toISOString(),submittedBy:actor(),returnNote:null},"إرسال لاعتماد الإدارة"); toast("أُرسلت للاعتماد"); notifySubmit(invById(i.id)); });
   const rt=$("#return"); if(rt) rt.onclick=()=>returnModal(i);
   const rc=$("#ret-collect"); if(rc) rc.onclick=()=>retCollectModal([i.id]);
   const rtu=$("#ret-undo"); if(rtu) rtu.onclick=()=>confirmBox("إلغاء تسجيل تحصيل المحتجزات لهذه الفاتورة؟","إلغاء التسجيل",async()=>{ await patchInvoice(i.id,{retention:null},"إلغاء تسجيل تحصيل المحتجزات"); toast("تم الإلغاء"); },true);
@@ -2171,6 +2676,10 @@ function bindInvoice(){
     if(linkedSpecials(i.id).length){ toast("الفاتورة مدرجة في فاتورة مجمعة مفتوحة — ألغِ المجمعة أولاً"); return; }
     confirmBox(`إلغاء ${dispNo(i)}؟ يبقى الرقم محفوظاً مع ختم CANCELLED ولا يُعاد استخدامه.`,"إلغاء نهائي",async reason=>{ await patchInvoice(i.id,{status:"cancelled",cancelReason:reason,cancelledAt:new Date().toISOString(),cancelledBy:actor(),spStatus:i.kind==="special"?"cancelled":(i.spStatus||null)},"إلغاء — "+reason); toast("تم الإلغاء"); },true,true); };
   const dup=$("#dup"); if(dup) dup.onclick=()=>repeatModal([i.id]);
+  const air=$("#ai-review"); if(air) air.onclick=()=>aiReview(i,$("#ai-review-out"),air);
+  const aic=$("[data-aicover]"); if(aic) aic.onclick=()=>aiCoverModal(i);
+  const cts=$("#ct-set"); if(cts) cts.onclick=()=>contractModal(i);
+  const qp=$("#qb-post"); if(qp) qp.onclick=()=>confirmBox(`ترحيل ${dispNo(i)} بقيمة ${fmt(calc(i).total)} ر.ق إلى QuickBooks؟ إن وُجدت فاتورة بنفس الرقم هناك تُربط ولا تتكرر.`,"ترحيل",async()=>{ const q=await qbPost(invById(i.id)); toast("تم الترحيل إلى QuickBooks برقم "+q.doc); });
   const cv=$("#convert"); if(cv) cv.onclick=()=>confirmBox("تحويل الفاتورة المبدئية إلى فاتورة رسمية برقم INV جديد؟ تبقى المبدئية محفوظة كمرجع.","تحويل واعتماد",async()=>{
     const n=clone(i); for(const k of ["id","docNos","snap","history"]) delete n[k]; const d=todayISO(), now=new Date().toISOString();
     Object.assign(n,{kind:"invoice",date:d,payments:[],status:"issued",fromProforma:i.no,createdAt:now,createdBy:actor(),issuedAt:now,issuedBy:actor(),snap:snapshot()});
