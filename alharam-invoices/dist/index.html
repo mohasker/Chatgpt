@@ -2298,8 +2298,6 @@ async function outputDoc(kind, id, how){
 async function printDoc(html, filename){
   if(S.mode==="local"){ printDirect(html); return; }
   const blob=await renderPdfBlob(html,3,true); if(!blob) return;
-  let w=null; try{ w=window.open(URL.createObjectURL(blob),"_blank"); }catch(e){ w=null; }
-  if(w){ toast("فُتح الملف في تبويب جديد — تظهر نافذة الطباعة تلقائياً"); return; }
   const ok=await saveFile(filename.replace(/\.pdf$/,"")+"-PRINT.pdf", blob);
   if(ok!==false) toast("افتح الملف المحفوظ — تظهر نافذة الطباعة تلقائياً");
 }
