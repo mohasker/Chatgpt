@@ -386,7 +386,7 @@ document.documentElement.setAttribute("dir","rtl"); document.documentElement.set
    ========================================================================== */
 const IMG = {logo:"{{LOGO}}", sign:"{{SIGN}}", stamp:"{{STAMP}}"};
 
-const APP_VERSION = "V.0.0.4";
+const APP_VERSION = "V.0.0.5";
 const PAL = ["#0E9A6C","#1F7FC8","#E07A0F","#7A4FD1","#C2185B","#13958A","#C9A227","#5D6B82","#2E7D32","#8E5B3A"];
 const QCOL = ["#0E9A6C","#1F7FC8","#7A4FD1","#C2185B"];
 const CHEQUE_HTML = {{CHEQUE_HTML}};
@@ -404,7 +404,7 @@ const DEFAULT_SETTINGS = {
   numbering:{prefix:"ALH", start:{INV:1001, PRO:1, CON:1, WCC:1, WRN:1, CVL:1, DN:1, RCV:1}},
   stampDefault:false,
   users:[],
-  auto:{digestOn:false, digestEmail:"", backupOn:false, backupDays:7, teamsChat:"", teamsChatName:"", waAdmin:""},
+  auto:{digestOn:false, digestEmail:"", backupOn:true, backupDays:7, teamsChat:"", teamsChatName:"", waAdmin:""},
   qb:{itemId:"", itemName:"", terms:30},
   tpl:{
     completionIntro:"This is to certify that {company}, has successfully completed the {typeOfWorks}, ( Ref : {ref} ) Work Order No. {workOrder}, project located at : {location}, as per the agreed upon scope of work and specifications.",
@@ -663,7 +663,7 @@ async function boot(){
 function subscribe(){
   const timer=setTimeout(()=>{ S.stale=true; S.loaded.set=true; S.loaded.users=true; render(); },10000);
   const done=()=>{ if(S.loaded.inv&&S.loaded.cus){ clearTimeout(timer); S.stale=false; } };
-  DB.collection("invoices").orderBy("date","desc").limit(1000).onSnapshot(snap=>{
+  DB.collection("invoices").orderBy("date","desc").limit(20000).onSnapshot(snap=>{
     S.invoices = snap.docs.map(d=>({...d.data(), id:d.id}));
     if(!snap.metadata.fromCache) S.loaded.inv=true; done(); sortData(); renderSoon();
   }, err=>{ S.loaded.inv=true; S.stale=true; clearTimeout(timer); toast("تعذر قراءة الفواتير ("+err.code+")"); render(); });
@@ -953,6 +953,7 @@ function viewDashboard(){
     <div class="actions"><select class="i" id="dash-year" aria-label="السنة" style="width:auto">${years().map(y=>`<option ${y===Y?"selected":""}>${y}</option>`).join("")}</select>
     ${can("edit")?`<a class="btn primary" href="#new">${IC.plus}فاتورة جديدة</a>`:""}</div></div>
   <div class="stack">
+  ${backupBanner()}
   <div class="kpis">
     <div class="kpi lead"><div class="l">إجمالي الفواتير ${Y}</div><div class="v">${fmt(invoiced)} <small>ر.ق</small></div><div class="s">${acc.length} فاتورة — مقابل ${fmt0(invoicedPrev)} في ${Y-1} ${delta(invoiced,invoicedPrev)}</div></div>
     <div class="kpi"><div class="l">المحصّل خلال ${Y}</div><div class="v">${fmt(collectedY)} <small>ر.ق</small></div><div class="meter"><i style="width:${invoiced?Math.min(100,collectedY/invoiced*100):0}%"></i></div><div class="s">${invoiced?Math.round(collectedY/invoiced*100):0}% من فواتير السنة</div></div>
@@ -2071,7 +2072,8 @@ function viewSettings(){
    <p class="hint" style="margin-top:8px"><b>الإدارة:</b> كل الشاشات، واعتماد الفواتير، والتقارير، والإلغاء، والإعدادات. <b>المحاسب:</b> إعداد الفواتير وإرسالها للاعتماد، والطباعة، والإرسال، والعملاء — بدون لوحة التحكم والإجماليات.<br>الحماية الفعلية للبيانات تتم من مشاركة الصفحة في claude.ai: أعطِ الإدارة صلاحية "محرر" والمحاسب "مساهم".</p></div>
   <div class="panel" style="margin-top:16px"><h2>النسخ الاحتياطي والنقل</h2>
    <p class="hint">صدّر كل البيانات (الفواتير، العملاء، الإعدادات بدون كلمات المرور، العدادات) كملف JSON واحتفظ به.</p>
-   <div class="actions"><button class="btn" id="bk-exp">${IC.pdf}تصدير نسخة احتياطية</button><button class="btn" id="bk-xls">${IC.xls}تصدير كل البيانات Excel</button>
+   <p class="hint">${metaAuto().backupAt?`آخر نسخة: ${esc(metaAuto().backupName||"")} (${esc(metaAuto().backupHow||"")}) — ${new Date(metaAuto().backupAt).toLocaleString("en-GB")}`:"<b>لم تؤخذ نسخة بعد.</b>"} النسخة تشمل الفواتير والعملاء والإعدادات والشيكات وقوالب البنوك.</p>
+   <div class="actions"><button class="btn primary" id="bk-exp">${IC.pdf}تنزيل نسخة احتياطية كاملة</button>${MCP?`<button class="btn" id="bk-drive">نسخ إلى Google Drive</button>`:""}<button class="btn" id="bk-xls">${IC.xls}تصدير كل البيانات Excel</button>
    ${S.canWrite?`<label class="btn" for="bk-file">استعادة من ملف</label><input type="file" id="bk-file" accept=".json,application/json" hidden>`:''}</div></div>`;
 }
 
@@ -2330,7 +2332,7 @@ function contractModal(i){
 /* ---------------- 6) alerts, email digest ---------------- */
 async function loadCheques(){
   if(S.mode!=="cloud"){ S.chqs=[]; return; }
-  try{ const snap=await DB.collection("cheques").limit(1000).get(); S.chqs=snap.docs.map(d=>({...d.data(),id:d.id})); }catch(e){ S.chqs=[]; }
+  try{ const snap=await DB.collection("cheques").limit(20000).get(); S.chqs=snap.docs.map(d=>({...d.data(),id:d.id})); }catch(e){ S.chqs=[]; }
 }
 function alertsList(){
   const A=[];
@@ -2358,12 +2360,34 @@ async function sendDigest(manual){
 }
 
 /* ---------------- 7) Google Drive backup ---------------- */
-function backupData(){ const st=clone(S.settings); delete st.users; return {app:"alharam-invoices",version:2,exportedAt:new Date().toISOString(),settings:st,counters:S.counters,customers:S.customers,invoices:S.invoices}; }
+async function backupData(){
+  const st=clone(S.settings); delete st.users;
+  const out={app:"alharam-invoices",version:3,appVersion:APP_VERSION,exportedAt:new Date().toISOString(),settings:st,counters:S.counters,meta:S.meta||{},customers:S.customers,invoices:S.invoices,cheques:[],chequeTemplates:[],chequeConfig:null};
+  if(S.mode==="cloud"){
+    const all=async c=>{ try{ const sn=await DB.collection(c).limit(20000).get(); return sn.docs.map(d=>({...d.data(),id:d.id})); }catch(e){ return []; } };
+    out.cheques=await all("cheques"); out.chequeTemplates=await all("templates"); S.chqs=out.cheques;
+    try{ const c=await DB.doc("config/main").get(); out.chequeConfig=c.exists?c.data():null; }catch(e){}
+  } else { const d=lsRead(); out.cheques=Object.entries(d.cheques||{}).map(([id,v])=>({...v,id})); out.chequeTemplates=Object.entries(d.templates||{}).map(([id,v])=>({...v,id})); }
+  out.counts={invoices:out.invoices.length,customers:out.customers.length,cheques:out.cheques.length,chequeTemplates:out.chequeTemplates.length};
+  return out;
+}
+async function noteBackup(how, name, link){
+  const h=[{at:new Date().toISOString(),how,name,by:actor()},...(metaAuto().backups||[])].slice(0,20);
+  await setMeta({backupAt:new Date().toISOString(),backupHow:how,backupName:name,...(link!==undefined?{backupLink:link}:{}),backups:h});
+}
+const backupAge = () => { const a=metaAuto().backupAt; return a?Math.floor((Date.now()-new Date(a))/864e5):null; };
+async function downloadBackup(){ const d=await backupData(); const name=`Alharam-Backup-${todayISO()}.json`; const ok=await saveFile(name, JSON.stringify(d)); if(ok!==false){ await noteBackup("تنزيل",name); await audit("تصدير نسخة احتياطية", name, `${d.counts.invoices} فاتورة، ${d.counts.cheques} شيك`); } }
+function backupBanner(){
+  if(!isAdmin()) return ""; const age=backupAge(); if(age!==null&&age<8) return "";
+  return `<div class="banner bad" style="margin:0"><span><b>النسخ الاحتياطي:</b> ${age===null?"لم تؤخذ أي نسخة احتياطية بعد.":"آخر نسخة منذ "+age+" يوماً."} احفظ نسخة الآن للحفاظ على البيانات.</span><span class="actions">${MCP?`<button class="btn sm primary" data-bk="drive">نسخ إلى Google Drive</button>`:""}<button class="btn sm" data-bk="dl">تنزيل نسخة</button></span></div>`;
+}
+function bindBackupButtons(){ $$("[data-bk]").forEach(b=>b.onclick=async()=>{ b.disabled=true; try{ if(b.dataset.bk==="drive"){ toast("جارٍ رفع النسخة إلى Google Drive…"); await driveBackup(true); } else await downloadBackup(); render(); }catch(e){ toast("تعذر: "+mcpErr(e)); b.disabled=false; } }); }
 async function driveBackup(manual){
   const name=`Alharam-Backup-${todayISO()}.json`;
-  const p=await mcpCall(SRV.drive,"create_file",{title:name,textContent:JSON.stringify(backupData()),contentMimeType:"application/json",disableConversionToGoogleType:true});
-  const link=p&&(p.webViewLink||p.alternateLink||p.url||(p.file&&p.file.webViewLink))||"";
-  await setMeta({backupAt:new Date().toISOString(),backupName:name,backupLink:link}); await audit("نسخة احتياطية على Google Drive", name, S.invoices.length+" فاتورة");
+  const data=await backupData();
+  const p=await mcpCall(SRV.drive,"create_file",{title:name,textContent:JSON.stringify(data),contentMimeType:"application/json",disableConversionToGoogleType:true});
+  const link=p&&(p.viewUrl||p.webViewLink||p.alternateLink||p.url||(p.file&&p.file.webViewLink))||"";
+  await noteBackup("Google Drive",name,link); await audit("نسخة احتياطية على Google Drive", name, `${data.counts.invoices} فاتورة، ${data.counts.cheques} شيك`);
   if(manual) toast("تم حفظ النسخة على Google Drive: "+name); return true;
 }
 
@@ -2501,6 +2525,7 @@ function viewAutomation(){
   return `<div class="top"><div><h1>الأتمتة والتكامل</h1><p>العقود الشهرية، التنبيهات بالبريد، النسخ الاحتياطي، إشعارات الاعتماد، وQuickBooks — كلها في مكان واحد.</p></div></div>
   <div class="stack">
   <div class="banner info">${ai.join(" · ")}</div>
+  ${backupBanner()}
   <div class="panel"><h2>التنبيهات الآن <small>المحتجزات، الشيكات المستحقة خلال 7 أيام، الاعتمادات، المسودات</small></h2>
     ${A.length?`<ul class="checks">${A.map(x=>`<li style="border-inline-start-color:${CHK_COL[x.lvl]}"><a href="${x.href}" style="color:inherit">${esc(x.t)}</a></li>`).join("")}</ul>`:'<p class="hint">✓ لا توجد تنبيهات.</p>'}
     <div class="grid g3" style="margin-top:12px;align-items:end"><label class="f">بريد ملخص التنبيهات<input class="i ltr" id="au-mail" value="${esc(a.digestEmail||"")}" placeholder="ceo@alharam.qa" ${ro?"disabled":""}></label>
@@ -2522,7 +2547,8 @@ function viewAutomation(){
   <div class="panel"><h2>النسخ الاحتياطي على Google Drive</h2>
     <div class="grid g3" style="align-items:end"><label class="chk"><input type="checkbox" id="au-bk" ${a.backupOn?"checked":""} ${ro?"disabled":""}>نسخة تلقائية كل</label><label class="f">عدد الأيام<input class="i ltr" id="au-bkd" value="${esc(a.backupDays||7)}" ${ro?"disabled":""}></label>
     <div class="actions"><button class="btn" id="au-bknow" ${MCP?"":"disabled"}>نسخ الآن إلى Drive</button></div></div>
-    <p class="hint">${m.backupAt?`آخر نسخة: ${esc(m.backupName||"")} — ${new Date(m.backupAt).toLocaleString("en-GB")} ${m.backupLink?`<a href="${esc(m.backupLink)}" target="_blank" rel="noopener">فتح</a>`:""}`:"لم تؤخذ نسخة على Drive بعد."} الملف JSON يُستعاد من الإعدادات ← استعادة من ملف.</p></div>
+    <p class="hint">الملف JSON كامل (الفواتير، العملاء، الإعدادات، الشيكات، قوالب البنوك) ويُستعاد من الإعدادات ← استعادة من ملف. كل نسخة ملف مستقل بتاريخها، فلا تُستبدل النسخ القديمة.</p>
+    ${(m.backups||[]).length?`<div class="tw"><table class="t"><thead><tr><th>التاريخ</th><th>الطريقة</th><th>الملف</th><th>بواسطة</th></tr></thead><tbody>${(m.backups||[]).slice(0,8).map(x=>`<tr><td class="num">${new Date(x.at).toLocaleString("en-GB")}</td><td>${esc(x.how||"")}</td><td class="code">${esc(x.name||"")}</td><td>${esc(x.by||"")}</td></tr>`).join("")}</tbody></table></div>`:'<p class="hint"><b>لم تؤخذ نسخة بعد.</b></p>'}</div>
   <div class="panel"><h2>إشعار الإدارة عند إرسال فاتورة للاعتماد</h2>
     <div class="grid g3" style="align-items:end"><label class="f">محادثة Teams<div style="display:flex;gap:6px"><input class="i" id="au-teams" value="${esc(a.teamsChatName||(a.teamsChat?"محادثة محددة":""))}" placeholder="لم تُحدد" disabled><button class="btn sm" id="au-teamsel" ${MCP?"":"disabled"}>اختيار</button>${a.teamsChat?'<button class="btn sm" id="au-teamsclr">إلغاء</button>':""}</div></label>
     <label class="f">رقم واتساب الإدارة<input class="i ltr" id="au-wa" value="${esc(a.waAdmin||"")}" placeholder="+974 5xxx xxxx" ${ro?"disabled":""}></label><span></span></div>
@@ -2535,7 +2561,7 @@ async function saveAutoSettings(patchAuto, patchQb){
   await Store.saveSettings(st); S.settings=deepMerge(DEFAULT_SETTINGS,st);
 }
 function bindAutomation(){
-  const v=id=>$("#"+id);
+  const v=id=>$("#"+id); bindBackupButtons();
   const qm=v("qb-m"); if(qm) qm.onchange=()=>{ S.qbMonth=qm.value||ym(todayISO()); render(); };
   const sv=v("au-save"); if(sv) sv.onclick=async()=>{ try{ await saveAutoSettings({digestEmail:v("au-mail").value.trim(),digestOn:v("au-dig").checked,backupOn:v("au-bk").checked,backupDays:Math.max(1,parseInt(v("au-bkd").value,10)||7),waAdmin:v("au-wa").value.trim()},{terms:Math.max(0,parseInt(v("qb-terms").value,10)||30)}); await audit("تعديل إعدادات الأتمتة",""); toast("تم الحفظ"); render(); }catch(e){ toast("تعذر الحفظ — تحتاج صلاحية محرر"); } };
   const sd=v("au-send"); if(sd) sd.onclick=async()=>{ sd.disabled=true; try{ await sendDigest(true); render(); }catch(e){ toast("تعذر الإرسال: "+mcpErr(e)); } sd.disabled=false; };
@@ -2569,7 +2595,7 @@ function bind(){
     $$("[data-goto-rep]").forEach(a=>a.onclick=()=>{ S.repTab="grouped"; S.rep={...S.rep,group:a.dataset.gotoRep,kind:"accounts"}; });
     $$("[data-goto-bal]").forEach(a=>a.onclick=()=>{ S.repTab="balances"; });
     $$("[data-stmt]").forEach(tr=>tr.onclick=()=>{ if(tr.dataset.stmt) go("statement-"+tr.dataset.stmt); });
-    const as=$("#ai-sum"); if(as) as.onclick=()=>aiSummary(as); }
+    const as=$("#ai-sum"); if(as) as.onclick=()=>aiSummary(as); bindBackupButtons(); }
   if(r==="invoices"||r==="special") bindList(r==="special");
   if(r==="approvals") bindApprovals();
   if(r==="retentions") bindRetentions();
@@ -2775,7 +2801,8 @@ function bindSettings(){
   $$("[data-utog]").forEach(b=>b.onclick=async()=>{ const u={...allUsers().find(x=>x.u===b.dataset.utog)}; delete u.builtin;
     if(u.active!==false && u.role==="admin" && allUsers().filter(x=>x.role==="admin"&&x.active!==false).length<=1){ toast("لا يمكن إيقاف آخر حساب إدارة"); return; }
     u.active = u.active===false; try{ await saveUser(u.u,u); await audit(u.active?"تفعيل مستخدم":"إيقاف مستخدم", u.u); $("#editor-form")?.remove(); render(); }catch(e){ toast("تعذر الحفظ"); } });
-  $("#bk-exp").onclick=()=>{ const st=clone(S.settings); delete st.users; const data={app:"alharam-invoices",version:2,exportedAt:new Date().toISOString(),settings:st,counters:S.counters,customers:S.customers,invoices:S.invoices}; saveFile(`Alharam-Backup-${todayISO()}.json`, JSON.stringify(data,null,1)); audit("تصدير نسخة احتياطية",""); };
+  $("#bk-exp").onclick=()=>downloadBackup().catch(e=>toast("تعذر: "+(e.message||e)));
+  const bkd=$("#bk-drive"); if(bkd) bkd.onclick=async()=>{ bkd.disabled=true; toast("جارٍ رفع النسخة إلى Google Drive…"); try{ await driveBackup(true); }catch(e){ toast("تعذر: "+mcpErr(e)); } bkd.disabled=false; };
   $("#bk-xls").onclick=()=>{ if(!window.XLSX) return toast("مكتبة Excel لم تُحمّل");
     const wb=XLSX.utils.book_new(), sf=o=>{ const r={}; for(const k in o) r[k]=xlsSafe(o[k]); return r; };
     const inv=S.invoices.map(i=>{const c=calc(i);return sf({"الرقم":dispNo(i),"النوع":KIND[i.kind],"التاريخ":i.date,"العميل":i.customerName,"المدرسة":i.site||"","نوع الأعمال":i.typeOfWorks||"","أمر العمل":i.workOrder||"","المرجع":i.ref||"","الموقع":i.location||"","المجموع":c.sub,"الاستقطاعات":c.ded,"الخصم":+i.discount||0,"الصافي":c.total,"المدفوع":c.paid,"الرصيد":c.balance,"الحالة":STATUS_AR[statusOf(i)],"مستوردة":isLegacy(i)?"نعم":"","معتمدة بواسطة":i.issuedBy||""});});
@@ -2789,9 +2816,12 @@ function bindSettings(){
   const fi=$("#bk-file"); if(fi) fi.onchange=()=>{ const f=fi.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=()=>{ let d; try{ d=JSON.parse(rd.result); }catch(e){ toast("ملف غير صالح"); return; }
     if(d.app!=="alharam-invoices"){ toast("هذا الملف ليس نسخة احتياطية من النظام"); return; }
     const okId=id=>/^[A-Za-z0-9_\-.~:@+]{1,200}$/.test(String(id||""));
-    confirmBox(`استعادة ${d.invoices?.length||0} فاتورة و ${d.customers?.length||0} عميل؟ السجلات بنفس المعرّف ستُستبدل. المستخدمون وكلمات المرور الحالية لا تتغير.`,"استعادة",async()=>{
+    confirmBox(`استعادة ${d.invoices?.length||0} فاتورة و ${d.customers?.length||0} عميل و ${d.cheques?.length||0} شيك؟ السجلات بنفس المعرّف ستُستبدل. المستخدمون وكلمات المرور الحالية لا تتغير.`,"استعادة",async()=>{
       let n=0; for(const c of d.customers||[]){ const {id,...x}=c; if(okId(id)){ await Store.save("customers",id,x); n++; } }
       for(const i of d.invoices||[]){ const {id,...x}=i; if(okId(id)){ await Store.save("invoices",id,x); n++; } }
+      for(const c of d.cheques||[]){ const {id,...x}=c; if(okId(id)){ await Store.save("cheques",id,x); n++; } }
+      for(const t of d.chequeTemplates||[]){ const {id,...x}=t; if(okId(id)){ await Store.save("templates",id,x); n++; } }
+      if(d.chequeConfig&&S.mode==="cloud"){ try{ await DB.doc("config/main").set(d.chequeConfig); }catch(e){} }
       if(d.settings&&S.isPlatformAdmin){ const st=deepMerge(S.settings,d.settings); delete st.users; await Store.saveSettings(st); }
       await audit("استعادة نسخة احتياطية", n+" سجل"); toast(`تمت استعادة ${n} سجل`); }); }; rd.readAsText(f); };
 }
