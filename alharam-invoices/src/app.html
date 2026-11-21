@@ -149,6 +149,7 @@ input.ltr,textarea.ltr{direction:ltr;text-align:left}
 .ai-out{white-space:pre-line;background:var(--gold-soft);border-radius:8px;padding:10px 12px;margin-top:10px;font-size:14px;line-height:1.8}
 .ai-card h3{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.ai-card h3 .btn{margin-inline-start:auto}
 .btn.rec{background:#C62828;color:#fff;border-color:#C62828;animation:pulse 1.2s infinite}@keyframes pulse{50%{opacity:.7}}
+table.lines select.unit{width:100%;min-width:64px;padding:6px 4px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:inherit;font:inherit}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;min-width:0}
 .panel h2{font-family:var(--f-display);font-size:15px;margin:0 0 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .panel h2 small{font-family:var(--f-body);font-weight:500;color:var(--muted);font-size:12px}
@@ -1252,11 +1253,13 @@ function viewEditor(id, kind){
     <div class="actions">${locked?`<button type="submit" class="btn primary" id="save-btn">حفظ التعديلات</button>`:`<button type="submit" class="btn" id="save-btn">حفظ كمسودة</button>${(!id||["draft","pending"].includes(invById(id)?.status))?(can("issue")?`<button type="button" class="btn primary" id="save-issue">${IC.check}حفظ واعتماد</button>`:can("submit")?`<button type="button" class="btn primary" id="save-submit">${IC.check}حفظ وإرسال للاعتماد</button>`:""):""}`}</div></div>
   </form>`;
 }
+const UNITS=["m2","m3","L.S.","Nos","LM","Set","Month","Day","Hr","Kg","Ton"];
+const unitOpts = cur => { const c=String(cur||"").trim(); const L=c&&!UNITS.includes(c)?[c,...UNITS]:UNITS; return `<option value="" ${c?"":"selected"}>—</option>`+L.map(u=>`<option value="${esc(u)}" ${u===c?"selected":""}>${esc(u)}</option>`).join(""); };
 function linesRows(locked){
   const dis=locked?"disabled":"";
   return ED.lines.map((l,k)=>`<tr class="${l.heading?"head":""}" data-k="${k}"><td class="muted" style="padding-top:12px">${l.heading?"—":k+1}</td>
    <td><input class="d" data-f="desc" value="${esc(l.desc)}" aria-label="الوصف" ${dis}></td>
-   ${l.heading?'<td colspan="4" class="muted" style="padding-top:12px;font-size:12px">عنوان قسم</td>':`<td><input data-f="unit" value="${esc(l.unit||"")}" aria-label="الوحدة" ${dis}></td><td><input class="ltr" data-f="qty" value="${esc(l.qty??"")}" inputmode="decimal" aria-label="الكمية" ${dis}></td><td><input class="ltr" data-f="price" value="${esc(l.price??"")}" inputmode="decimal" aria-label="السعر" ${dis}></td><td class="tot" data-tot>${fmt(lineTotal(l))}</td>`}
+   ${l.heading?'<td colspan="4" class="muted" style="padding-top:12px;font-size:12px">عنوان قسم</td>':`<td><select class="unit" data-f="unit" aria-label="الوحدة" ${dis}>${unitOpts(l.unit)}</select></td><td><input class="ltr" data-f="qty" value="${esc(l.qty??"")}" inputmode="decimal" aria-label="الكمية" ${dis}></td><td><input class="ltr" data-f="price" value="${esc(l.price??"")}" inputmode="decimal" aria-label="السعر" ${dis}></td><td class="tot" data-tot>${fmt(lineTotal(l))}</td>`}
    <td style="white-space:nowrap">${locked?"":`<button type="button" class="iconbtn" data-act="up" title="أعلى" aria-label="أعلى">${IC.up}</button><button type="button" class="iconbtn" data-act="down" title="أسفل" aria-label="أسفل">${IC.down}</button><button type="button" class="iconbtn ${l.heading?"on":""}" data-act="head" title="تحويل لعنوان" aria-label="تحويل لعنوان">${IC.h}</button><button type="button" class="iconbtn" data-act="del" title="حذف" aria-label="حذف">${IC.trash}</button>`}</td></tr>`).join("");
 }
 function dedRows(locked){
@@ -1358,7 +1361,7 @@ async function saveEditor(mode){
     toast(issue?"تم الاعتماد برقم "+data.no:submit?"أُرسلت لاعتماد الإدارة":"تم الحفظ");
     if(submit) notifySubmit({...data,id});
     ED=null; go("inv-"+id);
-  }catch(e){ console.error(e); fail("تعذر الحفظ: "+(e.message||e.code||e)); }
+  }catch(e){ console.error(e); fail(e&&e.code==="invalid_argument"?"لا توجد صلاحية حفظ في هذا العرض — افتح رابط النظام مباشرة في تبويب جديد على claude.ai":"تعذر الحفظ: "+(e.message||e.code||e)); }
 }
 async function issueExisting(i, quiet){
   const now=new Date().toISOString();
@@ -2650,7 +2653,7 @@ function bindEditor(){
   const form=$("#editor-form"); if(!form) return;
   const body=$("#lines-body");
   if(body){
-    body.addEventListener("input",e=>{ const inp=e.target.closest("input[data-f]"); if(!inp) return; const k=+inp.closest("tr").dataset.k; const f=inp.dataset.f;
+    body.addEventListener("input",e=>{ const inp=e.target.closest("[data-f]"); if(!inp) return; const k=+inp.closest("tr").dataset.k; const f=inp.dataset.f;
       ED.lines[k][f]=(f==="qty"||f==="price")?inp.value.replace(/,/g,""):inp.value; if(f==="qty"||f==="price") delete ED.lines[k].amount;
       const td=inp.closest("tr").querySelector("[data-tot]"); if(td) td.textContent=fmt(lineTotal(ED.lines[k])); updateTotals(); });
     body.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); const tr=e.target.closest("tr"); if(+tr.dataset.k===ED.lines.length-1){ ED.lines.push({desc:"",unit:ED.lines[ED.lines.length-1].unit||"",qty:"",price:""}); body.innerHTML=linesRows(false); } const nx=body.querySelector(`tr[data-k="${+tr.dataset.k+1}"] input`); nx&&nx.focus(); } });
