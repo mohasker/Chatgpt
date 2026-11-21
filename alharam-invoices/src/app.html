@@ -386,7 +386,7 @@ document.documentElement.setAttribute("dir","rtl"); document.documentElement.set
    ========================================================================== */
 const IMG = {logo:"{{LOGO}}", sign:"{{SIGN}}", stamp:"{{STAMP}}"};
 
-const APP_VERSION = "V.0.0.6";
+const APP_VERSION = "V.0.0.5";
 const PAL = ["#0E9A6C","#1F7FC8","#E07A0F","#7A4FD1","#C2185B","#13958A","#C9A227","#5D6B82","#2E7D32","#8E5B3A"];
 const QCOL = ["#0E9A6C","#1F7FC8","#7A4FD1","#C2185B"];
 const CHEQUE_HTML = {{CHEQUE_HTML}};
@@ -664,7 +664,7 @@ async function boot(){
 function subscribe(){
   const timer=setTimeout(()=>{ S.stale=true; S.loaded.set=true; S.loaded.users=true; render(); },10000);
   const done=()=>{ if(S.loaded.inv&&S.loaded.cus){ clearTimeout(timer); S.stale=false; } };
-  DB.collection("invoices").orderBy("date","desc").limit(20000).onSnapshot(snap=>{
+  DB.collection("invoices").orderBy("date","desc").limit(1000).onSnapshot(snap=>{
     S.invoices = snap.docs.map(d=>({...d.data(), id:d.id}));
     if(!snap.metadata.fromCache) S.loaded.inv=true; done(); sortData(); renderSoon();
   }, err=>{ S.loaded.inv=true; S.stale=true; clearTimeout(timer); toast("تعذر قراءة الفواتير ("+err.code+")"); render(); });
@@ -2337,7 +2337,7 @@ function contractModal(i){
 /* ---------------- 6) alerts, email digest ---------------- */
 async function loadCheques(){
   if(S.mode!=="cloud"){ S.chqs=[]; return; }
-  try{ const snap=await DB.collection("cheques").limit(20000).get(); S.chqs=snap.docs.map(d=>({...d.data(),id:d.id})); }catch(e){ S.chqs=[]; }
+  try{ const snap=await DB.collection("cheques").limit(1000).get(); S.chqs=snap.docs.map(d=>({...d.data(),id:d.id})); }catch(e){ S.chqs=[]; }
 }
 function alertsList(){
   const A=[];
@@ -2369,7 +2369,7 @@ async function backupData(){
   const st=clone(S.settings); delete st.users;
   const out={app:"alharam-invoices",version:3,appVersion:APP_VERSION,exportedAt:new Date().toISOString(),settings:st,counters:S.counters,meta:S.meta||{},customers:S.customers,invoices:S.invoices,cheques:[],chequeTemplates:[],chequeConfig:null};
   if(S.mode==="cloud"){
-    const all=async c=>{ try{ const sn=await DB.collection(c).limit(20000).get(); return sn.docs.map(d=>({...d.data(),id:d.id})); }catch(e){ return []; } };
+    const all=async c=>{ try{ const sn=await DB.collection(c).limit(1000).get(); return sn.docs.map(d=>({...d.data(),id:d.id})); }catch(e){ return []; } };
     out.cheques=await all("cheques"); out.chequeTemplates=await all("templates"); S.chqs=out.cheques;
     try{ const c=await DB.doc("config/main").get(); out.chequeConfig=c.exists?c.data():null; }catch(e){}
   } else { const d=lsRead(); out.cheques=Object.entries(d.cheques||{}).map(([id,v])=>({...v,id})); out.chequeTemplates=Object.entries(d.templates||{}).map(([id,v])=>({...v,id})); }
